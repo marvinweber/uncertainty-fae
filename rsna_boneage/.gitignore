@@ -1,0 +1,11 @@
+.vscode
+
+images/test
+images/train_val
+
+lightning_logs
+
+__pycache__
+
+eval_results
+eval*.csv
