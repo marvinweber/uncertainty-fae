@@ -57,7 +57,7 @@ class RSNABoneageDataset(Dataset):
         boneage = torch.tensor(np.float32(boneage))
 
         # Load image from disk
-        if not img_preprocessed_path:
+        if not img_preprocessed_path or np.isnan(img_preprocessed_path):
             image = Image.open(img_path).convert('RGB')
         else:
             image: torch.Tensor = torch.load(img_preprocessed_path)
