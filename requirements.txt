@@ -1,0 +1,7 @@
+ipykernel
+pytorch-lightning
+pandas
+matplotlib
+numpy
+Pillow
+torchsummary
