@@ -9,7 +9,7 @@ from torchvision.models.inception import InceptionOutputs
 class RSNABoneageLitModel(LightningModule):
     def __init__(self, net: nn.Module, lr: float = 3e-4,
                  mc_iterations=100, weight_decay_adam: float = 0,
-                 undo_boneage_rescaling=False, loss_weights: dict[Interval, float] = None) -> None:
+                 undo_boneage_rescaling=False) -> None:
         super().__init__()
 
         self.net = net
@@ -21,7 +21,6 @@ class RSNABoneageLitModel(LightningModule):
 
         self.mc_iterations = mc_iterations
         self.undo_boneage_rescaling = undo_boneage_rescaling
-        self.loss_weights = loss_weights
 
         self.save_hyperparameters(ignore=['net'])
 
@@ -44,7 +43,6 @@ class RSNABoneageLitModel(LightningModule):
         self.log('mae', mae)
 
         loss = self.mse(logits, y)
-        loss = self._apply_loss_weights(loss, y)
         self.log('loss', loss)
 
         return loss
@@ -108,21 +106,7 @@ class RSNABoneageLitModel(LightningModule):
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.weight_decay_adam)
 
-    def _apply_loss_weights(self, loss: Tensor, y_batch: Tensor):
-        if not self.loss_weights:
-            return loss
-        weights = [_get_weight_for_y(self.loss_weights, y) for y in y_batch.tolist()]
-        loss_weight = np.average(weights)
-        return loss * loss_weight
-
     def _undo_rescale_boneage(self, boneage_rescaled: int):
         lower_bound = 0
         upper_bound = 230
         return (boneage_rescaled * (upper_bound - lower_bound)) + lower_bound
-
-def _get_weight_for_y(weights: dict[Interval, float], y: float):
-    for interval, weight in weights.items():
-        if y in interval:
-            return weight
-    return 1
-    raise ValueError(f'Given y value "{y}" not in Weight Intervals!')

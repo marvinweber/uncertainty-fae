@@ -28,12 +28,7 @@ def main():
         target_dimensions=(299, 299),
         rescale_boneage=True,
         rebalance_classes=True)
-    rsna_boneage_datamodule.setup('fit')
-    train_dataset = rsna_boneage_datamodule.dataset_train
-    boneage_distribution = train_dataset.get_bonage_distribution()
-    loss_weights = {iv: 1 + (1 / count) for iv, count in boneage_distribution.items()}
-
-    model = RSNABoneageLitModel(net=rsna_net, loss_weights=None)
+    model = RSNABoneageLitModel(net=rsna_net)
 
     tb_logger = pl_loggers.TensorBoardLogger(save_dir=".")
     csv_logger = pl_loggers.CSVLogger(save_dir=".")

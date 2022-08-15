@@ -82,16 +82,6 @@ class RSNABoneageDataset(Dataset):
         upper_bound = 230  # 230 months
         return (boneage - lower_bound) / (upper_bound - lower_bound)
     
-    def get_bonage_distribution(self, bins: int = 25) -> dict[pd.Interval, int]:
-        annotations = self.annotations.copy(deep=True)
-        annotations['boneage_unscaled'] = annotations['boneage']
-        if self.rescale_boneage:
-            annotations['boneage'] = annotations['boneage'].map(lambda b: self._rescale_boneage(b))
-        
-        age_bins = pd.cut(annotations['boneage'], bins=bins)
-        age_grouped = annotations.groupby(age_bins).count()
-        return dict(zip(age_grouped.index.to_list(), age_grouped['boneage'].tolist()))
-
 
 class RSNABoneageDataModule(LightningDataModule):
     def __init__(self, 
