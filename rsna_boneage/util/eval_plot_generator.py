@@ -214,3 +214,5 @@ class EvalPlotGenerator():
         plt.savefig(os.path.join(self.img_save_dir, filename))
         if self.show_interactive_plots:
             plt.show(block=False)
+        else:
+            plt.close()
