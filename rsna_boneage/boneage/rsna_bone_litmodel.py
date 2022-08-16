@@ -1,9 +1,10 @@
-import numpy as np
-from pandas import Interval
-from torch import Tensor, nn, squeeze, vstack
 import torch.optim
 from pytorch_lightning.core.lightning import LightningModule
+from torch import nn, squeeze, vstack
 from torchvision.models.inception import InceptionOutputs
+
+from .rsna_boneage_inception import RSNABoneageInceptionNetWithGender
+from .rsna_boneage_resnet import RSNABoneageResNetWithGender
 
 
 class RSNABoneageLitModel(LightningModule):
@@ -77,6 +78,11 @@ class RSNABoneageLitModel(LightningModule):
     def forward_with_mc(self, batch):
         # Enable Dropout Layers in Network for MC
         self.net.dropout.train()
+        # Workarround for Gender Nets -> TODO: Abstraction into Interface
+        if isinstance(self.net, RSNABoneageInceptionNetWithGender):
+            self.net.inception.dropout.train()
+        if isinstance(self.net, RSNABoneageResNetWithGender):
+            self.net.resnet.dropout.train()
 
         preds = [self.forward(batch).cpu() for _ in range(self.mc_iterations)]
         if self.undo_boneage_rescaling:

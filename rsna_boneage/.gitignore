@@ -7,5 +7,10 @@ lightning_logs
 
 __pycache__
 
+train_logs
+
+eval_logs
 eval_results
 eval*.csv
+
+nohup.out

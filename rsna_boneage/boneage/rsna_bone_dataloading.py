@@ -1,13 +1,12 @@
-import torch
-from torch.utils.data import DataLoader, Dataset, random_split
+from typing import Optional
 
-from torchvision import transforms
-from pytorch_lightning import LightningDataModule
-
-from PIL import Image
 import numpy as np
 import pandas as pd
-from  typing import Optional
+import torch
+from PIL import Image
+from pytorch_lightning import LightningDataModule
+from torch.utils.data import DataLoader, Dataset
+from torchvision import transforms
 
 
 class RSNABoneageDataset(Dataset):
@@ -23,7 +22,7 @@ class RSNABoneageDataset(Dataset):
     """
     def __init__(self, annotation_file: str, transform=None,
                  target_dimensions=(200, 200), rescale_boneage=False,
-                 rebalance_classes=False) -> None:
+                 rebalance_classes=False, with_gender_input=False) -> None:
         super().__init__()
 
         self.annotation_file = annotation_file
@@ -42,6 +41,7 @@ class RSNABoneageDataset(Dataset):
         self.transform = transform
         self.target_dimensions = target_dimensions
         self.rescale_boneage = rescale_boneage
+        self.with_gender_input = with_gender_input
 
     def __len__(self):
         return self.annotations.shape[0]
@@ -57,7 +57,7 @@ class RSNABoneageDataset(Dataset):
         boneage = torch.tensor(np.float32(boneage))
 
         # Load image from disk
-        if not img_preprocessed_path or np.isnan(img_preprocessed_path):
+        if not img_preprocessed_path or not isinstance(img_preprocessed_path, str):
             image = Image.open(img_path).convert('RGB')
         else:
             image: torch.Tensor = torch.load(img_preprocessed_path)
@@ -75,6 +75,10 @@ class RSNABoneageDataset(Dataset):
         if self.rescale_boneage:
             boneage = self._rescale_boneage(boneage)
 
+        if self.with_gender_input:
+            male = int(self.annotations.loc[idx, 'male'])
+            return (image, np.float32(male)), boneage
+        else:
         return image, boneage
 
     def _rescale_boneage(self, boneage):
@@ -93,6 +97,7 @@ class RSNABoneageDataModule(LightningDataModule):
                  target_dimensions=(200, 200),
                  rescale_boneage=False,
                  rebalance_classes=False,
+                 with_gender_input=False,
                  split_seed: Optional[int] = None) -> None:
         super().__init__()
 
@@ -105,24 +110,26 @@ class RSNABoneageDataModule(LightningDataModule):
         self.target_dimensions = target_dimensions
         self.rescale_boneage = rescale_boneage
         self.rebalance_classes = rebalance_classes
+        self.with_gender_input = with_gender_input
 
     def setup(self, stage: str) -> None:
         # Training Dataset
         self.dataset_train = RSNABoneageDataset(
             annotation_file=self.annotation_file_train, transform=self.transform,
             target_dimensions=self.target_dimensions, rescale_boneage=self.rescale_boneage,
-            rebalance_classes=self.rebalance_classes)
+            rebalance_classes=self.rebalance_classes, with_gender_input=self.with_gender_input)
 
         # Validation Dataset
         self.dataset_val = RSNABoneageDataset(
             annotation_file=self.annotation_file_val, transform=self.transform,
             target_dimensions=self.target_dimensions, rescale_boneage=self.rescale_boneage,
-            rebalance_classes=self.rebalance_classes)
+            with_gender_input=self.with_gender_input)
 
         # Test Dataset
         self.dataset_test = RSNABoneageDataset(
             annotation_file=self.annotation_file_test, transform=self.transform,
-            target_dimensions=self.target_dimensions, rescale_boneage=self.rescale_boneage)
+            target_dimensions=self.target_dimensions, rescale_boneage=self.rescale_boneage,
+            with_gender_input=self.with_gender_input)
 
     def train_dataloader(self):
         return DataLoader(self.dataset_train, batch_size=self.batch_size,
@@ -138,6 +145,7 @@ class RSNABoneageDataModule(LightningDataModule):
 
 
 def get_image_transforms(target_dimensions=(200, 200)):
+    """Returns Transforms to resize Image to given dimensions and convert to Tensor."""
     return transforms.Compose([
         transforms.Resize(target_dimensions),
         transforms.ToTensor(),
