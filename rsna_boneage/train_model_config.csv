@@ -1,0 +1,13 @@
+model_id,name,img_input_width,img_input_height,with_gender_input
+1,inceptionv3,500,500,False
+2,inceptionv3,500,500,True
+3,resnet34,500,500,False
+4,resnet34,500,500,True
+5,resnet34,244,244,False
+6,resnet34,244,244,True
+7,resnet18,244,244,False
+8,resnet18,244,244,True
+9,resnet18,500,500,False
+10,resnet18,500,500,True
+11,resnet50,500,500,True
+12,resnet50,500,500,False
