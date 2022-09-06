@@ -17,10 +17,15 @@ parser.add_argument('--max-epochs', metavar='MAX_EPOCHS', type=int, default=100,
                     help='Maximum Epochs to train.')
 parser.add_argument('--early-stopping-patience', metavar='EARLY_STOPPING_PATIENCE', type=int,
                     default=10, required=False, help='Patience for EarlyStopping Callback.')
+parser.add_argument('--save-dir', metavar='SAVE_DIR', type=str, default='train_logs',
+                    required=False,
+                    help='Directory to save training logs (checkpoints, metrics) to.')
+parser.add_argument('--save-top-k-checkpoints', metavar='SAVE_TOP_K_CHECKPOINTS', type=int,
+                    default=5, required=False, help='Amount of k best checkpoints to save.')
 
 
-def train_all(model_train_config_filepath: str, max_epochs: int, early_stopping_patience: int):
-    save_dir = 'train_logs'
+def train_all(model_train_config_filepath: str, max_epochs: int, early_stopping_patience: int,
+              save_dir: str = 'train_logs', save_top_k_checkpoints: int = 5):
     version = datetime.now().strftime('%Y-%m-%d-%H-%M')
     train_configs = pd.read_csv(model_train_config_filepath, index_col='model_id')
     train_log = train_configs.copy(True)
@@ -61,8 +66,8 @@ def train_all(model_train_config_filepath: str, max_epochs: int, early_stopping_
             save_dir=save_dir, name=model_log_name, version=version)
 
         checkpoint_callback = ModelCheckpoint(
-            dirpath=checkpoint_dir, monitor='val_loss', save_top_k=-1,
-            filename='{epoch}-{val_loss:2f}')
+            dirpath=checkpoint_dir, monitor='val_loss', save_top_k=save_top_k_checkpoints,
+            save_last=True, filename='{epoch}-{val_loss:2f}')
         early_stopping_callback = EarlyStopping(
             monitor='val_loss', mode='min', patience=early_stopping_patience)
         callbacks = [checkpoint_callback, early_stopping_callback]
@@ -79,5 +84,8 @@ if __name__ == '__main__':
     model_train_config_filepath = args.model_train_config
     max_epochs = args.max_epochs
     early_stopping_patience = args.early_stopping_patience
+    save_dir = args.save_dir
+    save_top_k_checkpoints = args.save_top_k_checkpoints
 
-    train_all(model_train_config_filepath, max_epochs, early_stopping_patience)
+    train_all(model_train_config_filepath, max_epochs, early_stopping_patience,
+              save_dir=save_dir, save_top_k_checkpoints=save_top_k_checkpoints)
