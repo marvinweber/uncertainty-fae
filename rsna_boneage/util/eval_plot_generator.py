@@ -176,21 +176,24 @@ class EvalPlotGenerator():
         df_rolling = df.set_index('uncertainty').rolling(len(df), min_periods=1)
         df['abs_error_running_avg'] = df_rolling['abs_error'].mean().values
         df['abs_error_running_max'] = df_rolling['abs_error'].max().values
+        df['abs_error_running_95_percentile'] = df_rolling['abs_error'].quantile(0.95).values
         df['pos'] = np.arange(len(df))
         df['prediction_abstention_rate'] = 1 - (df['pos'] + 1) / len(df)
 
         uncertainties = df['uncertainty'].tolist()
         abs_error_avg = df['abs_error_running_avg'].tolist()
         abs_error_max = df['abs_error_running_max'].tolist()
+        abs_error_95_percentile = df['abs_error_running_95_percentile'].tolist()
         abstention_rate = df['prediction_abstention_rate'].tolist()
 
         self._init_figure()
         fig, ax = plt.subplots()
         p1 = ax.plot(uncertainties, abs_error_avg, label='Avg Abs Error')
         p2 = ax.plot(uncertainties, abs_error_max, label='Max Abs Error')
+        p3 = ax.plot(uncertainties, abs_error_95_percentile, label='95 Percentile Abs Error')
         ax2 = ax.twinx()
-        p3 = ax2.plot(uncertainties, abstention_rate, label='Abstention Rate', color='red')
-        lns = p1 + p2 + p3
+        p4 = ax2.plot(uncertainties, abstention_rate, label='Abstention Rate', color='red')
+        lns = p1 + p2 + p3 + p4
         labels = [l.get_label() for l in lns]
         plt.legend(lns, labels, loc='center right')
         ax.set_xlabel('Tolerated Uncertainty (Threshold)')
