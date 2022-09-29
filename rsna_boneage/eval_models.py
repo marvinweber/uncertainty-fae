@@ -39,48 +39,51 @@ def evaluate_all(train_log_filepath: str, mc_iterations: int):
     print('Will log summary to:', eval_log_file)
 
     for train_log_entry in train_log.itertuples():
-        print('\n######### NEXT MODEL ###############')
-        if not train_log_entry.log_name or not isinstance(train_log_entry.log_name, str):
-            print('Skip Model:', train_log_entry.log_name, '- No Log Dir found!')
-            continue
-        print('Model:', train_log_entry.log_name)
+        try:
+            print('\n######### NEXT MODEL ###############')
+            if not train_log_entry.log_name or not isinstance(train_log_entry.log_name, str):
+                print('Skip Model:', train_log_entry.log_name, '- No Log Dir found!')
+                continue
+            print('Model:', train_log_entry.log_name)
 
-        metrics_df = pd.read_csv(os.path.join(train_log_entry.log_dir, 'metrics.csv'))
-        metrics_df = metrics_df.dropna(subset=['val_loss'])
-        best_epoch = next(metrics_df.sort_values('val_loss', ascending=True).head(1).itertuples())
-        last_epoch = next(metrics_df.sort_values('epoch', ascending=False).head(1).itertuples())
-        best_epoch_checkpoint = os.path.join(
-            train_log_entry.checkpoint_dir,
-            _get_checkpoint_name(best_epoch.epoch, best_epoch.val_loss))
-        last_epoch_checkpoint = os.path.join(
-            train_log_entry.checkpoint_dir,
-            _get_checkpoint_name(last_epoch.epoch, last_epoch.val_loss))
+            metrics_df = pd.read_csv(os.path.join(train_log_entry.log_dir, 'metrics.csv'))
+            metrics_df = metrics_df.dropna(subset=['val_loss'])
+            best_epoch = next(metrics_df.sort_values('val_loss', ascending=True).head(1).itertuples())
+            last_epoch = next(metrics_df.sort_values('epoch', ascending=False).head(1).itertuples())
+            best_epoch_checkpoint = os.path.join(
+                train_log_entry.checkpoint_dir,
+                _get_checkpoint_name(best_epoch.epoch, best_epoch.val_loss))
+            last_epoch_checkpoint = os.path.join(
+                train_log_entry.checkpoint_dir,
+                _get_checkpoint_name(last_epoch.epoch, last_epoch.val_loss))
 
-        eval_base_dir = os.path.join(save_dir, train_log_entry.log_name, train_version)
-        best_epoch_dir = os.path.join(eval_base_dir, pathlib.Path(best_epoch_checkpoint).stem)
-        last_epoch_dir = os.path.join(eval_base_dir, pathlib.Path(last_epoch_checkpoint).stem)
+            eval_base_dir = os.path.join(save_dir, train_log_entry.log_name, train_version)
+            best_epoch_dir = os.path.join(eval_base_dir, pathlib.Path(best_epoch_checkpoint).stem)
+            last_epoch_dir = os.path.join(eval_base_dir, pathlib.Path(last_epoch_checkpoint).stem)
 
-        print(eval_base_dir, best_epoch_dir, last_epoch_dir)
-        print(train_log_entry)
+            for dir in [save_dir, best_epoch_dir, last_epoch_dir]:
+                os.makedirs(dir, exist_ok=True)
 
-        for dir in [save_dir, best_epoch_dir, last_epoch_dir]:
-            os.makedirs(dir, exist_ok=True)
-
-        best_epoch_pred_file = os.path.join(best_epoch_dir, f'predictions.csv')
-        _generate_model_predictions(
-            train_log_entry, best_epoch_pred_file, best_epoch_checkpoint, mc_iterations)
-        best_epoch_eval_dir = os.path.join(best_epoch_dir, f'eval_{eval_version}')
-        _eval_single_model(
-            best_epoch_pred_file, best_epoch_eval_dir, train_log_entry.log_name,
-            eval_log_df=eval_log, eval_log_df_index=train_log_entry.Index)
-
-        # Only evaluate last epoch, if it was not the best epoch
-        if best_epoch.epoch != last_epoch.epoch and False:
-            # TODO: fix issues with index (-> eval log file / df) / use second log file
-            last_epoch_pred_file = os.path.join(last_epoch_dir, 'predictions.csv')
+            best_epoch_pred_file = os.path.join(best_epoch_dir, f'predictions.csv')
             _generate_model_predictions(
-                train_log_entry, last_epoch_pred_file, last_epoch_checkpoint, mc_iterations)
-            _eval_single_model()
+                train_log_entry, best_epoch_pred_file, best_epoch_checkpoint, mc_iterations)
+            best_epoch_eval_dir = os.path.join(best_epoch_dir, f'eval_{eval_version}')
+            _eval_single_model(
+                best_epoch_pred_file, best_epoch_eval_dir, train_log_entry.log_name,
+                eval_log_df=eval_log, eval_log_df_index=train_log_entry.Index)
+
+            # Only evaluate last epoch, if it was not the best epoch
+            if best_epoch.epoch != last_epoch.epoch and False:
+                # TODO: fix issues with index (-> eval log file / df) / use second log file
+                last_epoch_pred_file = os.path.join(last_epoch_dir, 'predictions.csv')
+                _generate_model_predictions(
+                    train_log_entry, last_epoch_pred_file, last_epoch_checkpoint, mc_iterations)
+                _eval_single_model()
+        except Exception as e:
+            print('!!!!!!!!!!!!!! EXCEPTION !!!!!!!!!!!!!!')
+            print(e)
+        else:
+            print('Evaluation of model finished!')
 
         eval_log.to_csv(eval_log_file)
 
