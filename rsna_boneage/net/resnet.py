@@ -39,7 +39,8 @@ class RSNABoneageResNet(ResNet):
 
 class RSNABoneageResNetWithGender(nn.Module):
 
-    def __init__(self, resnet: RSNABoneageResNet, combination_layer_dropout=0.5) -> None:
+    def __init__(self, resnet: RSNABoneageResNet, combination_layer_dropout=0.5,
+                 output_neurons=1) -> None:
         super().__init__()
 
         self.resnet = resnet
@@ -47,7 +48,7 @@ class RSNABoneageResNetWithGender(nn.Module):
         self.fc_gender = nn.Linear(1, 32)
         self.fc_combi_1 = nn.Linear(32 + resnet.fc.out_features, 1000)
         self.dropout = nn.Dropout(p=combination_layer_dropout)
-        self.fc_combi_2 = nn.Linear(1000, 1)
+        self.fc_combi_2 = nn.Linear(1000, output_neurons)
 
     def forward(self, x: Tuple[Tensor, Tensor]):
         image, is_male = x

@@ -1,9 +1,10 @@
-import pandas
-from pandas import DataFrame
-import matplotlib.pyplot as plt
 import os
 from datetime import datetime
+
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas
+from pandas import DataFrame
 
 
 class EvalPlotGenerator():
@@ -31,19 +32,11 @@ class EvalPlotGenerator():
     
     def plot_abs_error_uncertainty_scatter(self):
         self._init_figure()
-        plt.scatter(self.log_df['abs_error'].tolist(), self.log_df['uncertainty'].tolist(), 0.3)
+        plt.scatter(self.log_df['abs_error'].tolist(), self.log_df['uncertainty'].tolist(), 1)
         plt.title('Absolute Error vs. Uncertainty (Standard Deviation)')
         plt.xlabel('Absolute Error')
         plt.ylabel(f'Uncertainty')
         self._save_and_show_plt('abs_error_uncertainty_scatter')
-
-    def plot_abs_error_uncertainty_17_83_scatter(self):
-        self._init_figure()
-        plt.scatter(self.log_df['abs_error'].tolist(), self.log_df['uncertainty_17_83'].tolist(), 0.3)
-        plt.title('Absolute Error vs. Uncertainty (17 / 83 Percentile Range)')
-        plt.xlabel('Absolute Error')
-        plt.ylabel(f'Uncertainty')
-        self._save_and_show_plt('abs_error_uncertainty_17_83_scatter')
 
     def plot_uncertainty_by_boneage(self, bins=15):
         bins_boneage = pandas.cut(self.log_df['boneage'], bins=bins)
@@ -166,10 +159,9 @@ class EvalPlotGenerator():
         plt.plot(boneage_truth, boneage_pred, 'r.', label = 'predictions')
         plt.plot(boneage_truth, boneage_truth, 'b-', label = 'actual')
         plt.legend()
-        plt.xlabel('Actual Boneage (Months)')
-        plt.ylabel('Predicted Boneage (Months)')
+        plt.xlabel('Boneage (Ground Truth)')
+        plt.ylabel('Predicted Boneage')
         self._save_and_show_plt('prediction_vs_truth')
-
 
     def plot_tolerated_uncertainty_abs_error(self):
         df = self.log_df.copy(True).sort_values('uncertainty')
@@ -201,6 +193,67 @@ class EvalPlotGenerator():
         ax2.set_ylabel('Percentage')
         self._save_and_show_plt('tolerated_uncertainty')
 
+    def plot_abstention_rate_vs_abs_error(self):
+        df = self.log_df.copy(True).sort_values('uncertainty')
+        df_rolling = df.set_index('uncertainty').rolling(len(df), min_periods=1)
+        df['abs_error_running_avg'] = df_rolling['abs_error'].mean().values
+        df['abs_error_running_max'] = df_rolling['abs_error'].max().values
+        df['abs_error_running_95_percentile'] = df_rolling['abs_error'].quantile(0.95).values
+        df_rolling = df.set_index('uncertainty').rolling(len(df), min_periods=1)
+        df['abs_error_running_95_percentile_max'] = df_rolling['abs_error_running_95_percentile'].max().values
+        df['pos'] = np.arange(len(df))
+        df['prediction_abstention_rate'] = 1 - (df['pos'] + 1) / len(df)
+
+        uncertainties = df['uncertainty'].tolist()
+        abs_error_avg = df['abs_error_running_avg'].tolist()
+        abs_error_max = df['abs_error_running_max'].tolist()
+        abs_error_95_percentile = df['abs_error_running_95_percentile'].tolist()
+        abs_error_95_percentile_max = df['abs_error_running_95_percentile_max'].tolist()
+        abstention_rate = df['prediction_abstention_rate'].tolist()
+
+        self._init_figure(title='Absolute Error by Abstention Rate')
+        plt.plot(abstention_rate, abs_error_max, label='Max Abs Error')
+        plt.plot(abstention_rate, abs_error_95_percentile_max, label='95% Percentile Abs Error')
+        plt.xlabel('Abstention Rate (%)')
+        plt.ylabel('Absolute Error')
+        plt.legend(loc='upper right')
+        # fig, ax = plt.subplots()
+        # p1 = ax.plot(uncertainties, abs_error_avg, label='Avg Abs Error')
+        # p2 = ax.plot(uncertainties, abs_error_max, label='Max Abs Error')
+        # p3 = ax.plot(uncertainties, abs_error_95_percentile, label='95 Percentile Abs Error')
+        # ax2 = ax.twinx()
+        # p4 = ax2.plot(uncertainties, abstention_rate, label='Abstention Rate', color='red')
+        # lns = p1 + p2 + p3 + p4
+        # labels = [l.get_label() for l in lns]
+        # plt.legend(lns, labels, loc='center right')
+        # ax.set_xlabel('Tolerated Uncertainty (Threshold)')
+        # ax.set_ylabel('Absolute Error')
+        # ax2.set_ylabel('Percentage')
+        self._save_and_show_plt('abstention_rate_vs_abs_error')
+
+    def plot_reliability_diagram(self):
+        data = self.log_df.sample(frac=0.001)
+        ci_share_means = []
+        ci_intervals = [i/100 for i in range(10, 110, 10)]
+        ci_share_lower_stds = []
+        ci_share_upper_stds = []
+        for ci_col in [f'ci_{i}' for i in range(10, 100, 10)]:
+            mean = data[ci_col].mean()
+            std = data[ci_col].std()
+            ci_share_means.append(mean)
+            ci_share_lower_stds.append(max(mean - 3 * std, 0))
+            ci_share_upper_stds.append(min(mean + 3 * std, 1))
+        
+        self._init_figure(title='Calibration (WIP)')
+        plt.fill_between(ci_intervals[:-1], [*ci_share_lower_stds], [*ci_share_upper_stds],
+                         color='red', alpha=0.2, label='Three Standard Deviations of Observed Fraction')
+        # Ideal Line
+        plt.plot([.0, *ci_intervals], [.0, *ci_intervals], linestyle="--", color='blue', label='Ideal Fraction')
+        plt.plot(ci_intervals, [*ci_share_means, 1], '^-r', label='Observed Fraction')
+        plt.xlabel('Expected Fraction')
+        plt.ylabel('Observed Fraction')
+        plt.legend()
+        self._save_and_show_plt('reliability_diagram_calibration')
 
     def _init_figure(self, figsize=(10, 7), dpi=250, title=None):
         plt.figure(figsize=figsize, dpi=dpi)

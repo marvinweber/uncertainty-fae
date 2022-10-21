@@ -1,0 +1,53 @@
+# default settings for datasets per data (rsna_boneage, fae, ...)
+defaults:
+    rsna_boneage:
+        datasets:
+            annotations:
+                train: /mnt/datassd/data_fae_uncertainty/train_annotations_preprocessed_500x500.csv
+                val: /mnt/datassd/data_fae_uncertainty/val_annotations_preprocessed_500x500.csv
+                test: /mnt/datassd/data_fae_uncertainty/test_annotations_preprocessed_500x500.csv
+            img_base_dirs:
+                train:
+                val:
+                test:
+
+# model configuration
+models:
+    rsna_inception_500_gender_mcd:
+        data: rsna_boneage
+        provider_config:
+            base_net: inceptionv3
+            uncertainty_method: mc_dropout
+            img_input_dimensions: [500, 500]
+            variance_net: False
+            with_gender_input: True
+            rescale_boneage: True
+            rebalance_classes: True
+        litmodel_config:
+            mc_iterations: 100
+        datasets:
+            annotations:
+                train:
+                val:
+                test:
+            img_base_dirs:
+                train:
+                val:
+                test:
+
+    rsna_inception_500_gender_variance_mcd100:
+        data: rsna_boneage
+        provider_config:
+            base_net: inceptionv3
+            uncertainty_method: mc_dropout
+            img_input_dimensions: [500, 500]
+            variance_net: True
+            with_gender_input: True
+            rescale_boneage: True
+            rebalance_classes: True
+        litmodel_config:
+            mc_iterations: 100
+        datasets:
+            train: /mnt/datassd/data_fae_uncertainty/train_annotations_preprocessed_500x500.csv
+            val: /mnt/datassd/data_fae_uncertainty/val_annotations_preprocessed_500x500.csv
+            test: /mnt/datassd/data_fae_uncertainty/test_annotations_preprocessed_500x500.csv
