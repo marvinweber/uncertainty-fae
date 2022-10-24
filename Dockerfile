@@ -8,7 +8,8 @@ RUN apt update && \
     rm -rf /var/lib/apt/lists/*
 
 ADD requirements.txt /install/requirements_fae_uncertainty.txt
-RUN pip install -r /install/requirements_fae_uncertainty.txt && \
+RUN pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113 && \
+    pip install -r /install/requirements_fae_uncertainty.txt && \
     rm -r /workspace/.cache || true
 
 RUN chmod go+rw /workspace

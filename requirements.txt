@@ -5,3 +5,5 @@ matplotlib
 numpy
 Pillow
 torchsummary
+dill
+laplace-torch
