@@ -121,7 +121,7 @@ def train_model(train_model_name: str, model_configurations: dict, config_defaul
             logger.info('Training succesfully finished!')
         else:
             logger.warning('Training was interrupted! Maybe resume is possible.')
-        logger.info(f'Logs are in: {log_dir}!')
+        logger.info(f'Logs are in: {log_dir}')
 
     except Exception:
         logger.critical('Training failed (see exception info below for reason)!', exc_info=True)
