@@ -6,7 +6,7 @@ from torch import nn
 from torchvision import transforms
 from torchvision.models import inception_v3, resnet18, resnet34, resnet50
 
-from rsna_boneage.litmodel.rsna import LitRSNABoneageMCDropout
+from rsna_boneage.litmodel.rsna import LitRSNABoneageLaplace, LitRSNABoneageMCDropout
 from rsna_boneage.litmodel.rsna_variance import (LitRSNABoneageVarianceNet,
                                                  LitRSNABoneageVarianceNetMCDropout)
 from util import ModelProvider
@@ -23,7 +23,7 @@ RSNA_LITMODEL_MAPPING: Dict[str, LightningModule] = {
     'base': LitRSNABoneage,
     'mc_dropout': LitRSNABoneageMCDropout,
     'deep_ensemble': None,
-    'laplace_approx': None,
+    'laplace_approx': LitRSNABoneageLaplace,
     'swag': None,
 }
 
