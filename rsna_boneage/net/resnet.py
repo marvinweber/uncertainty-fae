@@ -2,8 +2,9 @@ from typing import Any, Callable, List, Optional, Tuple, Type, Union
 
 import torch
 from torch import Tensor, nn
-from torchvision.models.resnet import (BasicBlock, Bottleneck, ResNet, load_state_dict_from_url,
-                                       model_urls)
+from torchvision.models.resnet import (BasicBlock, Bottleneck, ResNet, ResNet18_Weights,
+                                       ResNet34_Weights, ResNet50_Weights, WeightsEnum,
+                                       _ovewrite_named_param, handle_legacy_interface, model_urls)
 
 
 class RSNABoneageResNet(ResNet):
@@ -70,49 +71,99 @@ class RSNABoneageResNetWithGender(nn.Module):
 
 
 def _resnet(
-    arch: str,
     block: Type[Union[BasicBlock, Bottleneck]],
     layers: List[int],
-    pretrained: bool,
+    weights: Optional[WeightsEnum],
     progress: bool,
     **kwargs: Any,
 ) -> ResNet:
-    model = RSNABoneageResNet(block, layers, **kwargs)
-    if pretrained:
-        state_dict = load_state_dict_from_url(
-            model_urls[arch], progress=progress)
-        model.load_state_dict(state_dict)
+    if weights is not None:
+        _ovewrite_named_param(kwargs, "num_classes", len(weights.meta["categories"]))
+
+    model = ResNet(block, layers, **kwargs)
+
+    if weights is not None:
+        model.load_state_dict(weights.get_state_dict(progress=progress))
+
     return model
 
 
-def resnet18(pretrained: bool = False, progress: bool = True, **kwargs: Any) -> ResNet:
-    r"""ResNet-18 model from
-    `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_.
+@handle_legacy_interface(weights=("pretrained", ResNet18_Weights.IMAGENET1K_V1))
+def resnet18(*, weights: Optional[ResNet18_Weights] = None, progress: bool = True, **kwargs: Any) -> ResNet:
+    """ResNet-18 from `Deep Residual Learning for Image Recognition <https://arxiv.org/pdf/1512.03385.pdf>`__.
 
     Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-        progress (bool): If True, displays a progress bar of the download to stderr
+        weights (:class:`~torchvision.models.ResNet18_Weights`, optional): The
+            pretrained weights to use. See
+            :class:`~torchvision.models.ResNet18_Weights` below for
+            more details, and possible values. By default, no pre-trained
+            weights are used.
+        progress (bool, optional): If True, displays a progress bar of the
+            download to stderr. Default is True.
+        **kwargs: parameters passed to the ``torchvision.models.resnet.ResNet``
+            base class. Please refer to the `source code
+            <https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py>`_
+            for more details about this class.
+
+    .. autoclass:: torchvision.models.ResNet18_Weights
+        :members:
     """
-    return _resnet("resnet18", BasicBlock, [2, 2, 2, 2], pretrained, progress, **kwargs)
+    weights = ResNet18_Weights.verify(weights)
+
+    return _resnet(BasicBlock, [2, 2, 2, 2], weights, progress, **kwargs)
 
 
-def resnet34(pretrained: bool = False, progress: bool = True, **kwargs: Any) -> ResNet:
-    r"""ResNet-34 model from
-    `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_.
+@handle_legacy_interface(weights=("pretrained", ResNet34_Weights.IMAGENET1K_V1))
+def resnet34(*, weights: Optional[ResNet34_Weights] = None, progress: bool = True, **kwargs: Any) -> ResNet:
+    """ResNet-34 from `Deep Residual Learning for Image Recognition <https://arxiv.org/pdf/1512.03385.pdf>`__.
 
     Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-        progress (bool): If True, displays a progress bar of the download to stderr
+        weights (:class:`~torchvision.models.ResNet34_Weights`, optional): The
+            pretrained weights to use. See
+            :class:`~torchvision.models.ResNet34_Weights` below for
+            more details, and possible values. By default, no pre-trained
+            weights are used.
+        progress (bool, optional): If True, displays a progress bar of the
+            download to stderr. Default is True.
+        **kwargs: parameters passed to the ``torchvision.models.resnet.ResNet``
+            base class. Please refer to the `source code
+            <https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py>`_
+            for more details about this class.
+
+    .. autoclass:: torchvision.models.ResNet34_Weights
+        :members:
     """
-    return _resnet("resnet34", BasicBlock, [3, 4, 6, 3], pretrained, progress, **kwargs)
+    weights = ResNet34_Weights.verify(weights)
+
+    return _resnet(BasicBlock, [3, 4, 6, 3], weights, progress, **kwargs)
 
 
-def resnet50(pretrained: bool = False, progress: bool = True, **kwargs: Any) -> ResNet:
-    r"""ResNet-50 model from
-    `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_.
+@handle_legacy_interface(weights=("pretrained", ResNet50_Weights.IMAGENET1K_V1))
+def resnet50(*, weights: Optional[ResNet50_Weights] = None, progress: bool = True, **kwargs: Any) -> ResNet:
+    """ResNet-50 from `Deep Residual Learning for Image Recognition <https://arxiv.org/pdf/1512.03385.pdf>`__.
+
+    .. note::
+       The bottleneck of TorchVision places the stride for downsampling to the second 3x3
+       convolution while the original paper places it to the first 1x1 convolution.
+       This variant improves the accuracy and is known as `ResNet V1.5
+       <https://ngc.nvidia.com/catalog/model-scripts/nvidia:resnet_50_v1_5_for_pytorch>`_.
 
     Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-        progress (bool): If True, displays a progress bar of the download to stderr
+        weights (:class:`~torchvision.models.ResNet50_Weights`, optional): The
+            pretrained weights to use. See
+            :class:`~torchvision.models.ResNet50_Weights` below for
+            more details, and possible values. By default, no pre-trained
+            weights are used.
+        progress (bool, optional): If True, displays a progress bar of the
+            download to stderr. Default is True.
+        **kwargs: parameters passed to the ``torchvision.models.resnet.ResNet``
+            base class. Please refer to the `source code
+            <https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py>`_
+            for more details about this class.
+
+    .. autoclass:: torchvision.models.ResNet50_Weights
+        :members:
     """
-    return _resnet("resnet50", Bottleneck, [3, 4, 6, 3], pretrained, progress, **kwargs)
+    weights = ResNet50_Weights.verify(weights)
+
+    return _resnet(Bottleneck, [3, 4, 6, 3], weights, progress, **kwargs)
