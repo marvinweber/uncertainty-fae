@@ -42,6 +42,8 @@ def parse_args() -> argparse.Namespace:
                              'setting is only allowed if --version is set, too (because '
                              'subversions would most likely not be located in the same parent '
                              'directory).')
+    parser.add_argument('--debug', action='store_true', required=False, default=False,
+                        help='Flag to enable output of DEBUG logs.')
     return parser.parse_args()
 
 
@@ -139,8 +141,9 @@ def _get_annotation_file_and_img_dir(
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO, format='%(name)s - %(levelname)s: %(message)s')
     args = parse_args()
+    level = logging.DEBUG if args.debug else logging.INFO
+    logging.basicConfig(level=level, format='%(name)s - %(levelname)s: %(message)s')
 
     train_model_name = args.model_name
     configuration_path = args.configuration
