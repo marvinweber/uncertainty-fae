@@ -23,6 +23,9 @@ statsmodels==0.13.2
 torchio==0.18.84
 torchviz
 
+# SWAG
+gpytorch==0.1.0rc4
+
 # Uncertainty FAE
 ipykernel
 pytorch-lightning
