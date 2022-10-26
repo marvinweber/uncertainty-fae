@@ -13,6 +13,9 @@ from util.training import TrainConfig
 
 logger = logging.getLogger('UNCERTAINTY_FAE_TRAINING')
 
+TRAIN_CONFIG_FILENAME = 'config.yml'
+TRAIN_RESULT_FILENAME = 'train_result.yml'
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Training of RSNA Boneage Models')
@@ -84,13 +87,18 @@ def train_model(train_model_name: str, model_configurations: dict, config_defaul
         if not version_exists:
             os.makedirs(log_dir, exist_ok=False)
             logger.debug('Dumping train and model configuration...')
-            with open(os.path.join(log_dir, 'config.yml'), 'w') as file:
+            with open(os.path.join(log_dir, TRAIN_CONFIG_FILENAME), 'w') as file:
                 config = {
                     'train_config': train_config.__dict__,
                     'model_config': model_config,
                     'config_defaults': config_defaults,
                 }
                 yaml.dump(config, file)
+
+        # Log warning if training seems to be done already
+        if os.path.exists(os.path.join(log_dir, TRAIN_RESULT_FILENAME)):
+            logger.warning(f'Training started, even though {TRAIN_RESULT_FILENAME} already exists, '
+                           'indicating that the training probably already has been finished!')
 
         litmodel_kwargs = (model_config['litmodel_config']
                            if 'litmodel_config' in model_config
@@ -121,6 +129,10 @@ def train_model(train_model_name: str, model_configurations: dict, config_defaul
 
         if not train_result.interrupted:
             logger.info('Training succesfully finished!')
+
+            logger.debug('Dumping train result...')
+            with open(os.path.join(log_dir, TRAIN_RESULT_FILENAME), 'w') as file:
+                yaml.dump(train_result.__dict__, file)
         else:
             logger.warning('Training was interrupted! Maybe resume is possible.')
         logger.info(f'Logs are in: {log_dir}')
