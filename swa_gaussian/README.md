@@ -45,4 +45,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### Code Changes
 To see changes made to the original code, checkout the commit history
-for the `swa_gaussian` directory.
+for the `swa_gaussian` directory:
+
+```bash
+git diff a66369d..main -- swa_gaussian
+```
