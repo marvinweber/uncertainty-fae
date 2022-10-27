@@ -155,7 +155,7 @@ def _get_annotation_file_and_img_dir(
 if __name__ == '__main__':
     args = parse_args()
     level = logging.DEBUG if args.debug else logging.INFO
-    logging.basicConfig(level=level, format='%(name)s - %(levelname)s: %(message)s')
+    logging.basicConfig(level=level, format='%(name)s - %(asctime)s - %(levelname)s: %(message)s')
 
     train_model_name = args.model_name
     configuration_path = args.configuration
