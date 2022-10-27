@@ -64,7 +64,7 @@ class LitRSNABoneageMCDropout(UncertaintyAwareModel, LitRSNABoneage):
 
 class LitRSNABoneageLaplace(UncertaintyAwareModel, LitRSNABoneage):
 
-    base_model_class = LitRSNABoneage
+    BASE_MODEL_CLASS = LitRSNABoneage
     """Class type of the base model trained before Laplace approximation."""
 
     def __init__(self, *args, n_samples: int = 100, **kwargs):
@@ -72,14 +72,19 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, LitRSNABoneage):
         # use base_model plus la model later, but for consistency reasons super is still called
         super().__init__(*args, **kwargs)
         self.n_samples = n_samples
+
         self.base_model = LitRSNABoneage(*args, **kwargs)
         self.la_model = None
+
+        # Remove net, as we only need it in the base_model anyway (stores space when dumping
+        # (serializing) the model to disk).
+        self.net = None
 
     def forward(self, x: Any) -> Any:        
         if self.la_model and isinstance(self.la_model, BaseLaplace):
             # TODO: use la model for prediction and throw away uncertainty
             pass
-        elif self.base_model and isinstance(self.base_model, self.base_model_class):
+        elif self.base_model and isinstance(self.base_model, self.BASE_MODEL_CLASS):
             # TODO: use base model for "normal" prediction
             pass
         else:
@@ -108,12 +113,12 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, LitRSNABoneage):
         assert isinstance(model.la_model, BaseLaplace), \
             ('Loaded model has not yet been last-layer laplace approximated (no la_model found in '
              'the serialized file)!')
-        
+
         if base_model_checkpoint_pth is not None:
             if not os.path.isfile(base_model_checkpoint_pth):
                 raise ValueError(
                     f'Given base model checkpoint path is not valid: {base_model_checkpoint_pth}')
-            model.base_model = cls.base_model_class.load_from_checkpoint(
+            model.base_model = cls.BASE_MODEL_CLASS.load_from_checkpoint(
                 base_model_checkpoint_pth, **kwargs)
 
         return model
@@ -122,7 +127,7 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, LitRSNABoneage):
     def train_model(cls, log_dir: str, datamodule: LightningDataModule,
                     model: 'LitRSNABoneageLaplace', train_config: TrainConfig,
                     is_resume: bool = False) -> TrainResult:
-        assert isinstance(model.base_model, model.base_model_class)
+        assert isinstance(model.base_model, model.BASE_MODEL_CLASS)
         logger = logging.getLogger('LAPLACE-LITMODEL')
         logger.info('Starting Base-Model Training...')
 
