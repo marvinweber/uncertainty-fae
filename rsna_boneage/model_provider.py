@@ -1,7 +1,7 @@
 
 from typing import Dict, Tuple
 
-from pytorch_lightning import LightningDataModule, LightningModule
+from pytorch_lightning import LightningDataModule
 from torch import nn
 from torchvision import transforms
 from torchvision.models import inception_v3, resnet18, resnet34, resnet50
@@ -108,53 +108,6 @@ class RSNAModelProvider(ModelProvider):
     @classmethod
     def get_provider(cls, **kwargs) -> 'ModelProvider':
         return RSNAModelProvider(**kwargs)
-
-
-# def get_model_and_datamodule(
-#             name: str, img_input_dimension: tuple, with_gender_input: bool, rescale_boneage=True,
-#             rebalance_classes=True, with_pretrained_weights_if_avail=True, batch_size=8,
-#             variance_network=False, checkpoint_path: str = None, litmodel_kwargs: dict = dict()
-#         ) -> Tuple[RSNABoneageLitModel, RSNABoneageDataModule]:
-#     # TODO: Annotation File Path configurable!
-#     net = None
-#     output_neurons = 2 if variance_network else 1
-#     transform = transforms.Compose([
-#         transforms.RandomHorizontalFlip(),
-#         transforms.RandomRotation(30),
-#         transforms.ColorJitter(brightness=0.5)
-#     ])
-#     datamodule = RSNABoneageDataModule(
-#         annotation_file_train='/mnt/datassd/data_fae_uncertainty/train_annotations_preprocessed_500x500.csv',
-#         annotation_file_val='/mnt/datassd/data_fae_uncertainty/val_annotations_preprocessed_500x500.csv',
-#         annotation_file_test='/mnt/datassd/data_fae_uncertainty/test_annotations_preprocessed_500x500.csv',
-#         batch_size=batch_size,
-#         transform=transform,
-#         target_dimensions=img_input_dimension,
-#         rescale_boneage=rescale_boneage,
-#         rebalance_classes=rebalance_classes,
-#         with_gender_input=with_gender_input)
-
-#     # INCEPTION
-#     if name == 'inceptionv3':
-#         net = _get_inception(with_gender_input, with_pretrained_weights_if_avail, output_neurons)
-
-#     # RESNETS
-#     elif name in ['resnet18', 'resnet34', 'resnet50']:
-#         net = _get_resnet(name, with_gender_input, with_pretrained_weights_if_avail, output_neurons)
-
-#     else:
-#         raise ValueError(f'Invalid Network / Model Name! ({name})')
-
-#     litmodel_class: LightningModule = (RSNABoneageVarianceLitModel 
-#                                        if variance_network
-#                                        else RSNABoneageLitModel)
-#     # Either create "empty" LitModel or load from given Checkpoint file
-#     if checkpoint_path is not None:
-#         litmodel = litmodel_class.load_from_checkpoint(checkpoint_path, net=net, **litmodel_kwargs)
-#     else:
-#         litmodel = litmodel_class(net=net, **litmodel_kwargs)
-
-#     return litmodel, datamodule
 
 
 def _get_inception(with_gender_input: bool, with_pretrained_weights_if_avail=True,
