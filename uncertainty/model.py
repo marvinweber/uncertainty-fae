@@ -71,4 +71,5 @@ class TrainMixin:
             logger.info('STARTING TRAINING....')
             trainer.fit(model, datamodule=datamodule)
 
-        return TrainResult(interrupted=trainer.interrupted)
+        return TrainResult(
+            interrupted=trainer.interrupted, best_model_path=checkpoint_callback.best_model_path)

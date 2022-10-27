@@ -64,7 +64,10 @@ class LitRSNABoneageMCDropout(UncertaintyAwareModel, LitRSNABoneage):
 
 class LitRSNABoneageLaplace(UncertaintyAwareModel, LitRSNABoneage):
 
-    def __init__(self, *args, n_samples: int = 30, **kwargs):
+    base_model_class = LitRSNABoneage
+    """Class type of the base model trained before Laplace approximation."""
+
+    def __init__(self, *args, n_samples: int = 100, **kwargs):
         # this will initialize net and so on on this class well -> we don't need this as we only
         # use base_model plus la model later, but for consistency reasons super is still called
         super().__init__(*args, **kwargs)
@@ -102,33 +105,57 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, LitRSNABoneage):
     def train_model(cls, log_dir: str, datamodule: LightningDataModule,
                     model: 'LitRSNABoneageLaplace', train_config: TrainConfig,
                     is_resume: bool = False) -> TrainResult:
+        assert isinstance(model.base_model, model.base_model_class)
+        logger = logging.getLogger('LAPLACE-LITMODEL')
+        logger.info('Starting Base-Model Training...')
+
         # train the base model
-        train_result = super().train_model(
+        train_result_base_model = model.base_model.__class__.train_model(
             log_dir, datamodule, model.base_model, train_config, is_resume)
 
-        # TODO: load state dict of best epoch (not last) into base model
-
-        if train_result.interrupted:
+        if train_result_base_model.interrupted:
             # we got interrupted and should not continue with laplace
-            return train_result
+            logger.info('Base model training was interrupted, returning without LA approximation.')
+            return train_result_base_model
 
-        logger = logging.getLogger('LAPLACE-LITMODEL')
+        logger.debug('Loading best model state into base model...')
+        if (not train_result_base_model.best_model_path
+                or not os.path.isfile(train_result_base_model.best_model_path)):
+            logger.error(
+                'Base model training did not return valid best_model_path (%s)! Continue '
+                'without loading best model weights!', train_result_base_model.best_model_path)
+        else:
+            checkpoint = torch.load(train_result_base_model.best_model_path)
+            assert 'state_dict' in checkpoint, \
+                'No "model_state_dict" in the base model checkpoint!'
+            model.base_model.load_state_dict(checkpoint['state_dict'])
+
         logger.info('Laplace Training: Base model training finished. Starting LA Fit...')
 
         # Laplace fit is performed on the device the model is located on -> use GPU if available
         if torch.cuda.is_available():
             model.base_model.cuda()
+        else:
+            logger.warning('Cuda not available; LA fit on CPU may take very long!')
 
         la: KronLLLaplace = Laplace(model.base_model, 'regression', 'last_layer', 'kron')
         la.fit(datamodule.train_dataloader())
         model.la_model = la
 
-        logger.debug('LA fit done; dumping model to file...')
+        logger.info('LA fit done; dumping model to file...')
         # base model can be restored from checkpoint file -> don't serialize it twice
         del model.base_model
         model.base_model = None
         laplace_model_fpath = os.path.join(log_dir, 'laplace_model.gz')
         with gzip.open(laplace_model_fpath, 'wb') as file:
             dill.dump(model, file)
+        logger.debug('LA file dumping done!')
+
+        additional_info = {
+            'base_model_best_model_path': train_result_base_model.best_model_path
+        }
+        return TrainResult(interrupted=False, best_model_path=laplace_model_fpath,
+                           additional_info=additional_info)
+
 
         return TrainResult(interrupted=False)

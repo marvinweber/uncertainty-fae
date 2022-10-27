@@ -19,5 +19,8 @@ class TrainConfig():
 
 class TrainResult():
 
-    def __init__(self, interrupted: bool) -> None:
+    def __init__(self, interrupted: bool, best_model_path: str = None,
+                 additional_info: dict = None) -> None:
         self.interrupted = interrupted
+        self.best_model_path = best_model_path
+        self.additional_info = additional_info
