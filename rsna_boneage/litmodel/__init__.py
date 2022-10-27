@@ -8,10 +8,10 @@ from torch import nn, squeeze
 from torchvision.models.inception import InceptionOutputs
 
 from rsna_boneage.data import RSNA_BONEAGE_DATASET_MAX_AGE, RSNA_BONEAGE_DATASET_MIN_AGE
-from uncertainty.model import TrainMixin
+from uncertainty.model import TrainLoadMixin
 
 
-class LitRSNABoneage(TrainMixin, LightningModule):
+class LitRSNABoneage(TrainLoadMixin, LightningModule):
 
     def __init__(self, net: nn.Module, lr: float = 3e-4, weight_decay: float = 0,
                  undo_boneage_rescaling=False, **kwargs) -> None:
@@ -77,6 +77,10 @@ class LitRSNABoneage(TrainMixin, LightningModule):
 
         loss = self.mse(logits, y)
         self.log('test_loss', loss)
+
+    @classmethod
+    def load_model_from_disk(cls, **kwargs):
+        return cls.load_from_checkpoint(**kwargs)
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)

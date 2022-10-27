@@ -9,6 +9,7 @@ from torchvision.models import inception_v3, resnet18, resnet34, resnet50
 from rsna_boneage.litmodel.rsna import LitRSNABoneageLaplace, LitRSNABoneageMCDropout
 from rsna_boneage.litmodel.rsna_variance import (LitRSNABoneageVarianceNet,
                                                  LitRSNABoneageVarianceNetMCDropout)
+from uncertainty.model import TrainLoadMixin
 from util import ModelProvider
 
 from .data import RSNABoneageDataModule
@@ -19,7 +20,7 @@ from .net.resnet import resnet18 as boneage_resnet18
 from .net.resnet import resnet34 as boneage_resnet34
 from .net.resnet import resnet50 as boneage_resnet50
 
-RSNA_LITMODEL_MAPPING: Dict[str, LightningModule] = {
+RSNA_LITMODEL_MAPPING: Dict[str, TrainLoadMixin] = {
     'base': LitRSNABoneage,
     'mc_dropout': LitRSNABoneageMCDropout,
     'deep_ensemble': None,
@@ -27,7 +28,7 @@ RSNA_LITMODEL_MAPPING: Dict[str, LightningModule] = {
     'swag': None,
 }
 
-RSNA_VARIANCE_LITMODEL_MAPPING: Dict[str, LightningModule] = {
+RSNA_VARIANCE_LITMODEL_MAPPING: Dict[str, TrainLoadMixin] = {
     'base': LitRSNABoneageVarianceNet,
     'mc_dropout': LitRSNABoneageVarianceNetMCDropout,
     'deep_ensemble': None,
@@ -72,7 +73,7 @@ class RSNAModelProvider(ModelProvider):
 
         # Create Litmodel
         if checkpoint is not None:
-            litmodel = litmodel_cls.load_from_checkpoint(checkpoint, net=net, **litmodel_kwargs)
+            litmodel = litmodel_cls.load_model_from_disk(checkpoint, net=net, **litmodel_kwargs)
         else:
             litmodel = litmodel_cls(net=net, **litmodel_kwargs)
 

@@ -13,7 +13,7 @@ from torch import vstack
 from rsna_boneage.litmodel import LitRSNABoneage
 from rsna_boneage.net.inception import RSNABoneageInceptionNetWithGender
 from rsna_boneage.net.resnet import RSNABoneageResNetWithGender
-from uncertainty.model import UncertaintyAwareModel
+from uncertainty.model import TrainLoadMixin, UncertaintyAwareModel
 from util.training import TrainConfig, TrainResult
 
 
@@ -62,23 +62,17 @@ class LitRSNABoneageMCDropout(UncertaintyAwareModel, LitRSNABoneage):
         return torch.Tensor([metrics['mean'], metrics['uncertainty']]), metrics
 
 
-class LitRSNABoneageLaplace(UncertaintyAwareModel, LitRSNABoneage):
+class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
 
     BASE_MODEL_CLASS = LitRSNABoneage
     """Class type of the base model trained before Laplace approximation."""
 
     def __init__(self, *args, n_samples: int = 100, **kwargs):
-        # this will initialize net and so on on this class well -> we don't need this as we only
-        # use base_model plus la model later, but for consistency reasons super is still called
-        super().__init__(*args, **kwargs)
+        super().__init__()
+
         self.n_samples = n_samples
-
-        self.base_model = LitRSNABoneage(*args, **kwargs)
+        self.base_model = self.BASE_MODEL_CLASS(*args, **kwargs)
         self.la_model = None
-
-        # Remove net, as we only need it in the base_model anyway (stores space when dumping
-        # (serializing) the model to disk).
-        self.net = None
 
     def forward(self, x: Any) -> Any:        
         if self.la_model and isinstance(self.la_model, BaseLaplace):
@@ -104,7 +98,7 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, LitRSNABoneage):
         raise NotImplementedError('Not yet implemented')
 
     @classmethod
-    def load_from_checkpoint(cls, checkpoint_path: str, base_model_checkpoint_pth: str = None,
+    def load_model_from_disk(cls, checkpoint_path: str, base_model_checkpoint_pth: str = None,
                              **kwargs) -> 'LitRSNABoneageLaplace':
         with gzip.open(checkpoint_path, 'rb') as file:
             model = dill.load(file)

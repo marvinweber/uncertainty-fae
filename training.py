@@ -7,7 +7,7 @@ from typing import Dict, Tuple
 import yaml
 
 from rsna_boneage.model_provider import RSNAModelProvider
-from uncertainty.model import TrainMixin
+from uncertainty.model import TrainLoadMixin
 from util import ModelProvider
 from util.training import TrainConfig
 
@@ -120,8 +120,8 @@ def train_model(train_model_name: str, model_configurations: dict, config_defaul
             batch_size=train_config.batch_size,
         )
 
-        if not isinstance(model, TrainMixin):
-            raise ValueError('Model must implement `TrainMixin`!')
+        if not isinstance(model, TrainLoadMixin):
+            raise ValueError('Model must implement `TrainLoadMixin`!')
 
         model_cls = model.__class__
         train_result = model_cls.train_model(

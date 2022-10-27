@@ -29,10 +29,14 @@ class UncertaintyAwareModel:
         raise NotImplementedError()
 
 
-class TrainMixin:
+class TrainLoadMixin:
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+
+    @classmethod
+    def load_model_from_disk(cls, **kwargs):
+        raise NotImplementedError('Method not implemented!')
 
     @classmethod
     def train_model(cls, log_dir: str, datamodule: LightningDataModule, model: LightningModule,
