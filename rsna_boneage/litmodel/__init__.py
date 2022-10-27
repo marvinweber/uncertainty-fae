@@ -3,7 +3,7 @@ from typing import Any
 import torch
 import torch.nn.functional
 import torch.optim
-from pytorch_lightning.core.lightning import LightningModule
+from pytorch_lightning.core.module import LightningModule
 from torch import nn, squeeze
 from torchvision.models.inception import InceptionOutputs
 
