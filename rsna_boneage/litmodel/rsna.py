@@ -74,17 +74,14 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
         self.base_model = self.BASE_MODEL_CLASS(*args, **kwargs)
         self.la_model = None
 
-    def forward(self, x: Any) -> Any:        
+    def forward_without_uncertainty(self, x):
         if self.la_model and isinstance(self.la_model, BaseLaplace):
             # TODO: use la model for prediction and throw away uncertainty
-            pass
+            raise NotImplementedError('Not yet ready!')
         elif self.base_model and isinstance(self.base_model, self.BASE_MODEL_CLASS):
-            # TODO: use base model for "normal" prediction
-            pass
+            return self.base_model(x)
         else:
             raise ValueError('Neither base_model, nor la_model are available. No Forward possible!')
-
-        raise NotImplementedError('Not yet ready!')
 
     def forward_with_uncertainty(self, input) -> Tuple[torch.Tensor, Any]:
         assert isinstance(self.la_model, BaseLaplace), \

@@ -25,6 +25,10 @@ class UncertaintyAwareModel:
     def forward_with_uncertainty(self, input) -> Tuple[torch.Tensor, Any]:
         raise NotImplementedError()
 
+    def forward_without_uncertainty(self, input) -> torch.Tensor:
+        # TODO: default implementation: use forward_with_uncertainty and throw away uncertainty
+        raise NotImplementedError()
+
     def evaluate_dataset(self, dataloader: DataLoader):
         raise NotImplementedError()
 
