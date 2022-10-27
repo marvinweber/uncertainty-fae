@@ -75,13 +75,28 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, LitRSNABoneage):
         self.base_model = LitRSNABoneage(*args, **kwargs)
         self.la_model = None
 
+    def forward(self, x: Any) -> Any:        
+        if self.la_model and isinstance(self.la_model, BaseLaplace):
+            # TODO: use la model for prediction and throw away uncertainty
+            pass
+        elif self.base_model and isinstance(self.base_model, self.base_model_class):
+            # TODO: use base model for "normal" prediction
+            pass
+        else:
+            raise ValueError('Neither base_model, nor la_model are available. No Forward possible!')
+
+        raise NotImplementedError('Not yet ready!')
+
     def forward_with_uncertainty(self, input) -> Tuple[torch.Tensor, Any]:
         assert isinstance(self.la_model, BaseLaplace), \
-            'Loaded model has not yet been last-layer laplace approximated!'
+            'Loaded model has not yet been last-layer laplace approximated (no la_model available)!'
 
-        # TODO: verify correctness
-        predictions = self.la_model(input)
+        predictions = self.la_model(input, pred_type='nn', link_approx='mc',
+                                    n_samples=self.n_samples)
         return predictions
+
+    def evaluate_dataset(self, dataloader):
+        raise NotImplementedError('Not yet implemented')
 
     @classmethod
     def load_from_checkpoint(cls, checkpoint_path: str, base_model_checkpoint_pth: str = None,
@@ -91,13 +106,15 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, LitRSNABoneage):
 
         assert isinstance(model, LitRSNABoneageLaplace), 'Loaded model is not of correct instance!'
         assert isinstance(model.la_model, BaseLaplace), \
-            'Loaded model has yet been last-layer laplace approximated!'
+            ('Loaded model has not yet been last-layer laplace approximated (no la_model found in '
+             'the serialized file)!')
         
         if base_model_checkpoint_pth is not None:
             if not os.path.isfile(base_model_checkpoint_pth):
                 raise ValueError(
                     f'Given base model checkpoint path is not valid: {base_model_checkpoint_pth}')
-            # TODO: load base model as well
+            model.base_model = cls.base_model_class.load_from_checkpoint(
+                base_model_checkpoint_pth, **kwargs)
 
         return model
 
