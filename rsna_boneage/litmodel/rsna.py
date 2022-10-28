@@ -82,6 +82,7 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
         elif self.base_model and isinstance(self.base_model, self.BASE_MODEL_CLASS):
             if torch.cuda.is_available():
                 self.base_model.cuda()
+            self.base_model.eval()
             return self.base_model(x.to(self.base_model.device))
         else:
             raise ValueError('Neither base_model, nor la_model are available. No Forward possible!')
@@ -91,6 +92,7 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
         assert isinstance(self.la_model, BaseLaplace), \
             'Loaded model has not yet been last-layer laplace approximated (no la_model available)!'
 
+        self.la_model.model.eval()
         predictions = self.la_model(input, pred_type='nn', link_approx='mc',
                                     n_samples=self.n_samples)
         return predictions
@@ -166,6 +168,10 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
         model.la_model = la
 
         logger.info('LA fit done; dumping model to file...')
+
+        # store model in eval mode
+        model.la_model.model.eval()
+
         # base model can be restored from checkpoint file -> don't serialize it twice
         del model.base_model
         model.base_model = None
