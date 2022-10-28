@@ -3,7 +3,7 @@ import os
 from typing import Any, Tuple
 
 import torch
-from pytorch_lightning import LightningDataModule, LightningModule, Trainer
+from pytorch_lightning import Callback, LightningDataModule, Trainer
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from torch.utils.data import DataLoader
@@ -43,8 +43,22 @@ class TrainLoadMixin:
         raise NotImplementedError('Method not implemented!')
 
     @classmethod
-    def train_model(cls, log_dir: str, datamodule: LightningDataModule, model: LightningModule,
-                    train_config: TrainConfig, is_resume: bool = False) -> TrainResult:
+    def train_model(cls, log_dir: str, datamodule: LightningDataModule, model: 'TrainLoadMixin',
+                    train_config: TrainConfig, is_resume: bool = False,
+                    callbacks: list[Callback] = list()) -> TrainResult:
+        """Classmethod to train a model (of cls type, i.e. to train an instance of "itself").
+
+        Args:
+            log_dir: The base log_dir where metrics and checkpoints may be saved.
+            datamodule: Lightning DataModule containing train, val, (and test) datasets.
+            model: The actual instance of `cls` that should be trained.
+            train_config: Training configuration.
+            is_resume: Whether this training is a resume of a previously started run.
+            callbacks: List of additional callbacks to use with a Lightning Trainer.
+
+        Returns:
+            The result of the training as `TrainResult`.
+        """
         checkpoint_dir = os.path.join(log_dir, 'checkpoints')
         os.makedirs(checkpoint_dir, exist_ok=True)
 
@@ -80,4 +94,5 @@ class TrainLoadMixin:
             trainer.fit(model, datamodule=datamodule)
 
         return TrainResult(
-            interrupted=trainer.interrupted, best_model_path=checkpoint_callback.best_model_path)
+            interrupted=trainer.interrupted, best_model_path=checkpoint_callback.best_model_path,
+            trainer=trainer)

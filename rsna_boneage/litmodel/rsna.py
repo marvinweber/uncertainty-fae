@@ -7,7 +7,7 @@ import dill
 import torch
 from laplace import BaseLaplace, KronLLLaplace, Laplace
 from laplace.utils import FeatureExtractor
-from pytorch_lightning import LightningDataModule
+from pytorch_lightning import Callback, LightningDataModule
 from torch import vstack
 
 from rsna_boneage.litmodel import LitRSNABoneage
@@ -129,14 +129,15 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
     @classmethod
     def train_model(cls, log_dir: str, datamodule: LightningDataModule,
                     model: 'LitRSNABoneageLaplace', train_config: TrainConfig,
-                    is_resume: bool = False) -> TrainResult:
+                    is_resume: bool = False, callbacks: list[Callback] = list()) -> TrainResult:
         assert isinstance(model.base_model, model.BASE_MODEL_CLASS)
         logger = logging.getLogger('LAPLACE-LITMODEL')
         logger.info('Starting Base-Model Training...')
 
         # train the base model
         train_result_base_model = model.base_model.__class__.train_model(
-            log_dir, datamodule, model.base_model, train_config, is_resume)
+            log_dir=log_dir, datamodule=datamodule, model=model.base_model,
+            train_config=train_config, is_resume=is_resume, callbacks=callbacks)
 
         if train_result_base_model.interrupted:
             # we got interrupted and should not continue with laplace

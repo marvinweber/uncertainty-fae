@@ -1,3 +1,7 @@
+from typing import Optional
+from pytorch_lightning import Trainer
+
+
 class TrainConfig():
 
     def __init__(self, max_epochs: int, early_stopping_patience: int, save_dir: str,
@@ -20,7 +24,8 @@ class TrainConfig():
 class TrainResult():
 
     def __init__(self, interrupted: bool, best_model_path: str = None,
-                 additional_info: dict = None) -> None:
+                 additional_info: dict = None, trainer: Optional[Trainer] = None) -> None:
         self.interrupted = interrupted
         self.best_model_path = best_model_path
         self.additional_info = additional_info
+        self.trainer = trainer
