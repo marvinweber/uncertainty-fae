@@ -13,7 +13,7 @@ class ModelProvider(ABC):
         ...
 
     @abstractmethod
-    def get_model(self, checkpoint, litmodel_kwargs) -> nn.Module:
+    def get_model(self, checkpoint, litmodel_kwargs, checkpoint_kwargs) -> nn.Module:
         ...
 
     @abstractmethod

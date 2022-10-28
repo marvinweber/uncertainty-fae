@@ -53,7 +53,8 @@ class RSNAModelProvider(ModelProvider):
         self.rebalance_classes = rebalance_classes
         self.with_pretrained_weights = with_pretrained_weights
 
-    def get_model(self, checkpoint=None, litmodel_kwargs=dict()) -> nn.Module:
+    def get_model(self, checkpoint=None, litmodel_kwargs=dict(),
+                  checkpoint_kwargs=dict()) -> nn.Module:
         # Create Network
         output_neurons = 2 if self.variance_net else 1
         if self.base_net == 'inceptionv3':
@@ -73,7 +74,8 @@ class RSNAModelProvider(ModelProvider):
 
         # Create Litmodel
         if checkpoint is not None:
-            litmodel = litmodel_cls.load_model_from_disk(checkpoint, net=net, **litmodel_kwargs)
+            litmodel = litmodel_cls.load_model_from_disk(checkpoint, net=net, **litmodel_kwargs,
+                                                         **checkpoint_kwargs)
         else:
             litmodel = litmodel_cls(net=net, **litmodel_kwargs)
 
