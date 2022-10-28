@@ -1,4 +1,3 @@
-
 import gzip
 import logging
 import os
@@ -7,6 +6,7 @@ from typing import Any, Tuple
 import dill
 import torch
 from laplace import BaseLaplace, KronLLLaplace, Laplace
+from laplace.utils import FeatureExtractor
 from pytorch_lightning import LightningDataModule
 from torch import vstack
 
@@ -72,17 +72,21 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
 
         self.n_samples = n_samples
         self.base_model = self.BASE_MODEL_CLASS(*args, **kwargs)
-        self.la_model = None
+        self.la_model: BaseLaplace = None
 
-    def forward_without_uncertainty(self, x):
+    @torch.no_grad()
+    def forward_without_uncertainty(self, x: torch.Tensor):
         if self.la_model and isinstance(self.la_model, BaseLaplace):
             # TODO: use la model for prediction and throw away uncertainty
             raise NotImplementedError('Not yet ready!')
         elif self.base_model and isinstance(self.base_model, self.BASE_MODEL_CLASS):
-            return self.base_model(x)
+            if torch.cuda.is_available():
+                self.base_model.cuda()
+            return self.base_model(x.to(self.base_model.device))
         else:
             raise ValueError('Neither base_model, nor la_model are available. No Forward possible!')
 
+    @torch.no_grad()
     def forward_with_uncertainty(self, input) -> Tuple[torch.Tensor, Any]:
         assert isinstance(self.la_model, BaseLaplace), \
             'Loaded model has not yet been last-layer laplace approximated (no la_model available)!'
@@ -92,7 +96,7 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
         return predictions
 
     def evaluate_dataset(self, dataloader):
-        raise NotImplementedError('Not yet implemented')
+        raise NotImplementedError('Not yet implemented')  # TODO: implement
 
     @classmethod
     def load_model_from_disk(cls, checkpoint_path: str, base_model_checkpoint_pth: str = None,
@@ -111,6 +115,12 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
                     f'Given base model checkpoint path is not valid: {base_model_checkpoint_pth}')
             model.base_model = cls.BASE_MODEL_CLASS.load_from_checkpoint(
                 base_model_checkpoint_pth, **kwargs)
+
+        if torch.cuda.is_available():
+            model.la_model.model.cuda()
+            if isinstance(model.la_model.model, FeatureExtractor):
+                model.la_model.model.cuda()
+                model.la_model._device = model.la_model.model.model.device
 
         return model
 
