@@ -131,6 +131,7 @@ def train_model(train_model_name: str, model_configurations: dict, config_defaul
             logger.info('Training succesfully finished!')
 
             logger.debug('Dumping train result...')
+            train_result.trainer = None  # we don't need this
             with open(os.path.join(log_dir, TRAIN_RESULT_FILENAME), 'w') as file:
                 yaml.dump(train_result.__dict__, file)
         else:
