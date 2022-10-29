@@ -14,16 +14,19 @@ from uncertainty.model import TrainLoadMixin
 class LitRSNABoneage(TrainLoadMixin, LightningModule):
 
     def __init__(self, net: nn.Module, lr: float = 3e-4, weight_decay: float = 0,
-                 undo_boneage_rescaling=False, **kwargs) -> None:
+                 momentum: float = 0, optim_type: str = 'adam', undo_boneage_rescaling=False):
         super().__init__()
 
         self.net = net
+
+        self.optim_type = optim_type
         self.lr = lr
+        self.momentum = momentum
+        self.weight_decay = weight_decay
 
         self.mae = nn.L1Loss()
         self.mse = nn.MSELoss()
 
-        self.weight_decay = weight_decay
         self.undo_boneage_rescaling = undo_boneage_rescaling
 
         self.save_hyperparameters(ignore=['net'])
@@ -83,7 +86,13 @@ class LitRSNABoneage(TrainLoadMixin, LightningModule):
         return cls.load_from_checkpoint(**kwargs)
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        if self.optim_type == 'adam':
+            return torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        elif self.optim_type == 'sgd':
+            return torch.optim.SGD(self.parameters(), lr=self.lr, weight_decay=self.weight_decay,
+                                   momentum=self.momentum)
+        else:
+            raise ValueError(f'Unkown optimizer type: {self.optim_type}')
 
     def _undo_rescale_boneage(self, boneage_rescaled):
         lower_bound = RSNA_BONEAGE_DATASET_MIN_AGE
