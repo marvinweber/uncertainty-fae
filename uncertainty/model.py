@@ -5,7 +5,8 @@ from typing import Any, Optional, Tuple
 import torch
 from pytorch_lightning import Callback, LightningDataModule, Trainer
 from pytorch_lightning import loggers as pl_loggers
-from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor, ModelCheckpoint
+from pytorch_lightning.callbacks import (EarlyStopping, LearningRateMonitor, ModelCheckpoint,
+                                         TQDMProgressBar)
 from torch.utils.data import DataLoader
 
 from util.training import TrainConfig, TrainResult
@@ -70,6 +71,7 @@ class TrainLoadMixin:
             save_dir=log_dir, name='metrics', version=train_config.start_time)
         loggers = [tb_logger, csv_logger]
 
+        progress_bar = TQDMProgressBar(refresh_rate=25)
         checkpoint_callback = ModelCheckpoint(
             dirpath=checkpoint_dir, monitor='val_loss', save_last=True,
             save_top_k=train_config.save_top_k_checkpoints, filename='{epoch}-{val_loss:2f}')
@@ -77,7 +79,7 @@ class TrainLoadMixin:
             monitor='val_loss', mode='min', patience=train_config.early_stopping_patience)
         lr_monitor_callback = LearningRateMonitor(logging_interval='epoch')
         train_callbacks = [checkpoint_callback, early_stopping_callback, lr_monitor_callback,
-                           *(callbacks if callbacks and len(callbacks) > 0 else [])]
+                           progress_bar, *(callbacks if callbacks and len(callbacks) > 0 else [])]
 
         trainer = Trainer(accelerator='gpu', max_epochs=train_config.max_epochs,
                           log_every_n_steps=50, logger=loggers, callbacks=train_callbacks)
