@@ -1,11 +1,11 @@
 import logging
 import os
-from typing import Any, Tuple
+from typing import Any, Optional, Tuple
 
 import torch
 from pytorch_lightning import Callback, LightningDataModule, Trainer
 from pytorch_lightning import loggers as pl_loggers
-from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
+from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor, ModelCheckpoint
 from torch.utils.data import DataLoader
 
 from util.training import TrainConfig, TrainResult
@@ -45,7 +45,7 @@ class TrainLoadMixin:
     @classmethod
     def train_model(cls, log_dir: str, datamodule: LightningDataModule, model: 'TrainLoadMixin',
                     train_config: TrainConfig, is_resume: bool = False,
-                    callbacks: list[Callback] = list()) -> TrainResult:
+                    callbacks: Optional[list[Callback]] = None) -> TrainResult:
         """Classmethod to train a model (of cls type, i.e. to train an instance of "itself").
 
         Args:
@@ -75,10 +75,12 @@ class TrainLoadMixin:
             save_top_k=train_config.save_top_k_checkpoints, filename='{epoch}-{val_loss:2f}')
         early_stopping_callback = EarlyStopping(
             monitor='val_loss', mode='min', patience=train_config.early_stopping_patience)
-        callbacks = [checkpoint_callback, early_stopping_callback]
+        lr_monitor_callback = LearningRateMonitor(logging_interval='epoch')
+        train_callbacks = [checkpoint_callback, early_stopping_callback, lr_monitor_callback,
+                           *(callbacks if callbacks and len(callbacks) > 0 else [])]
 
         trainer = Trainer(accelerator='gpu', max_epochs=train_config.max_epochs,
-                          log_every_n_steps=50, logger=loggers, callbacks=callbacks)
+                          log_every_n_steps=50, logger=loggers, callbacks=train_callbacks)
 
         if is_resume:
             # Try to find latest/last checkpoint file and resume the training
