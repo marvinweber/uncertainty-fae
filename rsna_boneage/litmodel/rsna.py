@@ -1,7 +1,7 @@
 import gzip
 import logging
 import os
-from typing import Any, Tuple
+from typing import Any, Optional, Tuple, Union
 
 import dill
 import torch
@@ -129,7 +129,7 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
     @classmethod
     def train_model(cls, log_dir: str, datamodule: LightningDataModule,
                     model: 'LitRSNABoneageLaplace', train_config: TrainConfig,
-                    is_resume: bool = False, callbacks: list[Callback] = list()) -> TrainResult:
+                    is_resume: bool = False, callbacks: Optional[list[Callback]] = None) -> TrainResult:
         assert isinstance(model.base_model, model.BASE_MODEL_CLASS)
         logger = logging.getLogger('LAPLACE-LITMODEL')
         logger.info('Starting Base-Model Training...')
