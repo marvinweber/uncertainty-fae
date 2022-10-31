@@ -29,9 +29,16 @@ class RSNABoneageDataset(Dataset):
         transform : list (optional)
             Optional list of transforms to be applied to a sample
     """
-    def __init__(self, annotation_file: str, img_base_dir: str = None, transform=None,
-                 target_dimensions=(500, 500), rescale_boneage=False,
-                 rebalance_classes=False, with_gender_input=False) -> None:
+    def __init__(
+        self,
+        annotation_file: str,
+        img_base_dir: str = None,
+        transform=None,
+        target_dimensions=(500, 500),
+        rescale_boneage=False,
+        rebalance_classes=False,
+        with_gender_input=False
+    ) -> None:
         super().__init__()
 
         self.annotation_file = annotation_file
@@ -126,7 +133,9 @@ class RSNABoneageDataModule(LightningDataModule):
                  img_val_base_dir: str = None,
                  img_test_base_dir: str = None,
                  batch_size: int = 1,
-                 transform=None,
+                 train_transform=None,
+                 val_transform=None,
+                 test_transform=None,
                  target_dimensions=(500, 500),
                  rescale_boneage=False,
                  rebalance_classes=False,
@@ -144,7 +153,9 @@ class RSNABoneageDataModule(LightningDataModule):
         self.img_val_base_dir = img_val_base_dir
         self.img_test_base_dir = img_test_base_dir
         self.batch_size = batch_size
-        self.transform  = transform
+        self.train_transform  = train_transform
+        self.val_transform = val_transform
+        self.test_transform = test_transform
         self.split_seed = split_seed
         self.target_dimensions = target_dimensions
         self.rescale_boneage = rescale_boneage
@@ -159,7 +170,7 @@ class RSNABoneageDataModule(LightningDataModule):
         self.dataset_train = RSNABoneageDataset(
             annotation_file=self.annotation_file_train,
             img_base_dir=self.img_train_base_dir,
-            transform=self.transform,
+            transform=self.train_transform,
             target_dimensions=self.target_dimensions,
             rescale_boneage=self.rescale_boneage,
             rebalance_classes=self.rebalance_classes,
@@ -170,7 +181,7 @@ class RSNABoneageDataModule(LightningDataModule):
         self.dataset_val = RSNABoneageDataset(
             annotation_file=self.annotation_file_val,
             img_base_dir=self.img_val_base_dir,
-            transform=self.transform,
+            transform=self.val_transform,
             target_dimensions=self.target_dimensions,
             rescale_boneage=self.rescale_boneage,
             with_gender_input=self.with_gender_input,
@@ -180,7 +191,7 @@ class RSNABoneageDataModule(LightningDataModule):
         self.dataset_test = RSNABoneageDataset(
             annotation_file=self.annotation_file_test,
             img_base_dir=self.img_test_base_dir,
-            transform=self.transform,
+            transform=self.test_transform,
             target_dimensions=self.target_dimensions,
             rescale_boneage=self.rescale_boneage,
             with_gender_input=self.with_gender_input,

@@ -85,7 +85,7 @@ class RSNAModelProvider(ModelProvider):
             self, train_annotation_file: str, val_annotation_file: str, test_annotation_file: str,
             img_train_base_dir: str = None, img_val_base_dir: str = None,
             img_test_base_dir: str = None, batch_size: int = 8) -> LightningDataModule:
-        transform = transforms.Compose([
+        train_data_augmentation_transform = transforms.Compose([
             transforms.RandomHorizontalFlip(),
             transforms.RandomRotation(30),
             transforms.ColorJitter(brightness=0.5)
@@ -98,7 +98,7 @@ class RSNAModelProvider(ModelProvider):
             img_val_base_dir=img_val_base_dir,
             img_test_base_dir=img_test_base_dir,
             batch_size=batch_size,
-            transform=transform,
+            train_transform=train_data_augmentation_transform,
             target_dimensions=self.img_input_dimensions,
             rescale_boneage=self.rescale_boneage,
             rebalance_classes=self.rebalance_classes,
