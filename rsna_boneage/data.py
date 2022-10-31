@@ -95,18 +95,13 @@ class RSNABoneageDataset(Dataset):
         image: torch.Tensor = transform(image)
 
         if self.rescale_boneage:
-            boneage = self._rescale_boneage(boneage)
+            boneage = boneage_rescale(boneage)
 
         if self.with_gender_input:
             male = int(self.annotations.loc[idx, 'male'])
             return TensorList([image, np.float32(male)]), boneage
         else:
             return image, boneage
-
-    def _rescale_boneage(self, boneage):
-        lower_bound = RSNA_BONEAGE_DATASET_MIN_AGE
-        upper_bound = RSNA_BONEAGE_DATASET_MAX_AGE
-        return (boneage - lower_bound) / (upper_bound - lower_bound)
 
     def _get_img_path(self, idx) -> str:
         # whether to build the path dynamically or use the absolute path from the annotation file
@@ -216,3 +211,17 @@ def get_image_transforms(target_dimensions=(500, 500)):
         transforms.Resize(target_dimensions),
         transforms.ToTensor(),
     ])
+
+
+def boneage_rescale(boneage):
+    """Scale given boneage to values between [0, 1] according to train data."""
+    lower_bound = RSNA_BONEAGE_DATASET_MIN_AGE
+    upper_bound = RSNA_BONEAGE_DATASET_MAX_AGE
+    return (boneage - lower_bound) / (upper_bound - lower_bound)
+
+
+def undo_boneage_rescale(boneage_rescaled):
+    """Undu (down) scaling of boneage."""
+    lower_bound = RSNA_BONEAGE_DATASET_MIN_AGE
+    upper_bound = RSNA_BONEAGE_DATASET_MAX_AGE
+    return (boneage_rescaled * (upper_bound - lower_bound)) + lower_bound

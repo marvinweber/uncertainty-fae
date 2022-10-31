@@ -14,7 +14,7 @@ from uncertainty.model import TrainLoadMixin
 class LitRSNABoneage(TrainLoadMixin, LightningModule):
 
     def __init__(self, net: nn.Module, lr: float = 3e-4, weight_decay: float = 0,
-                 momentum: float = 0, optim_type: str = 'adam', undo_boneage_rescaling=False):
+                 momentum: float = 0, optim_type: str = 'adam', undo_boneage_rescale=False):
         super().__init__()
 
         self.net = net
@@ -27,7 +27,7 @@ class LitRSNABoneage(TrainLoadMixin, LightningModule):
         self.mae = nn.L1Loss()
         self.mse = nn.MSELoss()
 
-        self.undo_boneage_rescaling = undo_boneage_rescaling
+        self.undo_boneage_rescale = undo_boneage_rescale
 
         self.save_hyperparameters(ignore=['net'])
 
@@ -93,8 +93,3 @@ class LitRSNABoneage(TrainLoadMixin, LightningModule):
                                    momentum=self.momentum)
         else:
             raise ValueError(f'Unkown optimizer type: {self.optim_type}')
-
-    def _undo_rescale_boneage(self, boneage_rescaled):
-        lower_bound = RSNA_BONEAGE_DATASET_MIN_AGE
-        upper_bound = RSNA_BONEAGE_DATASET_MAX_AGE
-        return (boneage_rescaled * (upper_bound - lower_bound)) + lower_bound

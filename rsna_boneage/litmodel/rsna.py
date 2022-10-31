@@ -8,7 +8,7 @@ import torch
 from laplace import BaseLaplace, KronLLLaplace, Laplace
 from laplace.utils import FeatureExtractor
 from pytorch_lightning import Callback, LightningDataModule
-from torch import vstack
+from rsna_boneage.data import undo_boneage_rescale
 
 from rsna_boneage.litmodel import LitRSNABoneage
 from rsna_boneage.net.inception import RSNABoneageInceptionNetWithGender
@@ -35,9 +35,8 @@ class LitRSNABoneageMCDropout(UncertaintyAwareModel, LitRSNABoneage):
         with torch.no_grad():
             preds = [self.forward(batch).cpu() for _ in range(self.mc_iterations)]
 
-        # TODO: rescaling param is not set
-        if self.undo_boneage_rescaling:
-            preds = [self._undo_rescale_boneage(pred) for pred in preds]
+        if self.undo_boneage_rescale:
+            preds = [undo_boneage_rescale(pred) for pred in preds]
         preds = vstack(preds)
 
         # TODO: check return type of tensor

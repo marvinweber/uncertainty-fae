@@ -3,6 +3,7 @@ from typing import Any, Tuple
 import torch
 from torch import squeeze
 from torch import vstack
+from rsna_boneage.data import undo_boneage_rescale
 
 from rsna_boneage.litmodel import LitRSNABoneage
 from rsna_boneage.net.inception import RSNABoneageInceptionNetWithGender
@@ -74,8 +75,8 @@ class LitRSNABoneageVarianceNetMCDropout(LitRSNABoneageVarianceNet):
         with torch.no_grad():
             preds = [self.forward(input).cpu() for _ in range(self.mc_iterations)]
 
-        if self.undo_boneage_rescaling:
-            preds = [self._undo_rescale_boneage(pred) for pred in preds]
+        if self.undo_boneage_rescale:
+            preds = [undo_boneage_rescale(pred) for pred in preds]
         preds = vstack(preds)
 
         # TODO: check return type of tensor
