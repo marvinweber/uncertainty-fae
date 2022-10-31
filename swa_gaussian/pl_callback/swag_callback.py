@@ -115,7 +115,7 @@ class SWAGaussianCallback(Callback):
             logger.info('Starting SWA model update (collecting model).')
             self.swag_model.collect_model(pl_module)
             self._latest_update_epoch = trainer.current_epoch
-            logger.debug('SWA Calculation done.')
+            logger.info('SWA update done.')
 
     def state_dict(self) -> dict[str, Any]:
         return {

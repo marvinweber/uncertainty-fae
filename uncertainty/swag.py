@@ -48,7 +48,6 @@ class SwagEvalCallback(Callback):
         if not swa_started or not should_eval:
             return
 
-        logger.info('')  # workarround to get below progress bar
         logger.info('Running SWAG Evaluation...')
         score, _, _, _, _, _, metrics = self.swag_model.evaluate_dataset(self.validation_dataloader)
         logs = {f'swag_val_{key}': val
