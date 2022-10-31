@@ -23,6 +23,20 @@ class UncertaintyAwareModel:
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.train_dataloader: DataLoader = None
+        self.val_dataloader: DataLoader = None
+
+    def set_dataloaders(
+            self,
+            train_dataloader: DataLoader = None,
+            val_dataloader: DataLoader = None,
+    ) -> None:
+        """Set train and val dataloader on this model.
+        
+        Some UQ methods require the training dataset (SWAG) to update batch norm layers.
+        """
+        self.train_dataloader = train_dataloader
+        self.val_dataloader = val_dataloader
 
     def forward_with_uncertainty(self, input) -> Tuple[Tensor, Tensor]:
         """Forward a batch/input and return results including uncertainty.
