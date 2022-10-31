@@ -25,13 +25,13 @@ class SwagEvalCallback(Callback):
         self.metrics_to_log = metrics_to_log
         self.swa_eval_frequency = swa_eval_frequency
         self.validation_dataloader = validation_dataloader
+        self._checks_performed = False
 
     def on_validation_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
         super().on_validation_start(trainer, pl_module)
-        logger.info('Hi i am validation')
 
         # Ensure we have a validation dataloader
-        if not self.validation_dataloader:
+        if not self.validation_dataloader and not self._checks_performed:
             assert trainer.val_dataloaders, \
                 ('SwagEvalCallback either needs to be initialized with a `validation_loader`, or '
                  'the trainer must have >= 1 validation loaders')
@@ -39,6 +39,7 @@ class SwagEvalCallback(Callback):
                 logger.warning(
                     'SwagEvalCallback currently only uses the first trainer validation dataloader!')
             self.validation_dataloader = trainer.val_dataloaders[0]
+        self._checks_performed = True
 
     def on_validation_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
         epoch = trainer.current_epoch
