@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Optional
 
@@ -10,6 +11,8 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 
 from util.tensor_list import TensorList
+
+logger = logging.getLogger(__name__)
 
 RSNA_BONEAGE_DATASET_MIN_AGE = 0
 RSNA_BONEAGE_DATASET_MAX_AGE = 230
@@ -65,7 +68,12 @@ class RSNABoneageDataset(Dataset):
 
         # Load image from disk
         if not img_preprocessed_path or not isinstance(img_preprocessed_path, str):
-            image = Image.open(img_path).convert('RGB')
+            try:
+                image = Image.open(img_path).convert('RGB')
+            except OSError as e:
+                logger.critical('Error while loading img with id=%s and path=%s',
+                                self.annotations.loc[idx, 'id'], img_path)
+                raise e
         else:
             image: torch.Tensor = torch.load(img_preprocessed_path)
             image_pil: Image.Image = transforms.ToPILImage()(image)
