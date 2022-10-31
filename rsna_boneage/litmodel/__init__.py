@@ -7,7 +7,6 @@ from pytorch_lightning.core.module import LightningModule
 from torch import nn, squeeze
 from torchvision.models.inception import InceptionOutputs
 
-from rsna_boneage.data import RSNA_BONEAGE_DATASET_MAX_AGE, RSNA_BONEAGE_DATASET_MIN_AGE
 from uncertainty.model import TrainLoadMixin
 
 
