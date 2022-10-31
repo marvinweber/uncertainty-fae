@@ -6,15 +6,13 @@ from torch import nn
 from torchvision import transforms
 from torchvision.models import inception_v3, resnet18, resnet34, resnet50
 
-from rsna_boneage.litmodel.rsna import (LitRSNABoneageLaplace, LitRSNABoneageMCDropout,
-                                        LitRSNABoneageSWAG)
-from rsna_boneage.litmodel.rsna_variance import (LitRSNABoneageVarianceNet,
-                                                 LitRSNABoneageVarianceNetMCDropout)
+from rsna_boneage.litmodel import (LitRSNABoneage, LitRSNABoneageLaplace, LitRSNABoneageMCDropout,
+                                   LitRSNABoneageSWAG, LitRSNABoneageVarianceNet,
+                                   LitRSNABoneageVarianceNetMCDropout)
 from uncertainty.model import TrainLoadMixin
 from util import ModelProvider
 
 from .data import RSNABoneageDataModule
-from .litmodel import LitRSNABoneage
 from .net.inception import RSNABoneageInceptionNetWithGender
 from .net.resnet import RSNABoneageResNetWithGender
 from .net.resnet import resnet18 as boneage_resnet18
