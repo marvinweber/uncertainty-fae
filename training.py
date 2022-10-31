@@ -94,6 +94,8 @@ def train_model(train_model_name: str, model_configurations: dict, config_defaul
                     'config_defaults': config_defaults,
                 }
                 yaml.dump(config, file)
+        else:
+            logger.info('Trying to RESUME the training...')
 
         # Log warning if training seems to be done already
         if os.path.exists(os.path.join(log_dir, TRAIN_RESULT_FILENAME)):
