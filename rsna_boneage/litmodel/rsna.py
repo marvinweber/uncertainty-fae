@@ -1,21 +1,28 @@
 import gzip
 import logging
 import os
+from copy import deepcopy
 from typing import Any, Optional, Tuple, Union
 
 import dill
 import torch
+import tqdm
 from laplace import BaseLaplace, KronLLLaplace, Laplace
 from laplace.utils import FeatureExtractor
 from pytorch_lightning import Callback, LightningDataModule
 from torch import Tensor, vstack
 from torch.utils.data import DataLoader
+from tqdm import trange
 from rsna_boneage.data import undo_boneage_rescale
 
+import swa_gaussian.utils as swag_utils
 from rsna_boneage.litmodel import LitRSNABoneage
 from rsna_boneage.net.inception import RSNABoneageInceptionNetWithGender
 from rsna_boneage.net.resnet import RSNABoneageResNetWithGender
+from swa_gaussian.pl_callback.swag_callback import SWAGaussianCallback
+from swa_gaussian.posteriors.swag import SWAG
 from uncertainty.model import TrainLoadMixin, UncertaintyAwareModel
+from uncertainty.swag import SwagEvalCallback
 from util.training import TrainConfig, TrainResult
 
 
