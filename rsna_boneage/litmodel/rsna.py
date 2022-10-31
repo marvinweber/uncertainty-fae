@@ -8,6 +8,8 @@ import torch
 from laplace import BaseLaplace, KronLLLaplace, Laplace
 from laplace.utils import FeatureExtractor
 from pytorch_lightning import Callback, LightningDataModule
+from torch import Tensor, vstack
+from torch.utils.data import DataLoader
 from rsna_boneage.data import undo_boneage_rescale
 
 from rsna_boneage.litmodel import LitRSNABoneage
@@ -96,7 +98,10 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
                                     n_samples=self.n_samples)
         return predictions
 
-    def evaluate_dataset(self, dataloader):
+    def evaluate_dataset(
+        self,
+        dataloader: DataLoader
+    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, dict[Any, dict], dict[str, Any]]:
         raise NotImplementedError('Not yet implemented')  # TODO: implement
 
     @classmethod

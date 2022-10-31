@@ -7,6 +7,7 @@ from pytorch_lightning import Callback, LightningDataModule, Trainer
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks import (EarlyStopping, LearningRateMonitor, ModelCheckpoint,
                                          TQDMProgressBar)
+from torch import Tensor
 from torch.utils.data import DataLoader
 
 from util.training import TrainConfig, TrainResult
@@ -23,14 +24,52 @@ class UncertaintyAwareModel:
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-    def forward_with_uncertainty(self, input) -> Tuple[torch.Tensor, Any]:
+    def forward_with_uncertainty(self, input) -> Tuple[Tensor, Tensor]:
+        """Forward a batch/input and return results including uncertainty.
+
+        Returns:
+            A tuple with the results ("mean") values first, and the uncertainty values (e.g. std)
+            second. The size on each of those two tensors corresponds to the input (batch) size.
+
+        Example:
+            For an input of batch size = 2 the result may look like shown below:
+
+            >>> res = foo.forward_with_uncertainty(x)
+            >>> res[0]  # mean values (predictions)
+            >>> tensor([0.92, 0.51])
+            >>> res[1]  # uncertainties
+            >>> tensor([0.01, 0.02])
+        """
         raise NotImplementedError()
 
     def forward_without_uncertainty(self, input) -> torch.Tensor:
         # TODO: default implementation: use forward_with_uncertainty and throw away uncertainty
         raise NotImplementedError()
 
-    def evaluate_dataset(self, dataloader: DataLoader):
+    def evaluate_dataset(
+        self,
+        dataloader: DataLoader
+    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, list[dict], dict[str, Any]]:
+        """Evaluate the given given dataset (dataloader).
+
+        TODO docs/ explanation
+
+        Returns:
+            A tuple with the following entries
+
+            - score: a metric describing the "score" of the model w.r.t. the dataloader (e.g., mean
+                abs error)
+            - predictions: A tensor containing the predictions for every sample of the loader.
+            - targets: A tensor containing the targets (ground truth) for every sample of the
+                loader.
+            - errors: A tensor containing the error for each single sample of the loader (e.g., the
+                mean abs error for every sample).
+            - uncertainties: A tensor containing the uncertainty value for each single sample of the
+                loader (e.g., the std of many predictions per sample).
+            - sample_stats: A list of dictionaries containing (arbitrary) stats for each sample of
+                the dataloader.
+            - additional_stats: A dictionary containing any (additional) stats.
+        """
         raise NotImplementedError()
 
 
