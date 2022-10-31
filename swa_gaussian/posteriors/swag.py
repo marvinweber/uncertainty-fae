@@ -4,9 +4,7 @@
 
 import torch
 import numpy as np
-import itertools
 from torch.distributions.normal import Normal
-import copy
 
 import gpytorch
 from gpytorch.lazy import RootLazyTensor, DiagLazyTensor, AddedDiagLazyTensor
@@ -15,7 +13,7 @@ from gpytorch.distributions import MultivariateNormal
 from ..utils import flatten, unflatten_like
 
 
-def swag_parameters(module, params, no_cov_mat=True):
+def swag_parameters(module: torch.nn.Module, params, no_cov_mat=True):
     for name in list(module._parameters.keys()):
         if module._parameters[name] is None:
             continue
@@ -34,7 +32,7 @@ def swag_parameters(module, params, no_cov_mat=True):
 
 class SWAG(torch.nn.Module):
     def __init__(
-        self, base, no_cov_mat=True, max_num_models=0, var_clamp=1e-30, *args, **kwargs
+        self, base: torch.nn.Module, no_cov_mat=True, max_num_models=0, var_clamp=1e-30
     ):
         super(SWAG, self).__init__()
 
@@ -46,7 +44,7 @@ class SWAG(torch.nn.Module):
 
         self.var_clamp = var_clamp
 
-        self.base = base(*args, **kwargs)
+        self.base = base
         self.base.apply(
             lambda module: swag_parameters(
                 module=module, params=self.params, no_cov_mat=self.no_cov_mat
