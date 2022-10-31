@@ -41,7 +41,7 @@ class SwagEvalCallback(Callback):
             self.validation_dataloader = trainer.val_dataloaders[0]
         self._checks_performed = True
 
-    def on_validation_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
+    def on_train_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
         epoch = trainer.current_epoch
         swa_started = epoch >= (self.swa_start_epoch - 1)
         should_eval = (epoch - (self.swa_start_epoch - 1)) % self.swa_eval_frequency == 0
