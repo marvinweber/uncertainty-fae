@@ -14,6 +14,8 @@ from rsna_boneage.litmodel.base import LitRSNABoneage
 from uncertainty.model import TrainLoadMixin, UncertaintyAwareModel
 from util.training import TrainConfig, TrainResult
 
+logger = logging.getLogger(__name__)
+
 
 class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
 
@@ -59,6 +61,8 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
     @classmethod
     def load_model_from_disk(cls, checkpoint_path: str, base_model_checkpoint_pth: str = None,
                              **kwargs) -> 'LitRSNABoneageLaplace':
+        
+        logger.info('Loading Laplace Model from file...')
         with gzip.open(checkpoint_path, 'rb') as file:
             model = dill.load(file)
 
@@ -80,6 +84,7 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
                 model.la_model.model.cuda()
                 model.la_model._device = model.la_model.model.model.device
 
+        logger.info('%s loaded', cls.__name__)
         return model
 
     @classmethod
@@ -87,7 +92,6 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
                     model: 'LitRSNABoneageLaplace', train_config: TrainConfig,
                     is_resume: bool = False, callbacks: Optional[list[Callback]] = None) -> TrainResult:
         assert isinstance(model.base_model, model.BASE_MODEL_CLASS)
-        logger = logging.getLogger('LAPLACE-LITMODEL')
         logger.info('Starting Base-Model Training...')
 
         # train the base model

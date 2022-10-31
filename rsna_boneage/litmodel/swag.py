@@ -7,7 +7,7 @@ from typing import Any, Optional, Union
 import torch
 import tqdm
 from pytorch_lightning import Callback, LightningDataModule
-from torch import Tensor, vstack
+from torch import Tensor
 from torch.utils.data import DataLoader
 from tqdm import trange
 
@@ -19,6 +19,8 @@ from swa_gaussian.posteriors.swag import SWAG
 from uncertainty.model import TrainLoadMixin, UncertaintyAwareModel
 from uncertainty.swag import SwagEvalCallback
 from util.training import TrainConfig, TrainResult
+
+logger = logging.getLogger(__name__)
 
 
 class LitRSNABoneageSWAG(UncertaintyAwareModel, TrainLoadMixin):
@@ -138,11 +140,13 @@ class LitRSNABoneageSWAG(UncertaintyAwareModel, TrainLoadMixin):
     @classmethod
     def load_model_from_disk(cls, checkpoint_path: str, base_model_checkpoint_pth: str = None,
                              **kwargs) -> 'LitRSNABoneageSWAG':
+        logger.info('Loading SWAG Model from file...')
         with gzip.open(checkpoint_path, 'rb') as file:
             swag_model = torch.load(file)
         assert isinstance(swag_model, SWAG), 'Given checkpoint is not of a SWAG model!'
         model = cls(swag_model=swag_model, base_model_checkpoint_pth=base_model_checkpoint_pth,
                     **kwargs)
+        logger.info('%s loaded', cls.__name__)
         return model
 
     @classmethod
@@ -150,7 +154,6 @@ class LitRSNABoneageSWAG(UncertaintyAwareModel, TrainLoadMixin):
                     train_config: TrainConfig, is_resume: bool = False,
                     callbacks: Optional[list[Callback]] = None) -> TrainResult:
         assert isinstance(model.base_model, model.BASE_MODEL_CLASS)
-        logger = logging.getLogger('SWAG-LITMODEL')
 
         # Ensure no early stopping is done
         if train_config.early_stopping_patience < train_config.max_epochs:
