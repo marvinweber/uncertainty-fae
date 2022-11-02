@@ -28,7 +28,11 @@ RUN add-apt-repository ppa:deadsnakes/ppa && \
     rm -rf /var/lib/apt/lists/*
 
 # Install PyTorch
-RUN python -m pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113 && \
+RUN python -m pip install \
+        torch==1.12.* \
+        torchvision \ 
+        torchaudio \
+        --extra-index-url https://download.pytorch.org/whl/cu113 && \
     python -m pip cache purge
 
 ADD requirements.txt /install/requirements_fae_uncertainty.txt
