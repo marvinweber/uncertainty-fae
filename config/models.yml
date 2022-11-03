@@ -3,13 +3,13 @@ defaults:
     rsna_boneage:
         datasets:
             annotations:
-                train: /mnt/datassd/data_fae_uncertainty/train_annotations_preprocessed_500x500.csv
-                val: /mnt/datassd/data_fae_uncertainty/val_annotations_preprocessed_500x500.csv
-                test: /mnt/datassd/data_fae_uncertainty/test_annotations_preprocessed_500x500.csv
+                train: /data_fae_uncertainty/rsna_boneage/train_annotations.csv
+                val: /data_fae_uncertainty/rsna_boneage/val_annotations.csv
+                test: /data_fae_uncertainty/rsna_boneage/test_annotations.csv
             img_base_dirs:
-                train:
-                val:
-                test:
+                train: /data_fae_uncertainty/rsna_boneage/train_val
+                val: /data_fae_uncertainty/rsna_boneage/train_val
+                test: /data_fae_uncertainty/rsna_boneage/test
 
 # model configuration
 models:
@@ -24,18 +24,39 @@ models:
             rescale_boneage: True
             rebalance_classes: True
         litmodel_config:
-            mc_iterations: 100
-        datasets:
-            annotations:
-                train:
-                val:
-                test:
-            img_base_dirs:
-                train:
-                val:
-                test:
+            n_samples: 100
 
-    rsna_inception_500_gender_variance_mcd100:
+    rsna_inception_500_gender_laplace:
+        data: rsna_boneage
+        provider_config:
+            base_net: inceptionv3
+            uncertainty_method: laplace_approx
+            img_input_dimensions: [500, 500]
+            variance_net: False
+            with_gender_input: True
+            rescale_boneage: True
+            rebalance_classes: True
+        litmodel_config:
+            n_samples: 30
+
+    rsna_inception_500_gender_swag:
+        data: rsna_boneage
+        provider_config:
+            base_net: inceptionv3
+            uncertainty_method: swag
+            img_input_dimensions: [500, 500]
+            variance_net: False
+            with_gender_input: True
+            rescale_boneage: True
+            rebalance_classes: True
+        litmodel_config:
+            n_samples: 30
+            weight_decay: 0.001
+            swa_start_epoch: 150
+            lr: 0.001
+            swa_lrs: 0.0008
+
+    rsna_inception_500_gender_variance_mcd:
         data: rsna_boneage
         provider_config:
             base_net: inceptionv3
@@ -46,8 +67,4 @@ models:
             rescale_boneage: True
             rebalance_classes: True
         litmodel_config:
-            mc_iterations: 100
-        datasets:
-            train: /mnt/datassd/data_fae_uncertainty/train_annotations_preprocessed_500x500.csv
-            val: /mnt/datassd/data_fae_uncertainty/val_annotations_preprocessed_500x500.csv
-            test: /mnt/datassd/data_fae_uncertainty/test_annotations_preprocessed_500x500.csv
+            n_samples: 100
