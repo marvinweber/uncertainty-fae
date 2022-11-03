@@ -110,7 +110,7 @@ class LitRSNABoneage(TrainLoadMixin, LightningModule):
         if self.lr_scheduler == 'reduce_lr_on_plateau':
             scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
                 optim, factor=0.9, patience=10, threshold=1e-4)
-            config['lr_scheduler'] = {'lr_scheduler': scheduler, 'monitor': 'val_loss'}
+            config['lr_scheduler'] = {'scheduler': scheduler, 'monitor': 'val_loss'}
         elif self.lr_scheduler:
             # an unknown scheduler is given
             raise ValueError(f'Unkown lr scheduler type: {self.lr_scheduler}')
