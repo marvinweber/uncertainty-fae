@@ -12,8 +12,8 @@ from uncertainty.model import UncertaintyAwareModel
 
 class LitRSNABoneageMCDropout(UncertaintyAwareModel, LitRSNABoneage):
 
-    def __init__(self, *args, mc_iterations: int = 100, **kwargs):
-        self.mc_iterations = mc_iterations
+    def __init__(self, *args, n_samples: int = 100, **kwargs):
+        self.n_samples = n_samples
         super().__init__(*args, **kwargs)
 
     def forward_with_uncertainty(self, batch) -> tuple[torch.Tensor, Any]:
@@ -26,7 +26,7 @@ class LitRSNABoneageMCDropout(UncertaintyAwareModel, LitRSNABoneage):
             self.net.resnet.dropout.train()
 
         with torch.no_grad():
-            preds = [self.forward(batch).cpu() for _ in range(self.mc_iterations)]
+            preds = [self.forward(batch).cpu() for _ in range(self.n_samples)]
 
         if self.undo_boneage_rescale:
             preds = [undo_boneage_rescale(pred) for pred in preds]
@@ -56,9 +56,9 @@ class LitRSNABoneageMCDropout(UncertaintyAwareModel, LitRSNABoneage):
 
 class LitRSNABoneageVarianceNetMCDropout(LitRSNABoneageVarianceNet):
 
-    def __init__(self, mc_iterations: int = 100, **kwargs):
+    def __init__(self, n_samples: int = 100, **kwargs):
         super().__init__(**kwargs)
-        self.mc_iterations = mc_iterations
+        self.n_samples = n_samples
 
     def forward_with_uncertainty(self, input) -> tuple[torch.Tensor, Any]:
         # Enable Dropout Layers in Network for MC
@@ -70,7 +70,7 @@ class LitRSNABoneageVarianceNetMCDropout(LitRSNABoneageVarianceNet):
             self.net.resnet.dropout.train()
 
         with torch.no_grad():
-            preds = [self.forward(input).cpu() for _ in range(self.mc_iterations)]
+            preds = [self.forward(input).cpu() for _ in range(self.n_samples)]
 
         if self.undo_boneage_rescale:
             preds = [undo_boneage_rescale(pred) for pred in preds]
