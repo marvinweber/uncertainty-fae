@@ -1,4 +1,4 @@
-from typing import Any, Tuple
+from typing import Any, Optional, Tuple
 
 import torch
 import torch.nn.functional
@@ -7,20 +7,28 @@ from pytorch_lightning.core.module import LightningModule
 from torch import nn, squeeze
 from torchvision.models.inception import InceptionOutputs
 
-# from rsna_boneage.litmodel import LitRSNABoneage
 from uncertainty.model import TrainLoadMixin, UncertaintyAwareModel
 from util.nll_regression_loss import nll_regression_loss
 
 
 class LitRSNABoneage(TrainLoadMixin, LightningModule):
 
-    def __init__(self, net: nn.Module, lr: float = 3e-4, weight_decay: float = 0,
-                 momentum: float = 0, optim_type: str = 'adam', undo_boneage_rescale=False):
+    def __init__(
+        self,
+        net: nn.Module,
+        lr: float = 3e-4,
+        weight_decay: float = 0,
+        momentum: float = 0,
+        optim_type: str = 'adam',
+        lr_scheduler: Optional[str] = 'reduce_lr_on_plateau',
+        undo_boneage_rescale=False
+    ) -> None:
         super().__init__()
 
         self.net = net
 
         self.optim_type = optim_type
+        self.lr_scheduler = lr_scheduler
         self.lr = lr
         self.momentum = momentum
         self.weight_decay = weight_decay
@@ -88,12 +96,26 @@ class LitRSNABoneage(TrainLoadMixin, LightningModule):
 
     def configure_optimizers(self):
         if self.optim_type == 'adam':
-            return torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+            optim = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         elif self.optim_type == 'sgd':
-            return torch.optim.SGD(self.parameters(), lr=self.lr, weight_decay=self.weight_decay,
-                                   momentum=self.momentum)
+            optim = torch.optim.SGD(self.parameters(), lr=self.lr, weight_decay=self.weight_decay,
+                                    momentum=self.momentum)
         else:
             raise ValueError(f'Unkown optimizer type: {self.optim_type}')
+
+        config = {
+            'optimizer': optim
+        }
+
+        if self.lr_scheduler == 'reduce_lr_on_plateau':
+            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+                optim, factor=0.9, patience=10, threshold=1e-4)
+            config['lr_scheduler'] = {'lr_scheduler': scheduler, 'monitor': 'val_loss'}
+        elif self.lr_scheduler:
+            # an unknown scheduler is given
+            raise ValueError(f'Unkown lr scheduler type: {self.lr_scheduler}')
+
+        return config
 
 
 class LitRSNABoneageVarianceNet(UncertaintyAwareModel, LitRSNABoneage):
