@@ -11,4 +11,4 @@ echo "Using Image: ${UQ_FAE_SING_IMG}"
 echo "Mounts: ${UQ_FAE_SING_MOUNTS}"
 echo "###############################"
 
-singularity exec --nv --no-home -B "$UQ_FAE_SING_MOUNTS" "$UQ_FAE_SING_IMG" "$@"
+singularity exec --pwd /app --nv --no-home -B "$UQ_FAE_SING_MOUNTS" "$UQ_FAE_SING_IMG" "$@"
