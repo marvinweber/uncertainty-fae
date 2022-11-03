@@ -120,25 +120,28 @@ class RSNABoneageDataset(Dataset):
 
 
 class RSNABoneageDataModule(LightningDataModule):
-    def __init__(self, 
-                 annotation_file_train: str,
-                 annotation_file_val: str,
-                 annotation_file_test: str,
-                 img_train_base_dir: str = None,
-                 img_val_base_dir: str = None,
-                 img_test_base_dir: str = None,
-                 batch_size: int = 1,
-                 train_transform=None,
-                 val_transform=None,
-                 test_transform=None,
-                 target_dimensions=(500, 500),
-                 rescale_boneage=False,
-                 rebalance_classes=False,
-                 with_gender_input=False,
-                 split_seed: Optional[int] = None,
-                 shuffle_train: bool = True,
-                 shuffle_val: bool = False,
-                 shuffle_test: bool = False) -> None:
+    def __init__(
+        self, 
+        annotation_file_train: str,
+        annotation_file_val: str,
+        annotation_file_test: str,
+        img_train_base_dir: str = None,
+        img_val_base_dir: str = None,
+        img_test_base_dir: str = None,
+        batch_size: int = 1,
+        train_transform=None,
+        val_transform=None,
+        test_transform=None,
+        target_dimensions=(500, 500),
+        rescale_boneage=False,
+        rebalance_classes=False,
+        with_gender_input=False,
+        split_seed: Optional[int] = None,
+        shuffle_train: bool = True,
+        shuffle_val: bool = False,
+        shuffle_test: bool = False,
+        num_workers: int = 4,
+    ) -> None:
         super().__init__()
 
         self.annotation_file_train = annotation_file_train
@@ -159,6 +162,7 @@ class RSNABoneageDataModule(LightningDataModule):
         self.shuffle_train = shuffle_train
         self.shuffle_val = shuffle_val
         self.shuffle_test = shuffle_test
+        self.num_workers = num_workers
 
     def setup(self, stage: str) -> None:
         # Training Dataset
@@ -194,15 +198,15 @@ class RSNABoneageDataModule(LightningDataModule):
 
     def train_dataloader(self):
         return DataLoader(self.dataset_train, batch_size=self.batch_size,
-                          shuffle=self.shuffle_train, num_workers=4)
+                          shuffle=self.shuffle_train, num_workers=self.num_workers)
 
     def val_dataloader(self):
         return DataLoader(self.dataset_val, batch_size=self.batch_size,
-                          shuffle=self.shuffle_val, num_workers=4)
+                          shuffle=self.shuffle_val, num_workers=self.num_workers)
 
     def test_dataloader(self):
         return DataLoader(self.dataset_test, batch_size=self.batch_size,
-                          shuffle=self.shuffle_test, num_workers=4)
+                          shuffle=self.shuffle_test, num_workers=self.num_workers)
 
 
 def get_image_transforms(target_dimensions=(500, 500)):

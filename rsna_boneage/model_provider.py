@@ -81,9 +81,16 @@ class RSNAModelProvider(ModelProvider):
         return litmodel
 
     def get_lightning_data_module(
-            self, train_annotation_file: str, val_annotation_file: str, test_annotation_file: str,
-            img_train_base_dir: str = None, img_val_base_dir: str = None,
-            img_test_base_dir: str = None, batch_size: int = 8) -> LightningDataModule:
+            self,
+            train_annotation_file: str,
+            val_annotation_file: str,
+            test_annotation_file: str,
+            img_train_base_dir: str = None,
+            img_val_base_dir: str = None,
+            img_test_base_dir: str = None,
+            batch_size: int = 8,
+            num_workers: int = 4,
+    ) -> LightningDataModule:
         train_data_augmentation_transform = transforms.Compose([
             transforms.RandomHorizontalFlip(),
             transforms.RandomRotation(30),
@@ -102,6 +109,7 @@ class RSNAModelProvider(ModelProvider):
             rescale_boneage=self.rescale_boneage,
             rebalance_classes=self.rebalance_classes,
             with_gender_input=self.with_gender_input,
+            num_workers=num_workers,
         )
 
         return datamodule

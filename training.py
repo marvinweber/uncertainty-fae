@@ -48,6 +48,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--debug', action='store_true', required=False, default=False,
                         help='Flag to enable output of DEBUG logs.')
     parser.add_argument('--batch-size', type=int, required=False, default=8)
+    parser.add_argument('--dataloader-num-workers', type=int, required=False, default=4,
+                        help='Amount of workers to use for dataloading.')
     return parser.parse_args()
 
 
@@ -167,7 +169,8 @@ if __name__ == '__main__':
         max_epochs=args.max_epochs, early_stopping_patience=args.early_stopping_patience,
         save_top_k_checkpoints=args.save_top_k_checkpoints, save_dir=args.save_dir,
         start_time=datetime.now().strftime('%Y-%m-%d-%H-%M-%S-%f'), no_resume=args.no_resume,
-        version=args.version, sub_version=args.sub_version, batch_size=args.batch_size)
+        version=args.version, sub_version=args.sub_version, batch_size=args.batch_size,
+        dataloader_num_workers=args.dataloader_num_workers)
 
     with open(configuration_path, 'r') as f:
         configuration = yaml.safe_load(f)
