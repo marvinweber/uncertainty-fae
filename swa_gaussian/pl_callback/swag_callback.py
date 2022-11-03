@@ -43,8 +43,9 @@ class SWAGaussianCallback(Callback):
     def on_fit_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
         super().on_fit_start(trainer, pl_module)
 
-        if trainer.max_epochs > self._swa_start_epoch:  # max_epochs is not zero based
-            logger.warning('SWA will not be utilized as swa_start_epoch > max_epochs!')
+        if self._swa_start_epoch > trainer.max_epochs:  # max_epochs is not zero based
+            logger.warning('SWA will not be utilized as swa_start_epoch (%s) > max_epochs (%s)!',
+                           self._swa_start_epoch, trainer.max_epochs)
 
         assert len(trainer.optimizers) == 1, \
             'SWA(G) currently works with only 1 `optimizer`.'
