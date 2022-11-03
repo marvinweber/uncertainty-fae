@@ -3,13 +3,13 @@ defaults:
     rsna_boneage:
         datasets:
             annotations:
-                train: /data_fae_uncertainty/rsna_boneage/train_annotations.csv
-                val: /data_fae_uncertainty/rsna_boneage/val_annotations.csv
-                test: /data_fae_uncertainty/rsna_boneage/test_annotations.csv
+                train: /data_fae_uq/rsna_boneage/train_annotations.csv
+                val: /data_fae_uq/rsna_boneage/val_annotations.csv
+                test: /data_fae_uq/rsna_boneage/test_annotations.csv
             img_base_dirs:
-                train: /data_fae_uncertainty/rsna_boneage/train_val
-                val: /data_fae_uncertainty/rsna_boneage/train_val
-                test: /data_fae_uncertainty/rsna_boneage/test
+                train: /data_fae_uq/rsna_boneage/train_val
+                val: /data_fae_uq/rsna_boneage/train_val
+                test: /data_fae_uq/rsna_boneage/test
 
 # model configuration
 models:
