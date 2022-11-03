@@ -136,9 +136,9 @@ class LitRSNABoneageVarianceNet(UncertaintyAwareModel, LitRSNABoneage):
         logits = self.forward(x)
         logits = squeeze(logits, dim=1)
 
-        # TODO: we can do this on the first neuron (mean neuron)
-        # mae = self.mae(logits, y)
-        # self.log('mae', mae)
+        # Calculate MAE between mean neurons ("first column") and targets (ignore variance neurons)
+        mae = self.mae(logits[:, :1], y.unsqueeze(1))
+        self.log('val_mae', mae)
 
         loss = nll_regression_loss(logits, y)
         self.log('loss', loss)
@@ -151,7 +151,8 @@ class LitRSNABoneageVarianceNet(UncertaintyAwareModel, LitRSNABoneage):
         logits = self.forward(x)
         logits = squeeze(logits, dim=1)
 
-        mae = self.mae(logits[:, :1], y.view(logits.shape[0], 1))
+        # Calculate MAE between mean neurons ("first column") and targets (ignore variance neurons)
+        mae = self.mae(logits[:, :1], y.unsqueeze(1))
         self.log('val_mae', mae)
 
         loss = nll_regression_loss(logits, y)
