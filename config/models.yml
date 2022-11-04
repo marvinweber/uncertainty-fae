@@ -3,13 +3,13 @@ defaults:
     rsna_boneage:
         datasets:
             annotations:
-                train: /data_fae_uq/rsna_boneage/train_annotations.csv
-                val: /data_fae_uq/rsna_boneage/val_annotations.csv
-                test: /data_fae_uq/rsna_boneage/test_annotations.csv
+                train: /mnt/datassd/data_fae_uncertainty/train_annotations.csv
+                val: /mnt/datassd/data_fae_uncertainty/val_annotations.csv
+                test: /mnt/datassd/data_fae_uncertainty/test_annotations.csv
             img_base_dirs:
-                train: /data_fae_uq/rsna_boneage/train_val
-                val: /data_fae_uq/rsna_boneage/train_val
-                test: /data_fae_uq/rsna_boneage/test
+                train: /mnt/datassd/data_fae_uncertainty/train_val
+                val: /mnt/datassd/data_fae_uncertainty/train_val
+                test: /mnt/datassd/data_fae_uncertainty/test
 
 # model configuration
 models:
@@ -24,6 +24,8 @@ models:
             rescale_boneage: True
             rebalance_classes: True
         litmodel_config:
+            lr: 0.001
+            weight_decay: 0.001
             n_samples: 100
 
     rsna_inception_500_gender_laplace:
@@ -50,11 +52,11 @@ models:
             rescale_boneage: True
             rebalance_classes: True
         litmodel_config:
-            n_samples: 30
-            weight_decay: 0.001
-            swa_start_epoch: 150
             lr: 0.001
-            swa_lrs: 0.0008
+            weight_decay: 0.001
+            swa_lrs: 0.008
+            swa_start_epoch: 150
+            n_samples: 30
 
     rsna_inception_500_gender_variance_mcd:
         data: rsna_boneage
@@ -68,3 +70,20 @@ models:
             rebalance_classes: True
         litmodel_config:
             n_samples: 100
+
+    rsna_inception_500_gender_variance_swag:
+        data: rsna_boneage
+        provider_config:
+            base_net: inceptionv3
+            uncertainty_method: swag
+            img_input_dimensions: [500, 500]
+            variance_net: True
+            with_gender_input: True
+            rescale_boneage: True
+            rebalance_classes: True
+        litmodel_config:
+            n_samples: 30
+            weight_decay: 0.001
+            swa_start_epoch: 2
+            lr: 0.001
+            swa_lrs: 0.0008
