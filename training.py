@@ -65,6 +65,8 @@ def train_model(train_model_name: str, model_configurations: dict, config_defaul
     logger.info('Start Time: %s', train_config.start_time)
     logger.info('Model Name: %s', train_model_name)
     logger.info('Version: %s', version)
+    if train_config.sub_version:
+        logger.info('Subversion: %s', train_config.sub_version)
 
     try:
         if train_model_name not in model_configurations:
@@ -102,8 +104,9 @@ def train_model(train_model_name: str, model_configurations: dict, config_defaul
 
         # Log warning if training seems to be done already
         if os.path.exists(os.path.join(log_dir, TRAIN_RESULT_FILENAME)):
-            logger.warning(f'Training started, even though {TRAIN_RESULT_FILENAME} already exists, '
-                           'indicating that the training probably already has been finished!')
+            logger.info(f'File "{TRAIN_RESULT_FILENAME}" already exists, indicating that the '
+                        'training has already been finished! SKIPPING!')
+            return
 
         litmodel_kwargs = (model_config['litmodel_config']
                            if 'litmodel_config' in model_config
@@ -147,8 +150,6 @@ def train_model(train_model_name: str, model_configurations: dict, config_defaul
     except Exception:
         logger.critical('Training failed (see exception info below for reason)!', exc_info=True)
 
-    logger.info('DONE')
-
 
 def _get_annotation_file_and_img_dir(
         model_config: dict, config_defaults: dict, dataset: str) -> Tuple[str, str]:
@@ -180,3 +181,4 @@ if __name__ == '__main__':
     configuration_defaults = configuration['defaults']
 
     train_model(train_model_name, model_configurations, configuration_defaults, train_config)
+    logger.info('DONE')
