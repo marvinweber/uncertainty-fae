@@ -123,6 +123,7 @@ def train_model(train_model_name: str, model_configurations: dict, config_defaul
             img_val_base_dir=val_d,
             img_test_base_dir=test_d,
             batch_size=train_config.batch_size,
+            num_workers=train_config.dataloader_num_workers,
         )
 
         if not isinstance(model, TrainLoadMixin):
