@@ -54,7 +54,7 @@ models:
         litmodel_config:
             lr: 0.001
             weight_decay: 0.001
-            swa_lrs: 0.008
+            swa_lrs: 0.0008
             swa_start_epoch: 150
             n_samples: 30
 
