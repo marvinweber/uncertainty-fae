@@ -24,6 +24,8 @@ models:
             rescale_boneage: True
             rebalance_classes: True
         litmodel_config:
+            lr: 0.001
+            weight_decay: 0.001
             n_samples: 100
 
     rsna_inception_500_gender_laplace:
@@ -50,11 +52,11 @@ models:
             rescale_boneage: True
             rebalance_classes: True
         litmodel_config:
-            n_samples: 30
-            weight_decay: 0.001
-            swa_start_epoch: 150
             lr: 0.001
-            swa_lrs: 0.0008
+            weight_decay: 0.001
+            swa_lrs: 0.008
+            swa_start_epoch: 150
+            n_samples: 30
 
     rsna_inception_500_gender_variance_mcd:
         data: rsna_boneage
