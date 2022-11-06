@@ -86,7 +86,7 @@ class TrainConfig():
         if self.sub_version is not None and self.version is None:
             raise ValueError('You may not define --sub-version without --version!')
 
-    def get_lr_scheduler(self, optimizer: Optimizer) -> tuple[Any, str]:
+    def get_lr_scheduler(self, optimizer: Optimizer) -> tuple[Optional[Any], Optional[str]]:
         """Get the LR Scheduler based on given user arguments.
 
         Args:
@@ -104,6 +104,8 @@ class TrainConfig():
             scheduler = ReduceLROnPlateau(
                 optimizer, factor=factor, patience=patience, threshold=1e-4)
             return scheduler, 'val_loss'
+        
+        return None, None
 
 
 class TrainResult():
