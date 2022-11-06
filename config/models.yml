@@ -26,6 +26,19 @@ models:
         litmodel_config:
             n_samples: 100
 
+    rsna_inception_750_gender_mcd:
+        data: rsna_boneage
+        provider_config:
+            base_net: inceptionv3
+            uncertainty_method: mc_dropout
+            img_input_dimensions: [750, 750]
+            variance_net: False
+            with_gender_input: True
+            rescale_boneage: True
+            rebalance_classes: True
+        litmodel_config:
+            n_samples: 100
+
     rsna_inception_500_gender_laplace:
         data: rsna_boneage
         provider_config:
