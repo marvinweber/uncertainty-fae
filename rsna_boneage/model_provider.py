@@ -11,6 +11,7 @@ from rsna_boneage.litmodel import (LitRSNABoneage, LitRSNABoneageLaplace, LitRSN
                                    LitRSNABoneageVarianceNetMCDropout)
 from uncertainty.model import TrainLoadMixin
 from util import ModelProvider
+from util.training import TrainConfig
 
 from .data import RSNABoneageDataModule
 from .net.inception import RSNABoneageInceptionNetWithGender
@@ -38,11 +39,20 @@ RSNA_VARIANCE_LITMODEL_MAPPING: Dict[str, TrainLoadMixin] = {
 
 class RSNAModelProvider(ModelProvider):
 
-    def __init__(self, base_net: str, uncertainty_method: str,
-                 img_input_dimensions: Tuple[int, int], variance_net: bool, with_gender_input: bool,
-                 rescale_boneage: bool = True, rebalance_classes: bool = True,
-                 with_pretrained_weights: bool = True) -> None:
+    def __init__(
+        self,
+        train_config: TrainConfig,
+        base_net: str,
+        uncertainty_method: str,
+        img_input_dimensions: Tuple[int, int],
+        variance_net: bool,
+        with_gender_input: bool,
+        rescale_boneage: bool = True,
+        rebalance_classes: bool = True,
+        with_pretrained_weights: bool = True,
+    ) -> None:
         super().__init__()
+        self.train_config = train_config
         self.base_net = base_net
         self.uncertainty_method = uncertainty_method
         self.img_input_dimensions = tuple(img_input_dimensions)
@@ -73,10 +83,15 @@ class RSNAModelProvider(ModelProvider):
 
         # Create Litmodel
         if checkpoint is not None:
-            litmodel = litmodel_cls.load_model_from_disk(checkpoint, net=net, **litmodel_kwargs,
-                                                         **checkpoint_kwargs)
+            litmodel = litmodel_cls.load_model_from_disk(
+                checkpoint,
+                net=net,
+                train_config=self.train_config,
+                **litmodel_kwargs,
+                **checkpoint_kwargs,
+            )
         else:
-            litmodel = litmodel_cls(net=net, **litmodel_kwargs)
+            litmodel = litmodel_cls(net=net, train_config=self.train_config, **litmodel_kwargs)
 
         return litmodel
 
@@ -115,8 +130,8 @@ class RSNAModelProvider(ModelProvider):
         return datamodule
 
     @classmethod
-    def get_provider(cls, **kwargs) -> 'ModelProvider':
-        return RSNAModelProvider(**kwargs)
+    def get_provider(cls, train_config: TrainConfig, **kwargs) -> 'ModelProvider':
+        return RSNAModelProvider(train_config=train_config, **kwargs)
 
 
 def _get_inception(with_gender_input: bool, with_pretrained_weights_if_avail=True,

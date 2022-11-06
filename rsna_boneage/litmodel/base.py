@@ -9,6 +9,7 @@ from torchvision.models.inception import InceptionOutputs
 
 from uncertainty.model import TrainLoadMixin, UncertaintyAwareModel
 from util.nll_regression_loss import nll_regression_loss
+from util.training import TrainConfig
 
 
 class LitRSNABoneage(TrainLoadMixin, LightningModule):
@@ -20,15 +21,15 @@ class LitRSNABoneage(TrainLoadMixin, LightningModule):
         weight_decay: float = 0,
         momentum: float = 0,
         optim_type: str = 'adam',
-        lr_scheduler: Optional[str] = 'reduce_lr_on_plateau',
-        undo_boneage_rescale=False
+        train_config: Optional[TrainConfig] = None,
+        undo_boneage_rescale=False,
     ) -> None:
         super().__init__()
 
         self.net = net
 
+        self.train_config = train_config
         self.optim_type = optim_type
-        self.lr_scheduler = lr_scheduler
         self.lr = lr
         self.momentum = momentum
         self.weight_decay = weight_decay
@@ -107,13 +108,14 @@ class LitRSNABoneage(TrainLoadMixin, LightningModule):
             'optimizer': optim
         }
 
-        if self.lr_scheduler == 'reduce_lr_on_plateau':
-            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-                optim, factor=0.9, patience=10, threshold=1e-4)
-            config['lr_scheduler'] = {'scheduler': scheduler, 'monitor': 'val_loss'}
-        elif self.lr_scheduler:
-            # an unknown scheduler is given
-            raise ValueError(f'Unkown lr scheduler type: {self.lr_scheduler}')
+        # Create/get LR Scheduler for created Optimizer
+        if isinstance(self.train_config, TrainConfig):
+            lr_scheduler, monitor_metric = self.train_config.get_lr_scheduler(optim)
+
+            if lr_scheduler:
+                config['lr_scheduler'] = {'scheduler': lr_scheduler}
+            if monitor_metric:
+                config['lr_scheduler']['monitor'] = monitor_metric
 
         return config
 
