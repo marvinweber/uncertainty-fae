@@ -10,6 +10,7 @@ from laplace.utils import FeatureExtractor
 from pytorch_lightning import Callback, LightningDataModule
 from torch import Tensor
 from torch.utils.data import DataLoader
+
 from rsna_boneage.litmodel.base import LitRSNABoneage
 from uncertainty.model import TrainLoadMixin, UncertaintyAwareModel
 from util.training import TrainConfig, TrainResult
@@ -28,6 +29,9 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
         self.n_samples = n_samples
         self.base_model = self.BASE_MODEL_CLASS(*args, **kwargs)
         self.la_model: BaseLaplace = None
+
+        self.laplace_backend_loss_fn_decorator = laplace_backend_loss_fn_decorator_standard
+        """Decorator/ Wrapper for Laplace Backend Loss function; see train method for details."""
 
     @torch.no_grad()
     def forward_without_uncertainty(self, x: torch.Tensor):
@@ -125,14 +129,25 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
             logger.warning('Cuda not available; LA fit on CPU may take very long!')
 
         la: KronLLLaplace = Laplace(model.base_model, 'regression', 'last_layer', 'kron')
+
+        # We need to adjust the loss function used by the laplace backend, because per default MSE
+        # is used and fed with a column prediction vector and a row target value which results in
+        # too high loss values.
+        # Solution: wrap the loss function an unsqueeze the targets. For this, we need to access the
+        # backend, which requires the last_layer to be known.
+        X, _ = next(iter(datamodule.train_dataloader()))
+        la.model.find_last_layer(X.cuda() if torch.cuda.is_available() else X)
+        la.backend.lossfunc = model.laplace_backend_loss_fn_decorator(la.backend.lossfunc)
+
+        # Perform Laplace Last-Layer Approximation and Optimize Prior Precision
         la.fit(datamodule.train_dataloader())
-        model.la_model = la
+        logger.info('Starting prior precision optimization...')
+        la.optimize_prior_precision(pred_type='nn')
 
-        logger.info('LA fit done; dumping model to file...')
-
+        logger.info('LA Fit and Optimization done; dumping model to file...')
         # store model in eval mode
+        model.la_model = la
         model.la_model.model.eval()
-
         # base model can be restored from checkpoint file -> don't serialize it twice
         del model.base_model
         model.base_model = None
@@ -146,3 +161,10 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
         }
         return TrainResult(interrupted=False, best_model_path=laplace_model_fpath,
                            additional_info=additional_info)
+
+
+def laplace_backend_loss_fn_decorator_standard(loss_fn):
+    def inner(x: Tensor, y: Tensor):
+        y = y.unsqueeze(1)
+        return loss_fn(x, y)
+    return inner
