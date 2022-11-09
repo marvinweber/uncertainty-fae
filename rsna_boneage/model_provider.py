@@ -107,9 +107,9 @@ class RSNAModelProvider(ModelProvider):
             num_workers: int = 4,
     ) -> LightningDataModule:
         train_data_augmentation_transform = transforms.Compose([
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomRotation(30),
-            transforms.ColorJitter(brightness=0.5)
+            transforms.RandomRotation(15),
+            transforms.TrivialAugmentWide(),
+            transforms.RandomPerspective(distortion_scale=0.15, p=0.05),
         ])
         datamodule = RSNABoneageDataModule(
             annotation_file_train=train_annotation_file,
