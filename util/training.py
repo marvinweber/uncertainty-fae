@@ -24,6 +24,8 @@ def parse_cli_args(type: str) -> argparse.Namespace:
                         help='Maximum Epochs to train.')
     parser.add_argument('--early-stopping-patience', metavar='EARLY_STOPPING_PATIENCE', type=int,
                         default=10, required=False, help='Patience for EarlyStopping Callback.')
+    parser.add_argument('--train-no-augmentation', action='store_true', required=False,
+                        default=False, help='Disable training data augmentation.')
     parser.add_argument('--save-dir', metavar='SAVE_DIR', type=str, default='train_logs',
                         required=False,
                         help='Directory to save training logs (checkpoints, metrics) to.')
@@ -63,6 +65,7 @@ class TrainConfig():
         self.max_epochs=args.max_epochs
         self.early_stopping_patience=args.early_stopping_patience
         self.save_top_k_checkpoints=args.save_top_k_checkpoints
+        self.train_no_augmentation=args.train_no_augmentation
         self.save_dir=args.save_dir
         self.start_time=datetime.now().strftime('%Y-%m-%d-%H-%M-%S-%f')
         self.no_resume=args.no_resume

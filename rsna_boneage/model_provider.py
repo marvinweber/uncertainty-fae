@@ -1,4 +1,5 @@
 
+import logging
 from typing import Dict, Optional, Tuple
 
 from pytorch_lightning import LightningDataModule
@@ -19,6 +20,8 @@ from .net.resnet import RSNABoneageResNetWithGender
 from .net.resnet import resnet18 as boneage_resnet18
 from .net.resnet import resnet34 as boneage_resnet34
 from .net.resnet import resnet50 as boneage_resnet50
+
+logger = logging.getLogger(__name__)
 
 RSNA_LITMODEL_MAPPING: Dict[str, TrainLoadMixin] = {
     'base': LitRSNABoneage,
@@ -106,11 +109,16 @@ class RSNAModelProvider(ModelProvider):
             batch_size: int = 8,
             num_workers: int = 4,
     ) -> LightningDataModule:
-        train_data_augmentation_transform = transforms.Compose([
-            transforms.RandomRotation(15),
-            transforms.TrivialAugmentWide(),
-            transforms.RandomPerspective(distortion_scale=0.15, p=0.05),
-        ])
+        if self.train_config and self.train_config.train_no_augmentation:
+            train_data_augmentation_transform = None
+            logger.info('Training Data Augmentation DISABLED')
+        else:
+            train_data_augmentation_transform = transforms.Compose([
+                transforms.RandomRotation(15),
+                transforms.TrivialAugmentWide(),
+                transforms.RandomPerspective(distortion_scale=0.15, p=0.05),
+            ])
+
         datamodule = RSNABoneageDataModule(
             annotation_file_train=train_annotation_file,
             annotation_file_val=val_annotation_file,
