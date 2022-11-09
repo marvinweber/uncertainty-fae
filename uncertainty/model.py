@@ -150,7 +150,7 @@ class TrainLoadMixin:
         super().__init__(*args, **kwargs)
 
     @classmethod
-    def load_model_from_disk(cls, **kwargs):
+    def load_model_from_disk(cls, checkpoint_path, **kwargs):
         raise NotImplementedError('Method not implemented!')
 
     @classmethod
