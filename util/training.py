@@ -1,4 +1,5 @@
 import argparse
+from datetime import datetime
 from typing import Any, Optional
 
 from pytorch_lightning import Trainer
@@ -56,32 +57,19 @@ def parse_cli_args(type: str) -> argparse.Namespace:
 
 class TrainConfig():
 
-    def __init__(
-        self,
-        args: argparse.Namespace,
-        max_epochs: int,
-        early_stopping_patience: int,
-        save_dir: str,
-        start_time: str,
-        batch_size: int = 8,
-        save_top_k_checkpoints: int = 2,
-        no_resume: bool = False,
-        version: str = None,
-        sub_version: str = None,
-        dataloader_num_workers: int = 4,
-    ) -> None:
+    def __init__(self, args: argparse.Namespace) -> None:
         self.args = args
 
-        self.max_epochs = max_epochs
-        self.early_stopping_patience = early_stopping_patience
-        self.save_dir = save_dir
-        self.start_time = start_time
-        self.batch_size = batch_size
-        self.save_top_k_checkpoints = save_top_k_checkpoints
-        self.no_resume = no_resume
-        self.version = version
-        self.sub_version = sub_version
-        self.dataloader_num_workers = dataloader_num_workers
+        self.max_epochs=args.max_epochs
+        self.early_stopping_patience=args.early_stopping_patience
+        self.save_top_k_checkpoints=args.save_top_k_checkpoints
+        self.save_dir=args.save_dir
+        self.start_time=datetime.now().strftime('%Y-%m-%d-%H-%M-%S-%f')
+        self.no_resume=args.no_resume
+        self.version=args.version
+        self.sub_version=args.sub_version
+        self.batch_size=args.batch_size
+        self.dataloader_num_workers=args.dataloader_num_workers
 
         if self.sub_version is not None and self.version is None:
             raise ValueError('You may not define --sub-version without --version!')
@@ -91,7 +79,7 @@ class TrainConfig():
 
         Args:
             optimizer: The optimizer to wrap with the lr scheduler.
-        
+
         Returns:
             A tuple with the scheduler first and the metric to monitor (e.g. required by the
             `ReduceLROnPlateau`) second.
@@ -104,7 +92,7 @@ class TrainConfig():
             scheduler = ReduceLROnPlateau(
                 optimizer, factor=factor, patience=patience, threshold=1e-4)
             return scheduler, 'val_loss'
-        
+
         return None, None
 
 

@@ -1,6 +1,5 @@
 import logging
 import os
-from datetime import datetime
 from typing import Dict, Tuple
 
 import yaml
@@ -130,12 +129,7 @@ if __name__ == '__main__':
 
     train_model_name = args.model_name
     configuration_path = args.configuration
-    train_config = TrainConfig(
-        args, max_epochs=args.max_epochs, early_stopping_patience=args.early_stopping_patience,
-        save_top_k_checkpoints=args.save_top_k_checkpoints, save_dir=args.save_dir,
-        start_time=datetime.now().strftime('%Y-%m-%d-%H-%M-%S-%f'), no_resume=args.no_resume,
-        version=args.version, sub_version=args.sub_version, batch_size=args.batch_size,
-        dataloader_num_workers=args.dataloader_num_workers)
+    train_config = TrainConfig(args)
 
     with open(configuration_path, 'r') as f:
         configuration = yaml.safe_load(f)
