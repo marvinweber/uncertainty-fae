@@ -1,5 +1,5 @@
 
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 from pytorch_lightning import LightningDataModule
 from torch import nn
@@ -41,7 +41,6 @@ class RSNAModelProvider(ModelProvider):
 
     def __init__(
         self,
-        train_config: TrainConfig,
         base_net: str,
         uncertainty_method: str,
         img_input_dimensions: Tuple[int, int],
@@ -50,6 +49,7 @@ class RSNAModelProvider(ModelProvider):
         rescale_boneage: bool = True,
         rebalance_classes: bool = True,
         with_pretrained_weights: bool = True,
+        train_config: Optional[TrainConfig] = None,
     ) -> None:
         super().__init__()
         self.train_config = train_config
@@ -130,7 +130,9 @@ class RSNAModelProvider(ModelProvider):
         return datamodule
 
     @classmethod
-    def get_provider(cls, train_config: TrainConfig, **kwargs) -> 'ModelProvider':
+    def get_provider(
+        cls, train_config: Optional[TrainConfig] = None, **kwargs
+    ) -> 'RSNAModelProvider':
         return RSNAModelProvider(train_config=train_config, **kwargs)
 
 
