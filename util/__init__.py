@@ -3,6 +3,7 @@ from typing import Optional
 
 from pytorch_lightning import LightningDataModule
 from torch import nn
+import torch
 
 from util.training import TrainConfig
 
@@ -49,3 +50,9 @@ class ModelProvider(ABC):
             The `LightningDataModule` according to the given configuration.
         """
         ...
+
+
+def dropout_train(m: torch.nn.Module):
+    """Set all dropout layers in given module `m` to train mode."""
+    if isinstance(m, torch.nn.modules.dropout.Dropout):
+        m.train()

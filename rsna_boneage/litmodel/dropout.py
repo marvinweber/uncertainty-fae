@@ -1,13 +1,14 @@
-from typing import Any
+from typing import Any, Optional
 
 import torch
-from torch import vstack
+from torch import Tensor
+from torch.utils.data import DataLoader
 
 from rsna_boneage.data import undo_boneage_rescale
 from rsna_boneage.litmodel.base import LitRSNABoneage, LitRSNABoneageVarianceNet
-from rsna_boneage.net.inception import RSNABoneageInceptionNetWithGender
-from rsna_boneage.net.resnet import RSNABoneageResNetWithGender
-from uncertainty.model import UncertaintyAwareModel
+from uncertainty.model import (ADT_STAT_PREDS_DISTINCT, ADT_STAT_PREDS_VAR, UncertaintyAwareModel,
+                               uam_evaluate_dataset_default)
+from util import dropout_train
 
 
 class LitRSNABoneageMCDropout(UncertaintyAwareModel, LitRSNABoneage):
@@ -16,67 +17,77 @@ class LitRSNABoneageMCDropout(UncertaintyAwareModel, LitRSNABoneage):
         self.n_samples = n_samples
         super().__init__(*args, **kwargs)
 
-    def forward_with_uncertainty(self, batch) -> tuple[torch.Tensor, Any]:
+    def forward_with_uncertainty(self, batch) -> tuple[Tensor, Tensor, Optional[dict[str, Any]]]:
         # Enable Dropout Layers in Network for MC
-        self.net.dropout.train()
-        # Workarround for Gender Nets -> TODO: Abstraction into Interface
-        if isinstance(self.net, RSNABoneageInceptionNetWithGender):
-            self.net.inception.dropout.train()
-        if isinstance(self.net, RSNABoneageResNetWithGender):
-            self.net.resnet.dropout.train()
+        self.apply(dropout_train)
 
         with torch.no_grad():
-            preds = [self.forward(batch).cpu() for _ in range(self.n_samples)]
+            preds = [self.forward(batch).cpu().flatten() for _ in range(self.n_samples)]
+            preds = torch.stack(preds)
+
+        preds_mean = preds.mean(dim=0)
+        preds_var = preds.var(dim=0)
+        preds_std = preds.std(dim=0)
 
         if self.undo_boneage_rescale:
-            preds = [undo_boneage_rescale(pred) for pred in preds]
-        preds = vstack(preds)
+            preds = undo_boneage_rescale(preds)
+            preds_mean = undo_boneage_rescale(preds_mean)
+            preds_var = undo_boneage_rescale(preds_var)
+            preds_std = undo_boneage_rescale(preds_std)
 
-        # TODO: check return type of tensor
-        # TODO: batch support
-        # TODO: gaussian quantile thing calculation
-        quantile_5 = preds.quantile(0.05)
-        quantile_17 = preds.quantile(0.17)
-        quantile_83 = preds.quantile(0.83)
-        quantile_95 = preds.quantile(0.95)
         metrics = {
-            'mean': preds.mean(),
-            'median': preds.median(),
-            'std': preds.std(),
-            'var': preds.var(),
-            'quantile_5': quantile_5,
-            'quantile_17': quantile_17,
-            'quantile_83': quantile_83,
-            'quantile_95': quantile_95,
-            'uncertainty': preds.std(),
-            'predictions': preds,
+            ADT_STAT_PREDS_DISTINCT: [preds[:, i:i+1].flatten() for i in range(len(batch))],
+            ADT_STAT_PREDS_VAR: preds_var,
         }
-        return torch.Tensor([metrics['mean'], metrics['uncertainty']]), metrics
+        return preds_mean, preds_std, metrics
+
+    def evaluate_dataset(
+        self, dataloader: DataLoader
+    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, Optional[dict[str, Any]]]:
+        self.eval()
+        self.cuda()
+        return uam_evaluate_dataset_default(self, self.device, dataloader)
 
 
 class LitRSNABoneageVarianceNetMCDropout(LitRSNABoneageVarianceNet):
 
-    def __init__(self, n_samples: int = 100, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, *args, n_samples: int = 100, **kwargs):
         self.n_samples = n_samples
+        super().__init__(*args, **kwargs)
 
-    def forward_with_uncertainty(self, input) -> tuple[torch.Tensor, Any]:
+    def forward_with_uncertainty(self, batch) -> tuple[Tensor, Tensor, Optional[dict[str, Any]]]:
         # Enable Dropout Layers in Network for MC
-        self.net.dropout.train()
-        # Workarround for Gender Nets -> TODO: Abstraction into Interface
-        if isinstance(self.net, RSNABoneageInceptionNetWithGender):
-            self.net.inception.dropout.train()
-        if isinstance(self.net, RSNABoneageResNetWithGender):
-            self.net.resnet.dropout.train()
+        self.apply(dropout_train)
 
         with torch.no_grad():
-            preds = [self.forward(input).cpu() for _ in range(self.n_samples)]
+            iter_means = []
+            iter_vars = []
+
+            for _ in range(self.n_samples):
+                pred_mean_var = self.forward(batch).cpu()
+                iter_means.append(pred_mean_var[:, :1].cpu().flatten())  # Mean Column (1st)
+                iter_vars.append(pred_mean_var[:, 1:].cpu().flatten())  # Variance Column (2nd)
+
+            preds_mean = torch.stack(iter_means)
+            preds_var = torch.stack(iter_vars)
+
+        preds_mean = preds_mean.mean(dim=0)
+        preds_var = preds_var.mean(dim=0)
+        preds_std = torch.sqrt(preds_var)
 
         if self.undo_boneage_rescale:
-            preds = [undo_boneage_rescale(pred) for pred in preds]
-        preds = vstack(preds)
+            preds_mean = undo_boneage_rescale(preds_mean)
+            preds_var = undo_boneage_rescale(preds_var)
+            preds_std = undo_boneage_rescale(preds_std)
 
-        # TODO: check return type of tensor
-        # TODO: batch support
-        # TODO: gaussian quantile thing calculation
-        return preds.mean(dim=0), None
+        metrics = {
+            ADT_STAT_PREDS_VAR: preds_var,
+        }
+        return preds_mean, preds_std, metrics
+
+    def evaluate_dataset(
+        self, dataloader: DataLoader
+    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, Optional[dict[str, Any]]]:
+        self.eval()
+        self.cuda()
+        return uam_evaluate_dataset_default(self, self.device, dataloader)
