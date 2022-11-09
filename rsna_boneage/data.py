@@ -19,26 +19,35 @@ RSNA_BONEAGE_DATASET_MAX_AGE = 230
 
 
 class RSNABoneageDataset(Dataset):
-    """
-    RSNA Boneage Dataset.
-    
-    Attributes
-    ----------
-        annotation_file : string
-            Path to a csv file with annotations
-        transform : list (optional)
-            Optional list of transforms to be applied to a sample
-    """
+
     def __init__(
         self,
         annotation_file: str,
         img_base_dir: str = None,
-        transform=None,
-        target_dimensions=(500, 500),
+        transform: Optional[transforms.Compose] =  None,
+        target_dimensions: tuple[int, int] = (500, 500),
         rescale_boneage=False,
         rebalance_classes=False,
-        with_gender_input=False
+        with_gender_input=False,
     ) -> None:
+        """
+        RSNA Bone Age Dataset
+
+        Args:
+            annotation_file: Path to a CSV file with the annotations (containing id, img_path, 
+                boneage, male). The "img_path" column can be ommited, if `img_base_dir` is given.
+            img_base_dir: The base directory in which to search for the images. If given, the path
+                for each image is dynamically derived from the given directory and the image id.
+            transform: Optionally, a Compose Transform each image will be passed through BEFORE it
+                is converted to `target_dimensions`. Single transform should be wrapped in `Compose`
+                as well.
+            target_dimensions: Targed dimensions the images are scaled to.
+            rescale_boneage: Whether to rescale the bone age into values between [0, 1].
+            rebalance_classes: Wether to ensure bin-wise balacned bone age classes. This will cause
+                some images of bins with less images than other bins to be returned multiple times!
+            with_gender_input: Wether each item should only return the Image (`False`), or if the
+                gender (is_male) should also be returned (`False`).
+        """
         super().__init__()
 
         self.annotation_file = annotation_file
@@ -129,9 +138,9 @@ class RSNABoneageDataModule(LightningDataModule):
         img_val_base_dir: str = None,
         img_test_base_dir: str = None,
         batch_size: int = 1,
-        train_transform=None,
-        val_transform=None,
-        test_transform=None,
+        train_transform: Optional[transforms.Compose] = None,
+        val_transform: Optional[transforms.Compose] = None,
+        test_transform: Optional[transforms.Compose] = None,
         target_dimensions=(500, 500),
         rescale_boneage=False,
         rebalance_classes=False,
