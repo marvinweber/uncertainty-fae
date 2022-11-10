@@ -154,6 +154,9 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
         X, _ = next(iter(datamodule.train_dataloader()))
         la.model.find_last_layer(X.cuda() if torch.cuda.is_available() else X)
         la.backend.lossfunc = model.laplace_backend_loss_fn_decorator(la.backend.lossfunc)
+        # Workaround, because the Laplace (KronLLLaplace::fit()) fit-method only sets some other
+        # parameters (e.g., n_params), when the last_layer is not set already.
+        la.model.last_layer = None
 
         # Perform Laplace Last-Layer Approximation and Optimize Prior Precision
         la.fit(datamodule.train_dataloader())
