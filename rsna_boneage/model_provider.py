@@ -5,7 +5,8 @@ from typing import Dict, Optional, Tuple
 from pytorch_lightning import LightningDataModule
 from torch import nn
 from torchvision import transforms
-from torchvision.models import inception_v3, resnet18, resnet34, resnet50
+from torchvision.models import (Inception_V3_Weights, ResNet18_Weights, ResNet34_Weights,
+                                ResNet50_Weights, inception_v3, resnet18, resnet34, resnet50)
 
 from rsna_boneage.litmodel import (LitRSNABoneage, LitRSNABoneageLaplace, LitRSNABoneageMCDropout,
                                    LitRSNABoneageSWAG, LitRSNABoneageVarianceNet,
@@ -147,10 +148,11 @@ class RSNAModelProvider(ModelProvider):
 def _get_inception(with_gender_input: bool, with_pretrained_weights_if_avail=True,
                    output_neurons=1) -> nn.Module:
     inception_num_classes=output_neurons if not with_gender_input else 1000
-    inception_net = inception_v3(pretrained=False, num_classes=inception_num_classes)
+    inception_net = inception_v3(weights=None, num_classes=inception_num_classes)
 
     if with_pretrained_weights_if_avail:
-        inception_pretrained = inception_v3(pretrained=True, progress=True)
+        inception_pretrained = inception_v3(
+            weights=Inception_V3_Weights.IMAGENET1K_V1, progress=True)
         inception_pretrained_state_dict = inception_pretrained.state_dict()
 
         inception_state_dict = inception_net.state_dict()
@@ -173,14 +175,14 @@ def _get_resnet(name: str, with_gender_input: bool,
     num_classes_resnet = output_neurons if not with_gender_input else 1000
 
     if name == 'resnet18':
-        resnet = boneage_resnet18(pretrained=False, progress=True, num_classes=num_classes_resnet)
-        resnet_pretrained = resnet18(pretrained=True, progress=True)
+        resnet = boneage_resnet18(weights=None, num_classes=num_classes_resnet)
+        resnet_pretrained = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1, progress=True)
     elif name == 'resnet34':
-        resnet = boneage_resnet34(pretrained=False, progress=True, num_classes=num_classes_resnet)
-        resnet_pretrained = resnet34(pretrained=True, progress=True)
+        resnet = boneage_resnet34(weights=None, num_classes=num_classes_resnet)
+        resnet_pretrained = resnet34(weights=ResNet34_Weights.IMAGENET1K_V1, progress=True)
     elif name == 'resnet50':
-        resnet = boneage_resnet50(pretrained=False, progress=True, num_classes=num_classes_resnet)
-        resnet_pretrained = resnet50(pretrained=True, progress=True)
+        resnet = boneage_resnet50(weights=None, num_classes=num_classes_resnet)
+        resnet_pretrained = resnet50(weights=ResNet50_Weights.IMAGENET1K_V1, progress=True)
 
     if resnet is None:
         raise ValueError('Invalid Arguments!')
