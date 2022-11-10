@@ -1,13 +1,13 @@
-from typing import Any, Optional, Tuple
+from typing import Any, Optional
 
 import torch
 import torch.nn.functional
 import torch.optim
 from pytorch_lightning.core.module import LightningModule
-from torch import nn, squeeze
+from torch import Tensor, nn, squeeze
 from torchvision.models.inception import InceptionOutputs
 
-from uncertainty.model import TrainLoadMixin, UncertaintyAwareModel
+from uncertainty.model import ADT_STAT_PREDS_VAR, TrainLoadMixin, UncertaintyAwareModel
 from util.nll_regression_loss import nll_regression_loss
 from util.training import TrainConfig
 
@@ -41,11 +41,12 @@ class LitRSNABoneage(TrainLoadMixin, LightningModule):
 
         self.save_hyperparameters(ignore=['net'])
 
-    def forward(self, x: Any) -> Any:
+    def forward(self, x: Any) -> Tensor:
         logits = self.net.forward(x)
 
         # Workaround to make this LitModel usable with Inception, too.
         if isinstance(logits, InceptionOutputs):
+            assert isinstance(logits.logits, Tensor)
             logits = logits.logits
 
         return logits
@@ -162,5 +163,13 @@ class LitRSNABoneageVarianceNet(UncertaintyAwareModel, LitRSNABoneage):
 
         return loss
 
-    def forward_with_uncertainty(self, input) -> Tuple[torch.Tensor, Any]:
-        return self.forward(input), None
+    def forward_with_uncertainty(self, input) -> tuple[Tensor, Tensor, Optional[dict]]:
+        pred_mean_var = self.forward(input)
+        pred_mean = pred_mean_var[:, :1].cpu().flatten()
+        pred_var = pred_mean_var[:, 1:].cpu().flatten()
+        pred_std = torch.sqrt(pred_var)
+
+        metrics = {
+            ADT_STAT_PREDS_VAR: pred_var,
+        }
+        return pred_mean, pred_std, metrics
