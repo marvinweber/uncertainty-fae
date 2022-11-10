@@ -11,8 +11,9 @@ from pytorch_lightning import Callback, LightningDataModule
 from torch import Tensor
 from torch.utils.data import DataLoader
 
-from rsna_boneage.litmodel.base import LitRSNABoneage
-from uncertainty.model import TrainLoadMixin, UncertaintyAwareModel
+from rsna_boneage.data import undo_boneage_rescale
+from uncertainty.model import (ADT_STAT_PREDS_VAR, TrainLoadMixin, UncertaintyAwareModel,
+                               uam_evaluate_dataset_default)
 from util.training import TrainConfig, TrainResult
 
 logger = logging.getLogger(__name__)
@@ -54,20 +55,36 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
             raise ValueError('Neither base_model, nor la_model are available. No Forward possible!')
 
     @torch.no_grad()
-    def forward_with_uncertainty(self, input) -> tuple[torch.Tensor, Any]:
+    def forward_with_uncertainty(self, input) -> tuple[Tensor, Tensor, Optional[dict[str, Any]]]:
         assert isinstance(self.la_model, BaseLaplace), \
             'Loaded model has not yet been last-layer laplace approximated (no la_model available)!'
 
         self.la_model.model.eval()
-        predictions = self.la_model(input, pred_type='nn', link_approx='mc',
-                                    n_samples=self.n_samples)
-        return predictions
+        preds_mean, preds_var = self.la_model(
+            input,
+            pred_type='nn',
+            link_approx='mc',
+            n_samples=self.n_samples
+        )
+        preds_mean = preds_mean.cpu().flatten()
+        preds_var = preds_var.cpu().flatten()
+        preds_std = torch.sqrt(preds_var)
+
+        if self.undo_boneage_rescale:
+            preds_mean = undo_boneage_rescale(preds_mean)
+            preds_var = undo_boneage_rescale(preds_var)
+            preds_std = undo_boneage_rescale(preds_std)
+
+        metrics = {
+            ADT_STAT_PREDS_VAR: preds_var,
+        }
+        return preds_mean, preds_std, metrics
 
     def evaluate_dataset(
         self,
         dataloader: DataLoader
     ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, dict[Any, dict], dict[str, Any]]:
-        raise NotImplementedError('Not yet implemented')  # TODO: implement
+        return uam_evaluate_dataset_default(self, 'cuda', dataloader)
 
     @classmethod
     def load_model_from_disk(
