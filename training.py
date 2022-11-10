@@ -1,6 +1,5 @@
 import logging
 import os
-from typing import Dict, Tuple
 
 import yaml
 
@@ -14,7 +13,7 @@ logger = logging.getLogger('UNCERTAINTY_FAE_TRAINING')
 TRAIN_CONFIG_FILENAME = 'config.yml'
 TRAIN_RESULT_FILENAME = 'train_result.yml'
 
-PROVIDER_MAPPING: Dict[str, ModelProvider] = {
+PROVIDER_MAPPING: dict[str, ModelProvider] = {
     'rsna_boneage': RSNAModelProvider,
 }
 
@@ -114,7 +113,7 @@ def train_model(train_model_name: str, model_configurations: dict, config_defaul
 
 
 def _get_annotation_file_and_img_dir(
-        model_config: dict, config_defaults: dict, dataset: str) -> Tuple[str, str]:
+        model_config: dict, config_defaults: dict, dataset: str) -> tuple[str, str]:
     annotation_file = (model_config.get('datasets', {}).get('annotations', {}).get(dataset, {})
             or config_defaults[model_config['data']]['datasets']['annotations'][dataset])
     img_base_dir = (model_config.get('datasets', {}).get('img_base_dirs', {}).get(dataset, {})
