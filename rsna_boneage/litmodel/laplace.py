@@ -23,10 +23,17 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
     BASE_MODEL_CLASS = LitRSNABoneage
     """Class type of the base model trained before Laplace approximation."""
 
-    def __init__(self, *args, n_samples: int = 100, **kwargs):
+    def __init__(
+        self,
+        *args,
+        n_samples: int = 100,
+        undo_boneage_rescale: Optional[bool] = False,
+        **kwargs
+    ) -> None:
         super().__init__()
 
         self.n_samples = n_samples
+        self.undo_boneage_rescale = undo_boneage_rescale
         self.base_model = self.BASE_MODEL_CLASS(*args, **kwargs)
         self.la_model: BaseLaplace = None
 
@@ -63,9 +70,14 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
         raise NotImplementedError('Not yet implemented')  # TODO: implement
 
     @classmethod
-    def load_model_from_disk(cls, checkpoint_path: str, base_model_checkpoint_pth: str = None,
-                             **kwargs) -> 'LitRSNABoneageLaplace':
-        
+    def load_model_from_disk(
+        cls,
+        checkpoint_path: str,
+        base_model_checkpoint_pth: str = None,
+        n_samples: int = 100,
+        undo_boneage_rescale: Optional[bool] = False,
+        **kwargs,
+    ) -> 'LitRSNABoneageLaplace':
         logger.info('Loading Laplace Model from file...')
         with gzip.open(checkpoint_path, 'rb') as file:
             model = dill.load(file)
@@ -74,6 +86,10 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
         assert isinstance(model.la_model, BaseLaplace), \
             ('Loaded model has not yet been last-layer laplace approximated (no la_model found in '
              'the serialized file)!')
+        # We must explicitly update the model parameters (the ones from training, stored in the
+        # dumped model, could be different from the ones used when loading the model again).
+        model.n_samples = n_samples
+        model.undo_boneage_rescale = undo_boneage_rescale
 
         if base_model_checkpoint_pth is not None:
             if not os.path.isfile(base_model_checkpoint_pth):
