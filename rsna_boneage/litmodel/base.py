@@ -92,8 +92,8 @@ class LitRSNABoneage(TrainLoadMixin, LightningModule):
         self.log('test_loss', loss)
 
     @classmethod
-    def load_model_from_disk(cls, **kwargs):
-        return cls.load_from_checkpoint(**kwargs)
+    def load_model_from_disk(cls, checkpoint_path: str, **kwargs):
+        return cls.load_from_checkpoint(checkpoint_path, **kwargs)
 
     def configure_optimizers(self):
         if self.optim_type == 'adam':
