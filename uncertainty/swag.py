@@ -49,7 +49,7 @@ class SwagEvalCallback(Callback):
             return
 
         logger.info('Running SWAG Evaluation...')
-        score, _, _, _, _, _, metrics = self.swag_model.evaluate_dataset(self.validation_dataloader)
+        score, _, _, _, _, metrics = self.swag_model.evaluate_dataset(self.validation_dataloader)
         logs = {f'swag_val_{key}': val
                 for key, val in metrics.items() if key in self.metrics_to_log}
         for l in trainer.loggers:
