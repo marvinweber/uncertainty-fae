@@ -1,4 +1,6 @@
 from rsna_boneage.litmodel.base import LitRSNABoneage, LitRSNABoneageVarianceNet
+from rsna_boneage.litmodel.deep_ensemble import (LitRSNABoneageDeepEnsemble,
+                                                 LitRSNABoneageVarianceNetDeepEnsemble)
 from rsna_boneage.litmodel.dropout import (LitRSNABoneageMCDropout,
                                            LitRSNABoneageVarianceNetMCDropout)
 from rsna_boneage.litmodel.laplace import LitRSNABoneageLaplace
@@ -12,7 +14,7 @@ __all__ = [
     'LitRSNABoneageMCDropout', 'LitRSNABoneageVarianceNetMCDropout',
 
     # Deep Ensemble LitModels
-    # TODO
+    'LitRSNABoneageDeepEnsemble', 'LitRSNABoneageVarianceNetDeepEnsemble',
 
     # Laplace Approximation LitModels
     'LitRSNABoneageLaplace',
