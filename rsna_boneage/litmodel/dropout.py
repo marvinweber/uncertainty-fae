@@ -36,7 +36,7 @@ class LitRSNABoneageMCDropout(UncertaintyAwareModel, LitRSNABoneage):
             preds_std = undo_boneage_rescale(preds_std)
 
         metrics = {
-            ADT_STAT_PREDS_DISTINCT: [preds[:, i:i+1].flatten() for i in range(len(batch))],
+            ADT_STAT_PREDS_DISTINCT: [preds[:, i:i+1].flatten() for i in range(len(preds_mean))],
             ADT_STAT_PREDS_VAR: preds_var,
         }
         return preds_mean, preds_std, metrics
