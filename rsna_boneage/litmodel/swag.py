@@ -13,7 +13,7 @@ from tqdm import trange
 
 import swa_gaussian.utils as swag_utils
 from rsna_boneage.data import undo_boneage_rescale
-from rsna_boneage.litmodel.base import LitRSNABoneage
+from rsna_boneage.litmodel.base import LitRSNABoneage, LitRSNABoneageVarianceNet
 from swa_gaussian.pl_callback.swag_callback import SWAGaussianCallback
 from swa_gaussian.posteriors.swag import SWAG
 from uncertainty.model import ADT_STAT_MEAN_UNCERTAINTY, TrainLoadMixin, UncertaintyAwareModel
@@ -211,3 +211,74 @@ class LitRSNABoneageSWAG(UncertaintyAwareModel, TrainLoadMixin):
         }
         return TrainResult(interrupted=False, best_model_path=swag_model_fpath,
                            additional_info=additional_info)
+
+
+class LitRSNABoneageVarianceNetSWAG(LitRSNABoneageSWAG):
+
+    BASE_MODEL_CLASS = LitRSNABoneageVarianceNet
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
+    def evaluate_dataset(
+        self,
+        dataloader: DataLoader
+    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, Optional[dict[str, Any]]]:
+        assert self.train_dataloader and isinstance(self.train_dataloader, DataLoader), \
+            'SWAG requires the train dataloader to be set (c.f. `set_dataloaders(...)`!'
+
+        # We currently need the model to be on cuda
+        self.swag_model.cuda()
+
+        n_predictions = []  # list of n tensors, each tensor is a prediction set for all samples
+        n_variances = []  # list of n tensors, each is a predicted variance set for all samples
+        targets = []
+
+        n_iterator = trange(self.n_samples, desc='n_samples (per item)')
+        for n in n_iterator:
+            # Sample and update batch norm layers
+            self.swag_model.sample(scale=self.swag_sample_scale, cov=self.swag_with_cov, seed=n)
+            swag_utils.bn_update_2(self.train_dataloader, self.swag_model, cuda=True)
+            n_iterator.refresh()  # ensure global progess is shown
+
+            # Ensure eval mode for predictions
+            self.swag_model.eval()
+
+            # Make predictions
+            iter_preds = []  # prediction for every sample
+            iter_vars = []  # "predicted" variance for every sample
+            data_iterator = tqdm.tqdm(dataloader, desc=f'predictions for iteration n={n}',
+                                      total=len(dataloader), leave=False)
+            for input, target in data_iterator:
+                # fill targets on first iteration
+                if n == 0:
+                    targets.append(target)
+
+                input = input.cuda()
+                pred_mean_var: Tensor = self.swag_model(input)
+                iter_preds.append(pred_mean_var[:, :1].cpu().flatten())
+                iter_vars.append(pred_mean_var[:, 1:].cpu().flatten())
+
+            iter_preds = torch.cat(iter_preds)
+            iter_vars = torch.cat(iter_vars)
+            n_predictions.append(iter_preds)
+            n_variances.append(iter_vars)
+
+        targets = torch.cat(targets)
+        preds_mean = torch.stack(n_predictions).mean(dim=0)
+        preds_var = torch.stack(n_variances).mean(dim=0)
+        preds_std = torch.sqrt(preds_var)
+
+        if self.undo_boneage_rescale:
+            preds_mean = undo_boneage_rescale(preds_mean)
+            preds_var = undo_boneage_rescale(preds_var)
+            preds_std = undo_boneage_rescale(preds_std)
+
+        preds_abs_errors = torch.abs((preds_mean - targets))
+        mae = torch.mean(preds_abs_errors)
+
+        metrics = {
+            ADT_STAT_MEAN_UNCERTAINTY: preds_std.mean(),
+            'mae': mae,
+        }
+        return mae, preds_mean, targets, preds_abs_errors, preds_std, metrics
