@@ -4,7 +4,7 @@ import torch
 from torch import Tensor, nn
 from torchvision.models.resnet import (BasicBlock, Bottleneck, ResNet, ResNet18_Weights,
                                        ResNet34_Weights, ResNet50_Weights, WeightsEnum,
-                                       _ovewrite_named_param, handle_legacy_interface, model_urls)
+                                       _ovewrite_named_param, handle_legacy_interface)
 
 
 class RSNABoneageResNet(ResNet):
@@ -46,6 +46,7 @@ class RSNABoneageResNetWithGender(nn.Module):
 
         self.resnet = resnet
 
+        self.relu = nn.ReLU(inplace=True)
         self.fc_gender = nn.Linear(1, 32)
         self.fc_combi_1 = nn.Linear(32 + resnet.fc.out_features, 1000)
         self.dropout = nn.Dropout(p=combination_layer_dropout)
@@ -58,13 +59,16 @@ class RSNABoneageResNetWithGender(nn.Module):
 
         # ResNet
         resnet_output = self.resnet.forward(image)
+        resnet_output = self.relu(resnet_output)
 
         # Gender Dense Net
         fc_gender_output = self.fc_gender(is_male)
+        fc_gender_output = self.relu(fc_gender_output)
 
         # Combination and Output
         fc_combi_input = torch.cat((resnet_output, fc_gender_output), dim=1)
         x = self.fc_combi_1(fc_combi_input)
+        x = self.relu(x)
         x = self.dropout(x)
         output = self.fc_combi_2(x)
         return output
