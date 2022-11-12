@@ -12,8 +12,10 @@ from torch import Tensor
 from torch.utils.data import DataLoader
 
 from rsna_boneage.data import undo_boneage_rescale
+from rsna_boneage.litmodel.base import LitRSNABoneage, LitRSNABoneageVarianceNet
 from uncertainty.model import (ADT_STAT_PREDS_VAR, TrainLoadMixin, UncertaintyAwareModel,
                                uam_evaluate_dataset_default)
+from util.nll_regression_loss import nll_regression_loss
 from util.training import TrainConfig, TrainResult
 
 logger = logging.getLogger(__name__)
@@ -199,8 +201,25 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
                            additional_info=additional_info)
 
 
+class LitRSNABoneageVarianceNetLaplace(LitRSNABoneageLaplace):
+
+    BASE_MODEL_CLASS = LitRSNABoneageVarianceNet
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.laplace_backend_loss_fn_decorator = laplace_backend_loss_fn_decorator_var_net
+        
+        raise NotImplementedError('Not yet working!')
+
+
 def laplace_backend_loss_fn_decorator_standard(loss_fn):
     def inner(x: Tensor, y: Tensor):
         y = y.unsqueeze(1)
         return loss_fn(x, y)
+    return inner
+
+
+def laplace_backend_loss_fn_decorator_var_net(loss_fn):
+    def inner(x: Tensor, y: Tensor):
+        return nll_regression_loss(x, y)
     return inner
