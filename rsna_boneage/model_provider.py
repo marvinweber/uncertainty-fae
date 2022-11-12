@@ -8,9 +8,7 @@ from torchvision import transforms
 from torchvision.models import (Inception_V3_Weights, ResNet18_Weights, ResNet34_Weights,
                                 ResNet50_Weights, inception_v3, resnet18, resnet34, resnet50)
 
-from rsna_boneage.litmodel import (LitRSNABoneage, LitRSNABoneageLaplace, LitRSNABoneageMCDropout,
-                                   LitRSNABoneageSWAG, LitRSNABoneageVarianceNet,
-                                   LitRSNABoneageVarianceNetMCDropout)
+import rsna_boneage.litmodel as boneage_litmodels
 from uncertainty.model import TrainLoadMixin
 from util import ModelProvider
 from util.training import TrainConfig
@@ -25,19 +23,19 @@ from .net.resnet import resnet50 as boneage_resnet50
 logger = logging.getLogger(__name__)
 
 RSNA_LITMODEL_MAPPING: Dict[str, TrainLoadMixin] = {
-    'base': LitRSNABoneage,
-    'mc_dropout': LitRSNABoneageMCDropout,
-    'deep_ensemble': None,
-    'laplace_approx': LitRSNABoneageLaplace,
-    'swag': LitRSNABoneageSWAG,
+    'base': boneage_litmodels.LitRSNABoneage,
+    'mc_dropout': boneage_litmodels.LitRSNABoneageMCDropout,
+    'deep_ensemble': boneage_litmodels.LitRSNABoneageDeepEnsemble,
+    'laplace_approx': boneage_litmodels.LitRSNABoneageLaplace,
+    'swag': boneage_litmodels.LitRSNABoneageSWAG,
 }
 
 RSNA_VARIANCE_LITMODEL_MAPPING: Dict[str, TrainLoadMixin] = {
-    'base': LitRSNABoneageVarianceNet,
-    'mc_dropout': LitRSNABoneageVarianceNetMCDropout,
-    'deep_ensemble': None,
-    'laplace_approx': None,
-    'swag': None,
+    'base': boneage_litmodels.LitRSNABoneageVarianceNet,
+    'mc_dropout': boneage_litmodels.LitRSNABoneageVarianceNetMCDropout,
+    'deep_ensemble': boneage_litmodels.LitRSNABoneageVarianceNetDeepEnsemble,
+    'laplace_approx': boneage_litmodels.LitRSNABoneageVarianceNetLaplace,
+    'swag': boneage_litmodels.LitRSNABoneageVarianceNetSWAG,
 }
 
 
