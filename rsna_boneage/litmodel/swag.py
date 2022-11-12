@@ -16,7 +16,7 @@ from rsna_boneage.data import undo_boneage_rescale
 from rsna_boneage.litmodel.base import LitRSNABoneage
 from swa_gaussian.pl_callback.swag_callback import SWAGaussianCallback
 from swa_gaussian.posteriors.swag import SWAG
-from uncertainty.model import TrainLoadMixin, UncertaintyAwareModel
+from uncertainty.model import ADT_STAT_MEAN_UNCERTAINTY, TrainLoadMixin, UncertaintyAwareModel
 from uncertainty.swag import SwagEvalCallback
 from util.training import TrainConfig, TrainResult
 
@@ -43,7 +43,7 @@ class LitRSNABoneageSWAG(UncertaintyAwareModel, TrainLoadMixin):
         base_model_checkpoint_pth: Optional[str] = None,
         undo_boneage_rescale: Optional[bool] = False,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__()
 
         self.n_samples = n_samples
@@ -79,14 +79,14 @@ class LitRSNABoneageSWAG(UncertaintyAwareModel, TrainLoadMixin):
     def evaluate_dataset(
         self,
         dataloader: DataLoader
-    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, dict[Any, dict], dict[str, Any]]:
+    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, Optional[dict[str, Any]]]:
         assert self.train_dataloader and isinstance(self.train_dataloader, DataLoader), \
             'SWAG requires the train dataloader to be set (c.f. `set_dataloaders(...)`!'
 
         # We currently need the model to be on cuda
         self.swag_model.cuda()
 
-        n_predictions = []
+        n_predictions = []  # list of n tensors, each tensor is a prediction set for all samples
         targets = []
 
         n_iterator = trange(self.n_samples, desc='n_samples (per item)')
@@ -100,7 +100,7 @@ class LitRSNABoneageSWAG(UncertaintyAwareModel, TrainLoadMixin):
             self.swag_model.eval()
 
             # Make predictions
-            iter_preds = []
+            iter_preds = []  # prediction for every sample
             data_iterator = tqdm.tqdm(dataloader, desc=f'predictions for iteration n={n}',
                                       total=len(dataloader), leave=False)
             for input, target in data_iterator:
@@ -110,32 +110,29 @@ class LitRSNABoneageSWAG(UncertaintyAwareModel, TrainLoadMixin):
 
                 input = input.cuda()
                 pred_y = self.swag_model(input)
-                iter_preds.append(pred_y.cpu())
+                iter_preds.append(pred_y.cpu().flatten())
 
-            iter_preds = torch.cat(iter_preds).flatten()
+            iter_preds = torch.cat(iter_preds)
             n_predictions.append(iter_preds)
 
         targets = torch.cat(targets)
-        mean_predictions = torch.stack(n_predictions).mean(dim=0)
-        var_predictions = torch.stack(n_predictions).var(dim=0)
-        std_predictions = torch.stack(n_predictions).std(dim=0)
+        preds_mean = torch.stack(n_predictions).mean(dim=0)
+        preds_var = torch.stack(n_predictions).var(dim=0)
+        preds_std = torch.stack(n_predictions).std(dim=0)
 
         if self.undo_boneage_rescale:
-            targets = undo_boneage_rescale(targets)
-            mean_predictions = undo_boneage_rescale(mean_predictions)
-            var_predictions = undo_boneage_rescale(var_predictions)
-            std_predictions = undo_boneage_rescale(std_predictions)
+            preds_mean = undo_boneage_rescale(preds_mean)
+            preds_var = undo_boneage_rescale(preds_var)
+            preds_std = undo_boneage_rescale(preds_std)
 
-        abs_errors_predictions = torch.abs((mean_predictions - targets))
-        mae = torch.mean(abs_errors_predictions)
+        preds_abs_errors = torch.abs((preds_mean - targets))
+        mae = torch.mean(preds_abs_errors)
 
-        # TODO: extend metrics
-        all_metrics = {
+        metrics = {
+            ADT_STAT_MEAN_UNCERTAINTY: preds_std.mean(),
             'mae': mae,
-            'mean_uncertainty': std_predictions.mean()
         }
-        return (mae, mean_predictions, targets, abs_errors_predictions, std_predictions, [],
-                all_metrics)
+        return mae, preds_mean, targets, preds_abs_errors, preds_std, metrics
 
     @classmethod
     def load_model_from_disk(cls, checkpoint_path: str, base_model_checkpoint_pth: str = None,
