@@ -16,9 +16,9 @@ from rsna_boneage.data import undo_boneage_rescale
 from rsna_boneage.litmodel.base import LitRSNABoneage, LitRSNABoneageVarianceNet
 from swa_gaussian.pl_callback.swag_callback import SWAGaussianCallback
 from swa_gaussian.posteriors.swag import SWAG
-from uncertainty.model import ADT_STAT_MEAN_UNCERTAINTY, TrainLoadMixin, UncertaintyAwareModel
-from uncertainty.swag import SwagEvalCallback
-from util.training import TrainConfig, TrainResult
+from uncertainty_fae.model import ADT_STAT_MEAN_UNCERTAINTY, TrainLoadMixin, UncertaintyAwareModel
+from uncertainty_fae.swag import SwagEvalCallback
+from uncertainty_fae.util.training import TrainConfig, TrainResult
 
 logger = logging.getLogger(__name__)
 

@@ -7,9 +7,9 @@ from pytorch_lightning.core.module import LightningModule
 from torch import Tensor, nn, squeeze
 from torchvision.models.inception import InceptionOutputs
 
-from uncertainty.model import ADT_STAT_PREDS_VAR, TrainLoadMixin, UncertaintyAwareModel
-from util.nll_regression_loss import nll_regression_loss
-from util.training import TrainConfig
+from uncertainty_fae.model import ADT_STAT_PREDS_VAR, TrainLoadMixin, UncertaintyAwareModel
+from uncertainty_fae.util import nll_regression_loss
+from uncertainty_fae.util.training import TrainConfig
 
 
 class LitRSNABoneage(TrainLoadMixin, LightningModule):

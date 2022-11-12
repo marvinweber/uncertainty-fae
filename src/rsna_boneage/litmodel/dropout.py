@@ -6,9 +6,9 @@ from torch.utils.data import DataLoader
 
 from rsna_boneage.data import undo_boneage_rescale
 from rsna_boneage.litmodel.base import LitRSNABoneage, LitRSNABoneageVarianceNet
-from uncertainty.model import (ADT_STAT_PREDS_DISTINCT, ADT_STAT_PREDS_VAR, UncertaintyAwareModel,
-                               uam_evaluate_dataset_default)
-from util import dropout_train
+from uncertainty_fae.model import (ADT_STAT_PREDS_DISTINCT, ADT_STAT_PREDS_VAR,
+                                   UncertaintyAwareModel, uam_evaluate_dataset_default)
+from uncertainty_fae.util import dropout_train
 
 
 class LitRSNABoneageMCDropout(UncertaintyAwareModel, LitRSNABoneage):

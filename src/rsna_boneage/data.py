@@ -10,7 +10,7 @@ from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 
-from util.tensor_list import TensorList
+from uncertainty_fae.util import TensorList
 
 logger = logging.getLogger(__name__)
 

@@ -9,9 +9,9 @@ from torchvision.models import (Inception_V3_Weights, ResNet18_Weights, ResNet34
                                 ResNet50_Weights, inception_v3, resnet18, resnet34, resnet50)
 
 import rsna_boneage.litmodel as boneage_litmodels
-from uncertainty.model import TrainLoadMixin
-from util import ModelProvider
-from util.training import TrainConfig
+from uncertainty_fae.model import TrainLoadMixin
+from uncertainty_fae.util import ModelProvider
+from uncertainty_fae.util.training import TrainConfig
 
 from .data import RSNABoneageDataModule
 from .net.inception import RSNABoneageInceptionNetWithGender

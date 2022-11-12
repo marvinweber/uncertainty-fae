@@ -8,8 +8,8 @@ from torch.utils.data import DataLoader
 from rsna_boneage.data import undo_boneage_rescale
 from rsna_boneage.litmodel.base import LitRSNABoneageVarianceNet
 from rsna_boneage.litmodel.dropout import LitRSNABoneageMCDropout
-from uncertainty.model import (ADT_STAT_MEAN_UNCERTAINTY, ADT_STAT_PREDS_DISTINCT, TrainLoadMixin,
-                               UncertaintyAwareModel)
+from uncertainty_fae.model import (ADT_STAT_MEAN_UNCERTAINTY, ADT_STAT_PREDS_DISTINCT,
+                                   TrainLoadMixin, UncertaintyAwareModel)
 
 
 class LitRSNABoneageDeepEnsemble(UncertaintyAwareModel, TrainLoadMixin):

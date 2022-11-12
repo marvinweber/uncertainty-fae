@@ -4,7 +4,7 @@ import pytorch_lightning as pl
 from pytorch_lightning import Callback
 from torch.utils.data import DataLoader
 
-from uncertainty.model import UncertaintyAwareModel
+from uncertainty_fae.model import UncertaintyAwareModel
 
 logger = logging.getLogger(__name__)
 

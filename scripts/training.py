@@ -4,9 +4,9 @@ import os
 import yaml
 
 from rsna_boneage.model_provider import RSNAModelProvider
-from uncertainty.model import TrainLoadMixin
-from util import ModelProvider
-from util.training import TrainConfig, parse_cli_args
+from uncertainty_fae.model import TrainLoadMixin
+from uncertainty_fae.util import ModelProvider
+from uncertainty_fae.util.training import TrainConfig, parse_cli_args
 
 logger = logging.getLogger('UNCERTAINTY_FAE_TRAINING')
 
