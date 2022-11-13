@@ -114,12 +114,18 @@ class RSNABoneageDataset(Dataset):
 
     def _get_img_path(self, idx) -> str:
         # whether to build the path dynamically or use the absolute path from the annotation file
-        build_path_dynamically = self.img_base_dir is not None and os.path.exists(self.img_base_dir)
+        use_dynamic_path = self.img_base_dir is not None and os.path.exists(self.img_base_dir)
 
-        if build_path_dynamically:
-            img_id = self.annotations.loc[idx, 'id']
-            img_filename = f'{img_id}.png'
+        if use_dynamic_path:
+            img_filename = self.annotations.loc[idx, 'img_path']
             img_path = os.path.abspath(os.path.join(self.img_base_dir, img_filename))
+
+            # Fallback to generate filename from id, if img_path is not available
+            if not os.path.isfile(img_path):
+                img_id = self.annotations.loc[idx, 'id']
+                img_filename = f'{img_id}.png'
+                img_path = os.path.abspath(os.path.join(self.img_base_dir, img_filename))
+
         else:
             img_path = os.path.abspath(self.annotations.loc[idx, 'img_path'])
         
