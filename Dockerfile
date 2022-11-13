@@ -35,13 +35,17 @@ RUN python -m pip install \
         --extra-index-url https://download.pytorch.org/whl/cu113 && \
     python -m pip cache purge
 
+# Install Requirements
 ADD requirements.txt /install/requirements_fae_uncertainty.txt
 RUN python -m pip install -r /install/requirements_fae_uncertainty.txt && \
     python -m pip cache purge
 
+# Install Uncertainty FAE Package
+WORKDIR /app
+COPY --chown=cds:cds . /app/
+RUN python -m pip install -e .
+
 USER cds
 ENV HOME /workspace
-
-WORKDIR /app
 
 CMD exec /bin/bash -c "trap : TERM INT; sleep infinity & wait"

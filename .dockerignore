@@ -1,0 +1,13 @@
+# General
+.git
+.vscode
+.gitignore
+
+# Python General
+**/__pycache__
+*.pyc
+**/*.egg-info
+
+# Uncertainty Train/Results Dirs
+train_logs
+results
