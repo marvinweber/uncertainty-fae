@@ -48,5 +48,7 @@ To see changes made to the original code, checkout the commit history
 for the `swa_gaussian` directory:
 
 ```bash
-git diff a66369d..main -- swa_gaussian
+git diff a66369d..ba6bef9 -- swa_gaussian
+# swa_gaussian has been moved from `swa_gaussian` to `src/swa_gaussian`
+git diff 7fb1de6..main -- src/swa_gaussian
 ```
