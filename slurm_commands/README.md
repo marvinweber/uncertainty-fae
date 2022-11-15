@@ -59,7 +59,7 @@ sbatch \
   --partition=<slurm-partition> \
   --export="UQ_FAE_SING_IMG=${UQ_FAE_SING_IMG},UQ_FAE_SING_MOUNTS=${UQ_FAE_SING_MOUNTS}" \
   generic_sbatch_uncertainty.sh \
-  python training.py \
+  python /app/scripts/training.py \
   --max-epochs 250 \
   --batch-size 40 \
   --dataloader-num-workers 24 \
