@@ -13,6 +13,7 @@ defaults:
 
 # model configuration
 models:
+    # RSNA Bone Age Model Configurations
     rsna_inception_500_gender_mcd:
         data: rsna_boneage
         provider_config:
@@ -104,10 +105,27 @@ models:
             rescale_boneage: True
             rebalance_classes: True
         litmodel_config:
-            lr: 0.001
-            weight_decay: 0.001
-            swa_lrs: 0.0008
-            swa_start_epoch: 150
+            lr: 0.0003
+            weight_decay: 0.0001
+            swa_lrs: 0.0003
+            swa_start_epoch: 250
+            n_samples: 30
+
+    rsna_resnet50_500_gender_swag:
+        data: rsna_boneage
+        provider_config:
+            base_net: resnet50
+            uncertainty_method: swag
+            img_input_dimensions: [500, 500]
+            variance_net: False
+            with_gender_input: True
+            rescale_boneage: True
+            rebalance_classes: True
+        litmodel_config:
+            lr: 0.0003
+            weight_decay: 0.0001
+            swa_lrs: 0.0003
+            swa_start_epoch: 250
             n_samples: 30
 
     rsna_inception_500_gender_variance_mcd:
@@ -122,3 +140,46 @@ models:
             rebalance_classes: True
         litmodel_config:
             n_samples: 100
+
+    rsna_resnet50_500_gender_variance_mcd:
+        data: rsna_boneage
+        provider_config:
+            base_net: resnet50
+            uncertainty_method: mc_dropout
+            img_input_dimensions: [500, 500]
+            variance_net: True
+            with_gender_input: True
+            rescale_boneage: True
+            rebalance_classes: True
+        litmodel_config:
+            n_samples: 100
+
+    rsna_resnet50_500_gender_variance_laplace:
+        data: rsna_boneage
+        provider_config:
+            base_net: resnet50
+            uncertainty_method: laplace_approx
+            img_input_dimensions: [500, 500]
+            variance_net: True
+            with_gender_input: True
+            rescale_boneage: True
+            rebalance_classes: True
+        litmodel_config:
+            n_samples: 100
+
+    rsna_resnet50_500_gender_variance_swag:
+        data: rsna_boneage
+        provider_config:
+            base_net: resnet50
+            uncertainty_method: swag
+            img_input_dimensions: [500, 500]
+            variance_net: True
+            with_gender_input: True
+            rescale_boneage: True
+            rebalance_classes: True
+        litmodel_config:
+            n_samples: 30
+            weight_decay: 0.0001
+            swa_start_epoch: 10
+            lr: 0.00001
+            swa_lrs: 0.00001
