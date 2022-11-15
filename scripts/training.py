@@ -18,8 +18,7 @@ PROVIDER_MAPPING: dict[str, ModelProvider] = {
 }
 
 
-def train_model(train_model_name: str, model_configurations: dict, config_defaults: dict,
-                train_config: TrainConfig) -> None:
+def train_model(train_model_name: str, train_config: TrainConfig) -> None:
     version = train_config.start_time if train_config.version is None else train_config.version
     logger.info('Training Started...')
     logger.info('Start Time: %s', train_config.start_time)
@@ -29,9 +28,9 @@ def train_model(train_model_name: str, model_configurations: dict, config_defaul
         logger.info('Subversion: %s', train_config.sub_version)
 
     try:
-        if train_model_name not in model_configurations:
+        if train_model_name not in train_config.model_configurations:
             raise ValueError(f'Unkown Model: "{train_model_name}"!')
-        model_config: dict = model_configurations[train_model_name]
+        model_config: dict = train_config.model_configurations[train_model_name]
         if model_config['data'] not in PROVIDER_MAPPING.keys():
             raise ValueError(f'Unkown or unsupported Dataset: "{model_config["data"]}"!')
         model_provider_cls = PROVIDER_MAPPING[model_config['data']]
@@ -57,7 +56,6 @@ def train_model(train_model_name: str, model_configurations: dict, config_defaul
                 config = {
                     'train_config': train_config.__dict__,
                     'model_config': model_config,
-                    'config_defaults': config_defaults,
                 }
                 yaml.dump(config, file)
         else:
@@ -75,9 +73,9 @@ def train_model(train_model_name: str, model_configurations: dict, config_defaul
         model = model_provider.get_model(litmodel_kwargs=litmodel_kwargs)
 
         # Annotation files and img base dirs
-        train_af, train_d = _get_annotation_file_and_img_dir(model_config, config_defaults, 'train')
-        val_af, val_d = _get_annotation_file_and_img_dir(model_config, config_defaults, 'val')
-        test_af, test_d = _get_annotation_file_and_img_dir(model_config, config_defaults, 'test')
+        train_af, train_d = train_config.get_annotations_and_base_dir(train_model_name, 'train')
+        val_af, val_d = train_config.get_annotations_and_base_dir(train_model_name, 'val')
+        test_af, test_d = train_config.get_annotations_and_base_dir(train_model_name, 'test')
 
         datamodule = model_provider.get_lightning_data_module(
             train_annotation_file=train_af,
@@ -110,15 +108,6 @@ def train_model(train_model_name: str, model_configurations: dict, config_defaul
 
     except Exception:
         logger.critical('Training failed (see exception info below for reason)!', exc_info=True)
-
-
-def _get_annotation_file_and_img_dir(
-        model_config: dict, config_defaults: dict, dataset: str) -> tuple[str, str]:
-    annotation_file = (model_config.get('datasets', {}).get('annotations', {}).get(dataset, {})
-            or config_defaults[model_config['data']]['datasets']['annotations'][dataset])
-    img_base_dir = (model_config.get('datasets', {}).get('img_base_dirs', {}).get(dataset, {})
-            or config_defaults[model_config['data']]['datasets']['img_base_dirs'][dataset])
-    return annotation_file, img_base_dir
 
 
 if __name__ == '__main__':

@@ -5,6 +5,7 @@ from typing import Any, Optional
 from pytorch_lightning import Trainer
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+import yaml
 
 
 def parse_cli_args(type: str) -> dict:
@@ -79,6 +80,43 @@ class BaseConfig():
 
         self.batch_size = config_dict['batch_size']
         self.dataloader_num_workers = config_dict['dataloader_num_workers']
+        self.model_configuration_file = config_dict['configuration']
+        self.model_configurations = None
+        self.model_configurations_defaults = None
+
+        self._load_model_configs()
+        assert self.model_configurations is not None
+        assert self.model_configurations_defaults is not None
+
+    def _load_model_configs(self) -> None:
+        with open(self.model_configuration_file, 'r') as f:
+            configuration = yaml.safe_load(f)
+
+        self.model_configurations = configuration['models']
+        self.model_configurations_defaults = configuration['defaults']
+
+    def get_annotations_and_base_dir(self, model_name: str, dataset: str) -> tuple[str, str]:
+        """
+        Get paths to the annotation file and the base directory for given model name.
+
+        Args:
+            model_name: The name of the model (from the configuration).
+            dataset: The dataset type; e.g., train, val, or test
+        
+        Returns:
+            A tuple with the annotation file path first and the base dir path second.
+        """
+        model_config: dict = self.model_configurations[model_name]
+        config_defaults = self.model_configurations_defaults
+        annotation_file = (
+            model_config.get('datasets', {}).get('annotations', {}).get(dataset, {})
+            or config_defaults[model_config['data']]['datasets']['annotations'][dataset]
+        )
+        img_base_dir = (
+            model_config.get('datasets', {}).get('img_base_dirs', {}).get(dataset, {})
+            or config_defaults[model_config['data']]['datasets']['img_base_dirs'][dataset]
+        )
+        return annotation_file, img_base_dir
 
 
 class TrainConfig(BaseConfig):
