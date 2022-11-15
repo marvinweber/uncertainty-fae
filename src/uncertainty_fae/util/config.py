@@ -146,11 +146,11 @@ class TrainConfig(BaseConfig):
             A tuple with the scheduler first and the metric to monitor (e.g. required by the
             `ReduceLROnPlateau`) second.
         """
-        requested_type = self.args.lr_scheduler
+        requested_type = self.config_dict['lr_scheduler']
 
         if requested_type == 'reduce_lr_on_plateau':
-            factor = self.args.lrs_reduce_on_plateau_factor
-            patience = self.args.lrs_reduce_on_plateau_patience
+            factor = self.config_dict['lrs_reduce_on_plateau_factor']
+            patience = self.config_dict['lrs_reduce_on_plateau_patience']
             scheduler = ReduceLROnPlateau(
                 optimizer, factor=factor, patience=patience, threshold=1e-4)
             return scheduler, 'val_loss'
