@@ -5,8 +5,8 @@ import yaml
 
 from rsna_boneage.model_provider import RSNAModelProvider
 from uncertainty_fae.model import TrainLoadMixin
-from uncertainty_fae.util import ModelProvider
-from uncertainty_fae.util.config import TrainConfig, parse_cli_args
+from uncertainty_fae.util import ModelProvider, TrainConfig
+from uncertainty_fae.util.config import parse_cli_args
 
 logger = logging.getLogger('UNCERTAINTY_FAE_TRAINING')
 
@@ -125,5 +125,5 @@ if __name__ == '__main__':
     model_configurations = configuration['models']
     configuration_defaults = configuration['defaults']
 
-    train_model(train_model_name, model_configurations, configuration_defaults, train_config)
+    train_model(train_model_name, train_config)
     logger.info('DONE')
