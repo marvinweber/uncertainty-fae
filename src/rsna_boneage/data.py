@@ -54,7 +54,19 @@ class RSNABoneageDataset(Dataset):
         self.annotations = pd.read_csv(annotation_file)
         self.img_base_dir = img_base_dir
 
+        self.rebalance_classes = rebalance_classes
         if rebalance_classes:
+            self.annotations_unbalanced = self.annotations.copy(deep=True)
+            self.reload()  # initially: rebalance once
+
+        self.transform = transform
+        self.target_dimensions = target_dimensions
+        self.rescale_boneage = rescale_boneage
+        self.with_gender_input = with_gender_input
+
+    def reload(self) -> None:
+        if self.rebalance_classes:
+            self.annotations = self.annotations_unbalanced.copy(deep=True)
             # Divide age into categories / bins (10 bins)
             self.annotations['boneage_category'] = pd.cut(self.annotations['boneage'], 10)
             # Convert male to int value
@@ -63,11 +75,6 @@ class RSNABoneageDataset(Dataset):
             # ensure bone category/bin and male groups contain each 1100 images
             self.annotations = self.annotations.groupby(['boneage_category', 'male_numeric']).apply(
                 lambda x: x.sample(1100, replace = True)).reset_index(drop=True)
-
-        self.transform = transform
-        self.target_dimensions = target_dimensions
-        self.rescale_boneage = rescale_boneage
-        self.with_gender_input = with_gender_input
 
     def __len__(self):
         return self.annotations.shape[0]
@@ -212,16 +219,31 @@ class RSNABoneageDataModule(LightningDataModule):
         )
 
     def train_dataloader(self):
-        return DataLoader(self.dataset_train, batch_size=self.batch_size,
-                          shuffle=self.shuffle_train, num_workers=self.num_workers)
+        self.dataset_train.reload()
+        return DataLoader(
+            self.dataset_train,
+            batch_size=self.batch_size,
+            shuffle=self.shuffle_train,
+            num_workers=self.num_workers
+        )
 
     def val_dataloader(self):
-        return DataLoader(self.dataset_val, batch_size=self.batch_size,
-                          shuffle=self.shuffle_val, num_workers=self.num_workers)
+        self.dataset_val.reload()
+        return DataLoader(
+            self.dataset_val,
+            batch_size=self.batch_size,
+            shuffle=self.shuffle_val,
+            num_workers=self.num_workers
+        )
 
     def test_dataloader(self):
-        return DataLoader(self.dataset_test, batch_size=self.batch_size,
-                          shuffle=self.shuffle_test, num_workers=self.num_workers)
+        self.dataset_test.reload()
+        return DataLoader(
+            self.dataset_test,
+            batch_size=self.batch_size,
+            shuffle=self.shuffle_test,
+            num_workers=self.num_workers
+        )
 
 
 def get_image_transforms(target_dimensions=(500, 500)):

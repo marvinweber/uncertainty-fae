@@ -191,8 +191,14 @@ class TrainLoadMixin:
         train_callbacks = [checkpoint_callback, early_stopping_callback, lr_monitor_callback,
                            progress_bar, *(callbacks if callbacks and len(callbacks) > 0 else [])]
 
-        trainer = Trainer(accelerator='gpu', max_epochs=train_config.max_epochs,
-                          log_every_n_steps=50, logger=loggers, callbacks=train_callbacks)
+        trainer = Trainer(
+            accelerator='gpu',
+            max_epochs=train_config.max_epochs,
+            log_every_n_steps=50,
+            logger=loggers,
+            callbacks=train_callbacks,
+            reload_dataloaders_every_n_epochs=1,
+        )
 
         if is_resume:
             # Try to find latest/last checkpoint file and resume the training
