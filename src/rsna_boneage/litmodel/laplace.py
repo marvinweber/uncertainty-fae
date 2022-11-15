@@ -15,8 +15,7 @@ from rsna_boneage.data import undo_boneage_rescale
 from rsna_boneage.litmodel.base import LitRSNABoneage, LitRSNABoneageVarianceNet
 from uncertainty_fae.model import (ADT_STAT_PREDS_VAR, TrainLoadMixin, UncertaintyAwareModel,
                                    uam_evaluate_dataset_default)
-from uncertainty_fae.util import nll_regression_loss
-from uncertainty_fae.util.training import TrainConfig, TrainResult
+from uncertainty_fae.util import TrainConfig, TrainResult, nll_regression_loss
 
 logger = logging.getLogger(__name__)
 

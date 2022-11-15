@@ -6,7 +6,7 @@ import yaml
 from rsna_boneage.model_provider import RSNAModelProvider
 from uncertainty_fae.model import TrainLoadMixin
 from uncertainty_fae.util import ModelProvider
-from uncertainty_fae.util.training import TrainConfig, parse_cli_args
+from uncertainty_fae.util.config import TrainConfig, parse_cli_args
 
 logger = logging.getLogger('UNCERTAINTY_FAE_TRAINING')
 
@@ -122,13 +122,13 @@ def _get_annotation_file_and_img_dir(
 
 
 if __name__ == '__main__':
-    args = parse_cli_args('training')
-    level = logging.DEBUG if args.debug else logging.INFO
+    cli_config = parse_cli_args('training')
+    level = logging.DEBUG if cli_config['debug'] else logging.INFO
     logging.basicConfig(level=level, format='%(name)s - %(asctime)s - %(levelname)s: %(message)s')
 
-    train_model_name = args.model_name
-    configuration_path = args.configuration
-    train_config = TrainConfig(args)
+    train_model_name = cli_config['model_name']
+    configuration_path = cli_config['configuration']
+    train_config = TrainConfig(cli_config)
 
     with open(configuration_path, 'r') as f:
         configuration = yaml.safe_load(f)

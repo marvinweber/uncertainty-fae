@@ -11,7 +11,7 @@ from pytorch_lightning.callbacks import (EarlyStopping, LearningRateMonitor, Mod
 from torch import Tensor
 from torch.utils.data import DataLoader
 
-from uncertainty_fae.util.training import TrainConfig, TrainResult
+from uncertainty_fae.util import TrainConfig, TrainResult
 
 logger = logging.getLogger(__name__)
 

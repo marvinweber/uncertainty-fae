@@ -3,7 +3,8 @@ from typing import Optional
 
 from pytorch_lightning import LightningDataModule
 from torch import nn
-from uncertainty_fae.util.training import TrainConfig
+
+from uncertainty_fae.util import TrainConfig
 
 
 class ModelProvider(ABC):
