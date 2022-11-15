@@ -73,6 +73,10 @@ sbatch \
 The `submit_multiple_subversions.sh` bash script can be used to submit a bunch
 of model trainings at once.
 
+Set environment variables:
+- `UQ_SLURM_ACCOUNT`: Slurm account.
+- `UQ_SLURM_PARTITION`: Slurm partition.
+
 Usage:
 ```bash
 ./submit_multiple_subversions.sh rsna_resnet50_500_gender_mcd deepensemble 1 10

@@ -33,8 +33,8 @@ do
   logname="${jobname}_%A_%a.log"
   echo "Submitting Model=${model} Version=${version} Subversion=${subversion} Jobname=${jobname} Logname=${logname}"
   sbatch \
-    --account=<slurm-account> \
-    --partition=<slurm-partition> \
+    --account="${UQ_SLURM_ACCOUNT}" \
+    --partition="${UQ_SLURM_PARTITION}" \
     --output="logs/slurm/${logname}" \
     --error="logs/slurm/${logname}" \
     --job-name="${jobname}" \
@@ -42,9 +42,9 @@ do
     --export="UQ_FAE_SING_IMG=${UQ_FAE_SING_IMG},UQ_FAE_SING_MOUNTS=${UQ_FAE_SING_MOUNTS}" \
     generic_sbatch_uncertainty.sh \
     python /app/scripts/training.py \
-    --max-epochs 400 \
+    --max-epochs 250 \
     --batch-size 40 \
-    --early-stopping-patience 400 \
+    --early-stopping-patience 250 \
     --dataloader-num-workers 32 \
     --save-dir /ml_logs \
     --configuration /app/config/models.yml \
