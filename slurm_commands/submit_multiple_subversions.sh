@@ -20,6 +20,7 @@ then
 
     NOTE: Please adjust <slurm-account> and <slurm-partition> as required!
 EOF
+  exit 1
 fi
 
 model=$1
