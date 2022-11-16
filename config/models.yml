@@ -108,7 +108,7 @@ models:
             lr: 0.0003
             weight_decay: 0.0001
             swa_lrs: 0.0003
-            swa_start_epoch: 250
+            swa_start_epoch: 150
             n_samples: 30
 
     rsna_resnet50_500_gender_swag:
@@ -125,7 +125,7 @@ models:
             lr: 0.0003
             weight_decay: 0.0001
             swa_lrs: 0.0003
-            swa_start_epoch: 250
+            swa_start_epoch: 150
             n_samples: 30
 
     rsna_inception_500_gender_variance_mcd:
