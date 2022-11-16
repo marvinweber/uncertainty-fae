@@ -37,7 +37,7 @@ class LitRSNABoneageSWAG(UncertaintyAwareModel, TrainLoadMixin):
         swa_start_epoch: int = 31,
         swa_annealing_epochs: int = 10,
         swa_annealing_strategy: str = 'linear',
-        swag_max_num_models: int = 20,
+        swag_max_num_models: int = 30,
         swag_sample_scale: float = 1.0,
         swag_model: Optional[SWAG] = None,
         base_model_checkpoint_pth: Optional[str] = None,
