@@ -68,7 +68,22 @@ def parse_cli_args(type: str) -> dict:
 
     # Evaluation Arguments
     if type == 'evaluation':
-        pass
+        parser.add_argument('eval_version_name', type=str,
+                            help='Name of the evaluation run (key of the eval config yaml file).')
+        parser.add_argument('--dataset-type', choices=['val', 'test', 'train'], default='val',
+                            required=False,
+                            help='Which dataset to use (of the Lightning DataModule); Default=val.')
+        parser.add_argument('--eval-configuration', type=str, required=False,
+                            default='./config/eval-config.yml',
+                            help='Path to the file containing the evaluation configuration.')
+        parser.add_argument('--eval-dir', type=str, required=False, default='eval_logs',
+                            help='Base directory to store evaluation results in.')
+        parser.add_argument('--eval-only', type=str, required=False, default=None,
+                            help='Optionally, comma-separated list of eval config keys/names ('
+                                 'corresponding to the eval-configuration) that should only be '
+                                 'considered in this run (for parallel prediction generation).')
+        parser.add_argument('--only-combined-plots', action='store_true', default=False,
+                            required=False, help='Whether to only create the combined plots.')
 
     args = parser.parse_args()
     return {key: val for key, val in args._get_kwargs()}
@@ -220,6 +235,55 @@ class TrainConfig(BaseConfig):
             return scheduler, 'val_loss'
 
         return None, None
+
+
+class EvalRunConfig(BaseConfig):
+
+    def __init__(self, config_dict: dict) -> None:
+        super().__init__(config_dict)
+
+        self.eval_version_name = config_dict['eval_version_name']
+        self.dataset_type = config_dict['dataset_type']
+        self.eval_configuration_file = config_dict['eval_configuration']
+        self.eval_configuration: dict
+        self.eval_dir = config_dict['eval_dir']
+        self.only_combined_plots = config_dict['only_combined_plots']
+
+        self._load_eval_configuration()
+        assert isinstance(self.eval_configuration, dict)
+
+        if isinstance(config_dict['eval_only'], str) and len(config_dict['eval_only']) > 0:
+            self.eval_only = [cfg_name
+                              for cfg_name in config_dict['eval_only'].split(',')
+                              if cfg_name in self.eval_configuration.keys()]
+        else:
+            self.eval_only: list[str] = list(self.eval_configuration.keys())
+
+    def _load_eval_configuration(self) -> None:
+        with open(self.eval_configuration_file, 'r') as f:
+            full_eval_configuration = yaml.safe_load(f)
+        self.eval_configuration = full_eval_configuration['evaluations'][self.eval_version_name]
+
+    def _get_additional_model_providing_kwargs(
+        self, model_name: str, eval_cfg_name: Optional[str] = None
+    ) -> tuple[dict, dict]:
+        if eval_cfg_name not in self.eval_configuration:
+            raise ValueError('EvalRunConfig requires eval_cfg_name!')
+        cfg = self.eval_configuration[eval_cfg_name]
+        litmodel_kwargs = cfg['litmodel_config'] if 'litmodel_config' in cfg else {}
+        return {'eval_mode': True}, litmodel_kwargs
+
+    def get_eval_dataloader(self, datamodule: LightningDataModule):
+        datamodule.setup('test')  # we always want to "test" the model during evaluation
+
+        if self.dataset_type == 'train':
+            return datamodule.train_dataloader()
+        elif self.dataset_type == 'val':
+            return datamodule.val_dataloader()
+        elif self.dataset_type == 'test':
+            return datamodule.test_dataloader()
+        else:
+            raise ValueError('EvalRunConfig: Invalid DataSet Type: "%s"!', self.dataset_type)
 
 
 class TrainResult():

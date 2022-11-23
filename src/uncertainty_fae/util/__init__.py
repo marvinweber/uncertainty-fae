@@ -1,4 +1,4 @@
-from uncertainty_fae.util.config import TrainConfig, TrainResult, parse_cli_args
+from uncertainty_fae.util.config import EvalRunConfig, TrainConfig, TrainResult, parse_cli_args
 from uncertainty_fae.util.dropout_train import dropout_train
 from uncertainty_fae.util.model_provider import ModelProvider
 from uncertainty_fae.util.nll_regression_loss import nll_regression_loss
@@ -11,6 +11,7 @@ __all__ = [
     'parse_cli_args',
 
     # Utility Classes
+    'EvalRunConfig',
     'ModelProvider',
     'TensorList',
     'TrainConfig',

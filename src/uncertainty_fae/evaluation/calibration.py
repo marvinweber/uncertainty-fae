@@ -12,7 +12,10 @@ QUANTILE_SIGMA_ENV_SCALES = {
 
 
 def observation_share_per_prediction_interval(
-        mean: float, sigma: float, observations: 'list[float]'):
+    mean: float,
+    sigma: float,
+    observations: list[float]
+) -> dict:
     quantiles = {}
     observation_amount = len(observations)
     for quantile, sigma_env_scale in QUANTILE_SIGMA_ENV_SCALES.items():
