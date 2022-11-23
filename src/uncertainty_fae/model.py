@@ -68,8 +68,7 @@ class UncertaintyAwareModel:
         raise NotImplementedError()
 
     def forward_without_uncertainty(self, input) -> Tensor:
-        # TODO: default implementation: use forward_with_uncertainty and throw away uncertainty
-        raise NotImplementedError()
+        return self.forward_with_uncertainty(input)[0]
 
     def evaluate_dataset(
         self, dataloader: DataLoader
