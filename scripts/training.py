@@ -31,11 +31,6 @@ def train_model(train_model_name: str, train_config: TrainConfig) -> None:
         if train_model_name not in train_config.model_configurations:
             raise ValueError(f'Unkown Model: "{train_model_name}"!')
         model_config: dict = train_config.model_configurations[train_model_name]
-        if model_config['data'] not in PROVIDER_MAPPING.keys():
-            raise ValueError(f'Unkown or unsupported Dataset: "{model_config["data"]}"!')
-        model_provider_cls = PROVIDER_MAPPING[model_config['data']]
-        model_provider = model_provider_cls.get_provider(
-            train_config, **model_config['provider_config'])
 
         log_dir = os.path.abspath(
             os.path.join(train_config.save_dir, model_config['data'], train_model_name, version))
@@ -67,25 +62,9 @@ def train_model(train_model_name: str, train_config: TrainConfig) -> None:
                         'training has already been finished! SKIPPING!')
             return
 
-        litmodel_kwargs = (model_config['litmodel_config']
-                           if 'litmodel_config' in model_config
-                           else {})
-        model = model_provider.get_model(litmodel_kwargs=litmodel_kwargs)
-
-        # Annotation files and img base dirs
-        train_af, train_d = train_config.get_annotations_and_base_dir(train_model_name, 'train')
-        val_af, val_d = train_config.get_annotations_and_base_dir(train_model_name, 'val')
-        test_af, test_d = train_config.get_annotations_and_base_dir(train_model_name, 'test')
-
-        datamodule = model_provider.get_lightning_data_module(
-            train_annotation_file=train_af,
-            val_annotation_file=val_af,
-            test_annotation_file=test_af,
-            img_train_base_dir=train_d,
-            img_val_base_dir=val_d,
-            img_test_base_dir=test_d,
-            batch_size=train_config.batch_size,
-            num_workers=train_config.dataloader_num_workers,
+        model, datamodule = train_config.get_model_and_datamodule(
+            PROVIDER_MAPPING,
+            train_model_name,
         )
 
         if not isinstance(model, TrainLoadMixin):
@@ -93,7 +72,12 @@ def train_model(train_model_name: str, train_config: TrainConfig) -> None:
 
         model_cls = model.__class__
         train_result = model_cls.train_model(
-            log_dir, datamodule, model, train_config, is_resume=version_exists)
+            log_dir,
+            datamodule,
+            model,
+            train_config,
+            is_resume=version_exists,
+        )
 
         if not train_result.interrupted:
             logger.info('Training succesfully finished!')
@@ -112,18 +96,11 @@ def train_model(train_model_name: str, train_config: TrainConfig) -> None:
 
 if __name__ == '__main__':
     cli_config = parse_cli_args('training')
+
     level = logging.DEBUG if cli_config['debug'] else logging.INFO
     logging.basicConfig(level=level, format='%(name)s - %(asctime)s - %(levelname)s: %(message)s')
 
-    train_model_name = cli_config['model_name']
-    configuration_path = cli_config['configuration']
     train_config = TrainConfig(cli_config)
-
-    with open(configuration_path, 'r') as f:
-        configuration = yaml.safe_load(f)
-
-    model_configurations = configuration['models']
-    configuration_defaults = configuration['defaults']
-
+    train_model_name = cli_config['model_name']
     train_model(train_model_name, train_config)
     logger.info('DONE')

@@ -1,11 +1,13 @@
 import argparse
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Optional, Type
 
-from pytorch_lightning import Trainer
+from pytorch_lightning import LightningDataModule, Trainer
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import yaml
+
+from uncertainty_fae.util.model_provider import ModelProvider
 
 
 def parse_cli_args(type: str) -> dict:
@@ -118,6 +120,63 @@ class BaseConfig():
         )
         return annotation_file, img_base_dir
 
+    def get_model_and_datamodule(
+        self,
+        model_provider_cls_mapping: dict[str, Type[ModelProvider]],
+        model_name: str,
+        model_checkpoint: Optional[str] = None,
+        eval_cfg_name: Optional[str] = None,
+    ) -> tuple[Any, LightningDataModule]:
+        """
+        TODO Docs
+        """
+        provider_kwargs_adt, litmodel_kwargs_adt = \
+            self._get_additional_model_providing_kwargs(model_name, eval_cfg_name)
+        model_config = self.model_configurations[model_name]
+        if model_config['data'] not in model_provider_cls_mapping.keys():
+            raise ValueError(f'Unkown or unsupported Dataset: "{model_config["data"]}" '
+                             'No Provider Mapping found!')
+
+        # Create Model Provider
+        model_provider_cls = model_provider_cls_mapping[model_config['data']]
+        model_provider = model_provider_cls.get_provider(
+            **model_config['provider_config'],
+            **provider_kwargs_adt,
+        )
+
+        # Create Litmodel
+        litmodel_kwargs = (model_config['litmodel_config']
+                           if 'litmodel_config' in model_config
+                           else {})
+        litmodel_kwargs.update(litmodel_kwargs_adt)
+        model = model_provider.get_model(model_checkpoint, litmodel_kwargs=litmodel_kwargs)
+
+        # Annotation files and img base dirs
+        train_af, train_d = self.get_annotations_and_base_dir(model_name, 'train')
+        val_af, val_d = self.get_annotations_and_base_dir(model_name, 'val')
+        test_af, test_d = self.get_annotations_and_base_dir(model_name, 'test')
+
+        # Create Lightning DataModule
+        datamodule = model_provider.get_lightning_data_module(
+            train_annotation_file = train_af,
+            val_annotation_file = val_af,
+            test_annotation_file = test_af,
+            img_train_base_dir = train_d,
+            img_val_base_dir = val_d,
+            img_test_base_dir = test_d,
+            batch_size = self.batch_size,
+            num_workers = self.dataloader_num_workers,
+        )
+        return model, datamodule
+
+    def _get_additional_model_providing_kwargs(
+        self, model_name: str, eval_cfg_name: Optional[str] = None
+    ) -> tuple[dict, dict]:
+        """
+        Return tuple of additional kwargs for ModelProvider creation first, and Litmodel second.
+        """
+        return {}, {}
+
 
 class TrainConfig(BaseConfig):
 
@@ -135,6 +194,11 @@ class TrainConfig(BaseConfig):
 
         if self.sub_version is not None and self.version is None:
             raise ValueError('You may not define --sub-version without --version!')
+
+    def _get_additional_model_providing_kwargs(
+        self, model_name: str, eval_cfg_name: Optional[str] = None
+    ) -> tuple[dict, dict]:
+        return {'train_config': self}, {}
 
     def get_lr_scheduler(self, optimizer: Optimizer) -> tuple[Optional[Any], Optional[str]]:
         """Get the LR Scheduler based on given user arguments.
