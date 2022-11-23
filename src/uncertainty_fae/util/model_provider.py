@@ -1,17 +1,19 @@
 from abc import ABC, abstractmethod
-from typing import Optional
 
 from pytorch_lightning import LightningDataModule
 from torch import nn
-
-from .config import TrainConfig
 
 
 class ModelProvider(ABC):
 
     @classmethod
     @abstractmethod
-    def get_provider(cls, train_config: Optional[TrainConfig] = None, **kwargs) -> 'ModelProvider':
+    def get_provider(
+        cls,
+        train_config = None,
+        eval_mode: bool = False,
+        **kwargs
+    ) -> 'ModelProvider':
         """Create/instantiate the 'ModelProvider' object."""
         ...
 

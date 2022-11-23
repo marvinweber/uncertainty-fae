@@ -51,9 +51,11 @@ class RSNAModelProvider(ModelProvider):
         rebalance_classes: bool = True,
         with_pretrained_weights: bool = True,
         train_config: Optional[TrainConfig] = None,
+        eval_mode: bool = False,
     ) -> None:
         super().__init__()
         self.train_config = train_config
+        self.eval_mode = eval_mode
         self.base_net = base_net
         self.uncertainty_method = uncertainty_method
         self.img_input_dimensions = tuple(img_input_dimensions)
@@ -63,8 +65,12 @@ class RSNAModelProvider(ModelProvider):
         self.rebalance_classes = rebalance_classes
         self.with_pretrained_weights = with_pretrained_weights
 
-    def get_model(self, checkpoint=None, litmodel_kwargs=dict(),
-                  checkpoint_kwargs=dict()) -> nn.Module:
+    def get_model(
+        self,
+        checkpoint=None,
+        litmodel_kwargs=dict(),
+        checkpoint_kwargs=dict(),
+    ) -> nn.Module:
         # Create Network
         output_neurons = 2 if self.variance_net else 1
         if self.base_net == 'inceptionv3':
@@ -127,19 +133,23 @@ class RSNAModelProvider(ModelProvider):
             batch_size=batch_size,
             train_transform=train_data_augmentation_transform,
             target_dimensions=self.img_input_dimensions,
-            rescale_boneage=self.rescale_boneage,
+            rescale_boneage=(self.rescale_boneage and not self.eval_mode),
             rebalance_classes=self.rebalance_classes,
             with_gender_input=self.with_gender_input,
             num_workers=num_workers,
+            shuffle_train = not self.eval_mode,
         )
 
         return datamodule
 
     @classmethod
     def get_provider(
-        cls, train_config: Optional[TrainConfig] = None, **kwargs
+        cls,
+        train_config: Optional[TrainConfig] = None,
+        eval_mode: bool = False,
+        **kwargs
     ) -> 'RSNAModelProvider':
-        return RSNAModelProvider(train_config=train_config, **kwargs)
+        return RSNAModelProvider(train_config=train_config, eval_mode=eval_mode, **kwargs)
 
 
 def _get_inception(with_gender_input: bool, with_pretrained_weights_if_avail=True,
