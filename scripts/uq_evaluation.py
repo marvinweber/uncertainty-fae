@@ -102,7 +102,7 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
             os.path.join(eval_cfg_name_base_dir, 'corr_spearman.csv'))
 
         # CREATE PLOTS
-        eval_plot_dir = os.path.join(eval_cfg_name_base_dir, 'plots')
+        eval_plot_dir = os.path.join(eval_cfg_name_base_dir, 'plots', eval_run_cfg.start_time)
         os.makedirs(eval_plot_dir, exist_ok=True)
 
         plot_generator = EvalPlotGenerator(
@@ -128,6 +128,7 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
         eval_run_cfg.eval_dir,
         eval_run_cfg.eval_version_name,
         'combined_plots',
+        eval_run_cfg.start_time,
     )
     combined_plot_generator = EvalPlotGenerator(eval_runs_data, combined_plots_path)
     combined_plot_generator.plot_correlation_comparison(method='pearson')
