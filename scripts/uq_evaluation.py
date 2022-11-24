@@ -65,6 +65,8 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
             )
             dataloader = eval_run_cfg.get_eval_dataloader(dm)
             eval_files = generate_evaluation_predictions(eval_cfg_name_base_dir, model, dataloader)
+        else:
+            logger.info('SKIPPING PREDICTIONS, as already available!')
         eval_result_file, eval_predictions_file, eval_distinct_predictions_file = eval_files
 
         data_type = eval_run_cfg.model_configurations[eval_cfg['model']]['data']
