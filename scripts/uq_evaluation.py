@@ -118,6 +118,7 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
         plot_generator.plot_tolerated_uncertainty_abs_error(eval_cfg_name)
         plot_generator.plot_abstention_rate_vs_abs_error([eval_cfg_name])
         plot_generator.plot_reliability_de_calibration_diagram(eval_cfg_name)
+        plot_generator.plot_calibration_curve([eval_cfg_name])
 
     logger.info('EVALUATION of DISTINCT UQ METHODS DONE!')
     logger.info('Creating combined plots...')
@@ -139,6 +140,7 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
     combined_plot_generator.plot_reliability_de_calibration_diagram_comparison()
     combined_plot_generator.plot_uncertainty_by_abs_error_comparison()
     combined_plot_generator.plot_abs_error_by_boneage_comparison()
+    combined_plot_generator.plot_calibration_curve()
 
     logger.info('DONE!')
 

@@ -287,7 +287,7 @@ class EvalPlotGenerator():
         self._save_and_show_plt(filename)
 
     def plot_reliability_de_calibration_diagram(self, eval_cfg_name: str) -> None:
-        """Calibration/ Reliability Diagram - adapted from Deep Ensemble Paper"""
+        """Calibration/ Reliability Diagram - DEPRECATED"""
 
         df = self.eval_runs_data[eval_cfg_name]['prediction_log']
         df_distinct = self.eval_runs_data[eval_cfg_name]['distinct_prediction_log']
@@ -351,11 +351,90 @@ class EvalPlotGenerator():
         plt.legend()
         self._save_and_show_plt('reliability_de_calibration_diagram')
 
+    def plot_calibration_curve(self, eval_cfg_names: Optional[list[str]] = None) -> None:
+        """Calibration Curve - adapted from Deep Ensemble Paper
+
+        See: https://arxiv.org/abs/1612.01474
+
+        Args:
+            eval_cfg_names: A list of configuration names to include into the plot.
+        """
+
+        if not eval_cfg_names:
+            eval_cfg_names = self.eval_runs_data.keys()
+        comparison_plot = len(eval_cfg_names) > 1
+        ci_intervals = [i/100 for i in range(0, 110, 10)]
+
+        self._init_figure(
+            title=f'Calibration Curve {"Comparison " if comparison_plot else ""}(WIP)',
+            derive_suptitle_from_cfg=eval_cfg_names[0] if not comparison_plot else None,
+            suptitle=(self.eval_runs_data[list(eval_cfg_names)[0]]['data_display_name']
+                      if comparison_plot else None),
+        )
+        # Ideal Line
+        plt.plot(
+            ci_intervals,
+            ci_intervals,
+            linestyle="--",
+            color=TARGET_COLOR,
+            label='Ideal Fraction',
+        )
+
+        for eval_cfg_name in eval_cfg_names:
+            data = self.eval_runs_data[eval_cfg_name]
+            df = data['prediction_log']
+            # Observations from the (test) set
+            observations = df['target'].tolist()
+            
+            ci_shares = {k: [] for k in QUANTILE_SIGMA_ENV_SCALES.keys()}
+            for i in range(len(df)):
+                mean = df.iloc[i]['prediction']
+                var = df.iloc[i]['uncertainty']**2
+                # observations = df_distinct.iloc[i]['prediction']
+                sample_ci_shares = observation_share_per_prediction_interval(mean, var, observations)
+                for sample_ci_share, val in sample_ci_shares.items():
+                    ci_shares[sample_ci_share].append(val)
+
+            ci_share_means = []
+            ci_share_lower_stds = []
+            ci_share_upper_stds = []
+            for ci_share, ci_share_vals in ci_shares.items():
+                mean = np.mean(ci_share_vals)
+                std = np.std(ci_share_vals)
+                ci_share_means.append(mean)
+                ci_share_lower_stds.append(max(mean - 3 * std, 0))
+                ci_share_upper_stds.append(min(mean + 3 * std, 1))
+
+            color_obs = data['color']
+            # Actual Observations Std; only if not a comparison plot
+            if not comparison_plot:
+                plt.fill_between(
+                    ci_intervals,
+                    [0, *ci_share_lower_stds, 1],
+                    [0, *ci_share_upper_stds, 1],
+                    color=color_obs,
+                    alpha=0.2,
+                    label='Three Standard Deviations of Observed Fraction',
+                )
+            # Actual Observations
+            plt.plot(
+                ci_intervals,
+                [0, *ci_share_means, 1],
+                '^-',
+                label=f'Observed Fraction - {data["display_name"]}',
+                color=color_obs,
+            )
+        plt.xlabel('Expected Fraction')
+        plt.ylabel('Observed Fraction')
+        plt.legend()
+        name = 'calibration_curve_comparison' if comparison_plot else 'calibration_curve'
+        self._save_and_show_plt(name)
+
     def plot_reliability_de_calibration_diagram_comparison(
         self,
         eval_cfg_names: Optional[list[str]] = None
     ) -> None:
-        """Comparison of Calibration/ Reliability Diagrams - adapted from Deep Ensemble Paper"""
+        """Comparison of Calibration/ Reliability Diagrams - DEPRECATED"""
 
         if not eval_cfg_names:
             eval_cfg_names = self.eval_runs_data.keys()
