@@ -66,6 +66,8 @@ def train_model(train_model_name: str, train_config: TrainConfig) -> None:
             PROVIDER_MAPPING,
             train_model_name,
         )
+        datamodule.setup('fit')
+        datamodule.setup('validate')
 
         if not isinstance(model, TrainLoadMixin):
             raise ValueError('Model must implement `TrainLoadMixin`!')
