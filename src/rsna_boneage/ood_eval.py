@@ -32,6 +32,13 @@ class RSNABoneAgeOutOfDomainEvaluator(OutOfDomainEvaluator):
     def _get_pred_filepath(self, eval_cfg_name: str, ood_name: str) -> str:
         return os.path.join(self.base_dir, f'{eval_cfg_name}_{ood_name}_ood_preds.csv')
 
+    def ood_preds_avail(self, eval_cfg_name: str) -> bool:
+        for ood_name in self.ood_datasets.keys():
+            pred_file = self._get_pred_filepath(eval_cfg_name, ood_name)
+            if not os.path.exists(pred_file):
+                return False  # If single pred file missing: return False
+        return True
+
     def generate_predictions(
         self,
         eval_cfg_name: str,

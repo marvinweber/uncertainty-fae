@@ -24,6 +24,11 @@ class OutOfDomainEvaluator(ABC):
         ...
 
     @abstractmethod
+    def ood_preds_avail(self, eval_cfg_name: str) -> bool:
+        """Check wether Predictions for OOD Eval are available, or not."""
+        ...
+
+    @abstractmethod
     def generate_predictions(
         self,
         eval_cfg_name: str,

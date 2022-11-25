@@ -62,7 +62,8 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
 
         # GENERATING PREDICTIONS
         avail, *eval_files = evaluation_predictions_available(eval_cfg_name_base_dir)
-        if not avail:
+        ood_avail = ood_evaluator.ood_preds_avail(eval_cfg_name)
+        if not avail or not ood_avail:
             model, dm, model_provider = eval_run_cfg.get_model_and_datamodule(
                 PROVIDER_MAPPING,
                 eval_cfg['model'],
@@ -77,17 +78,27 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
             )
 
             # Start with OoD Predictions
-            logger.info('Generating OoD Predictions...')
-            ood_evaluator.generate_predictions(eval_cfg_name, model, model_provider)
-            logger.info('OoD Predictions DONE')
+            if not ood_avail:
+                logger.info('Generating OoD Predictions...')
+                ood_evaluator.generate_predictions(eval_cfg_name, model, model_provider)
+                logger.info('OoD Predictions GENERATED.')
+            else:
+                logger.info('OoD Predictions already available; skipping.')
 
             # Continue with "normal" predictions
-            logger.info('Generating Evaluation Predictions...')
-            dataloader = eval_run_cfg.get_eval_dataloader(dm)
-            eval_files = generate_evaluation_predictions(eval_cfg_name_base_dir, model, dataloader)
-            logger.info('Predictions GENERATED')
+            if not avail:
+                logger.info('Generating Evaluation Predictions...')
+                dataloader = eval_run_cfg.get_eval_dataloader(dm)
+                eval_files = generate_evaluation_predictions(
+                    eval_cfg_name_base_dir,
+                    model,
+                    dataloader,
+                )
+                logger.info('Evaluation Predictions GENERATED.')
+            else:
+                logger.info('Evaluation Predictions already available; skipping.')
         else:
-            logger.info('SKIPPING PREDICTIONS, as already available!')
+            logger.info('SKIPPING PREDICTIONS, as all are already available!')
         eval_result_file, eval_predictions_file, eval_distinct_predictions_file = eval_files
 
         prediction_log = pd.read_csv(eval_predictions_file)
