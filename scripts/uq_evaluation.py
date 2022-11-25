@@ -5,7 +5,8 @@ import pandas as pd
 import yaml
 
 from rsna_boneage.model_provider import RSNAModelProvider
-from uncertainty_fae.evaluation import EvalPlotGenerator
+from rsna_boneage.ood_eval import RSNABoneAgeOutOfDomainEvaluator
+from uncertainty_fae.evaluation import EvalPlotGenerator, OutOfDomainEvaluator
 from uncertainty_fae.evaluation.plotting import EvalRunData
 from uncertainty_fae.evaluation.util import (evaluation_predictions_available,
                                              generate_evaluation_predictions)
@@ -17,6 +18,10 @@ logger = logging.getLogger('UNCERTAINTY_FAE_EVALUATION')
 
 PROVIDER_MAPPING: dict[str, ModelProvider] = {
     'rsna_boneage': RSNAModelProvider,
+}
+
+OOD_EVALUATOR_MAPPING: dict[str, OutOfDomainEvaluator] = {
+    'rsna_boneage': RSNABoneAgeOutOfDomainEvaluator,
 }
 
 DATASET_NAMES = {
@@ -33,6 +38,18 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
 
     eval_runs_data: dict[str, EvalRunData] = {}
 
+    eval_base_dir = os.path.join(  # Base directory for overall evaluation
+        eval_run_cfg.eval_dir,
+        eval_run_cfg.eval_version_name,
+        eval_run_cfg.dataset_type,
+    )
+    # We assume same data type for entire evaluation (no plots / evals accross different datasets)
+    data_type = list(eval_run_cfg.model_configurations.values())[0]['data']
+    # Base directory and Evaluator for out of domain tests
+    ood_base_dir = os.path.join(eval_base_dir, 'ood_eval')
+    ood_evaluator_cls = OOD_EVALUATOR_MAPPING[data_type]
+    ood_evaluator = ood_evaluator_cls.get_evaluator(ood_base_dir, eval_run_cfg)
+
     for eval_cfg_name, eval_cfg in eval_run_cfg.eval_configuration.items():
         if eval_cfg_name not in eval_run_cfg.eval_only:
             logger.debug('Skipping config %s', eval_cfg_name)
@@ -40,36 +57,39 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
         logger.info('NEXT EVALUATION --- %s (%s) for model "%s"',
                     eval_cfg_name, eval_cfg['name'], eval_cfg['model'])
 
-        eval_cfg_name_base_dir = os.path.join(
-            eval_run_cfg.eval_dir,
-            eval_run_cfg.eval_version_name,
-            eval_cfg_name,
-            eval_run_cfg.dataset_type,
-        )
+        eval_cfg_name_base_dir = os.path.join(eval_base_dir, eval_cfg_name)
         logger.info('Eval Log-Dir: %s', eval_cfg_name_base_dir)
 
         # GENERATING PREDICTIONS
         avail, *eval_files = evaluation_predictions_available(eval_cfg_name_base_dir)
         if not avail:
-            model, dm = eval_run_cfg.get_model_and_datamodule(
+            model, dm, model_provider = eval_run_cfg.get_model_and_datamodule(
                 PROVIDER_MAPPING,
                 eval_cfg['model'],
                 model_checkpoint=eval_cfg['checkpoint'],
                 eval_cfg_name=eval_cfg_name,
             )
             assert isinstance(model, UncertaintyAwareModel)
-            dm.setup('test')
+            dm.setup('all')
             model.set_dataloaders(
                 train_dataloader=dm.train_dataloader(),
                 val_dataloader=dm.val_dataloader(),
             )
+
+            # Start with OoD Predictions
+            logger.info('Generating OoD Predictions...')
+            ood_evaluator.generate_predictions(eval_cfg_name, model, model_provider)
+            logger.info('OoD Predictions DONE')
+
+            # Continue with "normal" predictions
+            logger.info('Generating Evaluation Predictions...')
             dataloader = eval_run_cfg.get_eval_dataloader(dm)
             eval_files = generate_evaluation_predictions(eval_cfg_name_base_dir, model, dataloader)
+            logger.info('Predictions GENERATED')
         else:
             logger.info('SKIPPING PREDICTIONS, as already available!')
         eval_result_file, eval_predictions_file, eval_distinct_predictions_file = eval_files
 
-        data_type = eval_run_cfg.model_configurations[eval_cfg['model']]['data']
         prediction_log = pd.read_csv(eval_predictions_file)
         eval_runs_data[eval_cfg_name] = {
             'display_name': eval_cfg['name'],
@@ -123,12 +143,11 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
         plot_generator.plot_calibration_curve([eval_cfg_name])
 
     logger.info('EVALUATION of DISTINCT UQ METHODS DONE!')
-    logger.info('Creating combined plots...')
 
     # CREATE COMBINED PLOTS
+    logger.info('Creating combined plots...')
     combined_plots_path = os.path.join(
-        eval_run_cfg.eval_dir,
-        eval_run_cfg.eval_version_name,
+        eval_base_dir,
         'combined_plots',
         eval_run_cfg.start_time,
     )
@@ -144,6 +163,9 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
     combined_plot_generator.plot_uncertainty_by_abs_error_comparison()
     combined_plot_generator.plot_abs_error_by_boneage_comparison()
     combined_plot_generator.plot_calibration_curve()
+
+    logger.info('Creating OOD Plots...')
+    ood_evaluator.generate_plots(eval_runs_data)
 
     logger.info('DONE!')
 

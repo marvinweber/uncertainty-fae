@@ -188,35 +188,38 @@ class RSNABoneageDataModule(LightningDataModule):
 
     def setup(self, stage: str) -> None:
         # Training Dataset
-        self.dataset_train = RSNABoneageDataset(
-            annotation_file=self.annotation_file_train,
-            img_base_dir=self.img_train_base_dir,
-            transform=self.train_transform,
-            target_dimensions=self.target_dimensions,
-            rescale_boneage=self.rescale_boneage,
-            rebalance_classes=self.rebalance_classes,
-            with_gender_input=self.with_gender_input,
-        )
+        if stage in ['fit', 'train', 'all', '']:
+            self.dataset_train = RSNABoneageDataset(
+                annotation_file=self.annotation_file_train,
+                img_base_dir=self.img_train_base_dir,
+                transform=self.train_transform,
+                target_dimensions=self.target_dimensions,
+                rescale_boneage=self.rescale_boneage,
+                rebalance_classes=self.rebalance_classes,
+                with_gender_input=self.with_gender_input,
+            )
 
         # Validation Dataset
-        self.dataset_val = RSNABoneageDataset(
-            annotation_file=self.annotation_file_val,
-            img_base_dir=self.img_val_base_dir,
-            transform=self.val_transform,
-            target_dimensions=self.target_dimensions,
-            rescale_boneage=self.rescale_boneage,
-            with_gender_input=self.with_gender_input,
-        )
+        if stage in ['val', 'validate', 'all', '']:
+            self.dataset_val = RSNABoneageDataset(
+                annotation_file=self.annotation_file_val,
+                img_base_dir=self.img_val_base_dir,
+                transform=self.val_transform,
+                target_dimensions=self.target_dimensions,
+                rescale_boneage=self.rescale_boneage,
+                with_gender_input=self.with_gender_input,
+            )
 
         # Test Dataset
-        self.dataset_test = RSNABoneageDataset(
-            annotation_file=self.annotation_file_test,
-            img_base_dir=self.img_test_base_dir,
-            transform=self.test_transform,
-            target_dimensions=self.target_dimensions,
-            rescale_boneage=self.rescale_boneage,
-            with_gender_input=self.with_gender_input,
-        )
+        if stage in ['test', 'all', '']:
+            self.dataset_test = RSNABoneageDataset(
+                annotation_file=self.annotation_file_test,
+                img_base_dir=self.img_test_base_dir,
+                transform=self.test_transform,
+                target_dimensions=self.target_dimensions,
+                rescale_boneage=self.rescale_boneage,
+                with_gender_input=self.with_gender_input,
+            )
 
     def train_dataloader(self):
         self.dataset_train.reload()

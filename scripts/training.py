@@ -62,7 +62,7 @@ def train_model(train_model_name: str, train_config: TrainConfig) -> None:
                         'training has already been finished! SKIPPING!')
             return
 
-        model, datamodule = train_config.get_model_and_datamodule(
+        model, datamodule, _ = train_config.get_model_and_datamodule(
             PROVIDER_MAPPING,
             train_model_name,
         )

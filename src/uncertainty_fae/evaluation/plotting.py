@@ -1,27 +1,18 @@
 import os
 from datetime import datetime
-from typing import Optional, TypedDict
-from matplotlib.figure import Figure
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas
-from pandas import DataFrame
+from matplotlib.figure import Figure
 
-from uncertainty_fae.evaluation.calibration import QUANTILE_SIGMA_ENV_SCALES, observation_share_per_prediction_interval
+from uncertainty_fae.evaluation.calibration import (QUANTILE_SIGMA_ENV_SCALES,
+                                                    observation_share_per_prediction_interval)
+from uncertainty_fae.evaluation.util import EvalRunData
 
 TARGET_COLOR = 'green'
 """Color to use in plots for the target (ground truth)."""
-
-
-class EvalRunData(TypedDict):
-    """Simple Wrapper for results data as required by the `EvalPlotGenerator`."""
-
-    display_name: str
-    data_display_name: Optional[str]
-    prediction_log: DataFrame
-    distinct_prediction_log: Optional[DataFrame]
-    color: str
 
 
 class EvalPlotGenerator():

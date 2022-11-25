@@ -141,7 +141,7 @@ class BaseConfig():
         model_name: str,
         model_checkpoint: Optional[str] = None,
         eval_cfg_name: Optional[str] = None,
-    ) -> tuple[Any, LightningDataModule]:
+    ) -> tuple[Any, LightningDataModule, ModelProvider]:
         """
         TODO Docs
         """
@@ -182,7 +182,7 @@ class BaseConfig():
             batch_size = self.batch_size,
             num_workers = self.dataloader_num_workers,
         )
-        return model, datamodule
+        return model, datamodule, model_provider
 
     def _get_additional_model_providing_kwargs(
         self, model_name: str, eval_cfg_name: Optional[str] = None
@@ -246,6 +246,7 @@ class EvalRunConfig(BaseConfig):
         self.dataset_type = config_dict['dataset_type']
         self.eval_configuration_file = config_dict['eval_configuration']
         self.eval_configuration: dict
+        self.ood_datasets: dict
         self.eval_dir = config_dict['eval_dir']
         self.only_combined_plots = config_dict['only_combined_plots']
 
@@ -263,6 +264,7 @@ class EvalRunConfig(BaseConfig):
         with open(self.eval_configuration_file, 'r') as f:
             full_eval_configuration = yaml.safe_load(f)
         self.eval_configuration = full_eval_configuration['evaluations'][self.eval_version_name]
+        self.ood_datasets = full_eval_configuration['ood_datasets']
 
     def _get_additional_model_providing_kwargs(
         self, model_name: str, eval_cfg_name: Optional[str] = None

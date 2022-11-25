@@ -1,9 +1,11 @@
 import csv
 import logging
 import os
+from typing import Optional, TypedDict
 
 import torch
 import yaml
+from pandas import DataFrame
 from torch import Tensor
 from torch.utils.data import DataLoader
 
@@ -89,4 +91,14 @@ def evaluation_predictions_available(eval_base_dir: str, make_eval_dir: bool = F
                                           if os.path.exists(eval_distinct_predictions_file)
                                           else None)
         return True, eval_result_file, eval_predictions_file, eval_distinct_predictions_file
-    return False, None, None, None
+    return False, eval_result_file, eval_predictions_file, eval_distinct_predictions_file
+
+
+class EvalRunData(TypedDict):
+    """Simple Wrapper for results data as required by the `EvalPlotGenerator`."""
+
+    display_name: str
+    data_display_name: Optional[str]
+    prediction_log: DataFrame
+    distinct_prediction_log: Optional[DataFrame]
+    color: str
