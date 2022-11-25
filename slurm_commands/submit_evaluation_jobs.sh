@@ -14,6 +14,10 @@ then
           One to many eval configuration names for each of which a separate job
           will be scheduled.
 
+    The evaluation is started with --prediction-only flag, so that no plots are
+    created. This must be done with a separate job/execution afterwards (due to
+    parallel prediction generation).
+
     Jobs are submitted in HOLD state, so they have to be released manually
     afterwards with: scontrol release <job-id-1> <job-id-2> ...
 
@@ -47,7 +51,7 @@ do
     --array=1-2%1 \
     generic_sbatch_uncertainty.sh \
     python /app/scripts/uq_evaluation.py \
-    --batch-size 40 \
+    --batch-size 20 \
     --dataloader-num-workers 32 \
     --eval-dir /ml_eval \
     --model-logs-dir /ml_logs \
