@@ -200,7 +200,7 @@ class RSNABoneageDataModule(LightningDataModule):
             )
 
         # Validation Dataset
-        if stage in ['val', 'validate', 'all', '']:
+        if stage in ['val', 'validate', 'fit', 'all', '']:
             self.dataset_val = RSNABoneageDataset(
                 annotation_file=self.annotation_file_val,
                 img_base_dir=self.img_val_base_dir,
