@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib.collections import PolyCollection
+from matplotlib.figure import Figure
 from matplotlib.patches import Patch
 
 from rsna_boneage.data import RSNABoneageDataModule
@@ -16,6 +17,8 @@ from uncertainty_fae.util import EvalRunConfig, ModelProvider
 
 logger = logging.getLogger(__name__)
 
+HATCHES = ['xxx', '***', 'ooo']
+
 
 class RSNABoneAgeOutOfDomainEvaluator(OutOfDomainEvaluator):
 
@@ -23,6 +26,7 @@ class RSNABoneAgeOutOfDomainEvaluator(OutOfDomainEvaluator):
         super().__init__(base_dir, eval_run_cfg)
 
         self.ood_datasets: dict = self.eval_run_cfg.ood_datasets['rsna_boneage']
+        self.plot_base_dir = os.path.join(self.base_dir, 'plots', self.eval_run_cfg.start_time)
 
     @classmethod
     def get_evaluator(cls, base_dir: str, eval_run_cfg: EvalRunConfig) -> 'OutOfDomainEvaluator':
@@ -81,6 +85,7 @@ class RSNABoneAgeOutOfDomainEvaluator(OutOfDomainEvaluator):
 
     def generate_plots(self, eval_runs_data: dict[str, EvalRunData]) -> None:
         self._generate_uq_comparison_plot(eval_runs_data)
+        self._generate_prediction_comparison_plot(eval_runs_data)
 
     def _generate_uq_comparison_plot(self, eval_runs_data: dict[str, EvalRunData]) -> None:
         violin_positions = []
@@ -100,7 +105,7 @@ class RSNABoneAgeOutOfDomainEvaluator(OutOfDomainEvaluator):
             uq_preds = eval_run_data['prediction_log']
             color = eval_run_data['color']
 
-            avail_hatches = ['xx', 'oo', '**']
+            avail_hatches = HATCHES.copy()
 
             # Base Entry: UQ with "normal" dataset
             violin_positions.append(v_pos)
@@ -134,9 +139,8 @@ class RSNABoneAgeOutOfDomainEvaluator(OutOfDomainEvaluator):
                     legend_elements.append(patch)
             v_pos += 1
 
-        fig, ax = plt.subplots()
-        fig.set_size_inches(10, 6)
-        vplots = ax.violinplot(violin_datas, violin_positions, showmeans=True)
+        fig, ax = self._get_fig()
+        vplots = ax.violinplot(violin_datas, violin_positions, showmeans=True, widths=1)
         v_patch: PolyCollection
         for v_patch, color, hatch in zip(vplots['bodies'], violin_colors, violin_hatches):
             v_patch.set_facecolor(color)
@@ -150,4 +154,68 @@ class RSNABoneAgeOutOfDomainEvaluator(OutOfDomainEvaluator):
         ax.set_xticklabels(violin_labels, rotation=15)
         ax.set_ylabel('Uncertainty')
         ax.legend(handles=legend_elements, handleheight=3, handlelength=4, loc='upper left')
-        fig.savefig(os.path.join(self.base_dir, 'uq_comparison.png'))
+        self._save_fig(fig, 'uq_comparison')
+
+    def _generate_prediction_comparison_plot(self, eval_runs_data: dict[str, EvalRunData]) -> None:
+        """Violin-Plot Comparison of the Predictions for the OOD Datasets by the UQ-Models."""
+        violin_positions = []
+        violin_labels = []
+        violin_datas = []
+        violin_colors = []
+        violin_hatches = []
+        violin_edge_color = []
+        legend_elements = []
+
+        v_pos = 0
+        for eval_cfg_name, eval_run_data in eval_runs_data.items():
+            uq_name = eval_run_data['display_name']
+            color = eval_run_data['color']
+
+            avail_hatches = HATCHES.copy()
+
+            for ood_name, ood_cfg in self.ood_datasets.items():
+                ood_pred_file = self._get_pred_filepath(eval_cfg_name, ood_name)
+                if not os.path.isfile(ood_pred_file):
+                    logger.warning('No OOD-Pred file for %s, %s (%s)',
+                                   eval_cfg_name, ood_name, ood_pred_file)
+                    continue
+                v_pos += 1
+
+                ood_preds = pd.read_csv(ood_pred_file)
+                violin_positions.append(v_pos)
+                violin_labels.append(uq_name)
+                violin_datas.append(ood_preds['prediction'].tolist())
+                violin_colors.append(color)
+                hatch = avail_hatches.pop(0)
+                violin_hatches.append(hatch)
+                violin_edge_color.append('white')
+
+                if len(legend_elements) < len(self.ood_datasets.items()):
+                    patch = Patch(
+                        facecolor='white', edgecolor='grey', hatch=hatch, label=ood_cfg['name'])
+                    legend_elements.append(patch)
+            v_pos += 1
+
+        fig, ax = self._get_fig()
+        vplots = ax.violinplot(violin_datas, violin_positions, showmeans=True, widths=1)
+        v_patch: PolyCollection
+        for v_patch, color, hatch in zip(vplots['bodies'], violin_colors, violin_hatches):
+            v_patch.set_facecolor(color)
+            if hatch:
+                v_patch.set_hatch(hatch)
+                v_patch.set_edgecolor(color)
+        for partname in ('cbars', 'cmins', 'cmaxes', 'cmeans'):
+            vplots[partname].set_edgecolor('black')
+            vplots[partname].set_linewidth(1)
+        ax.set_xticks(violin_positions)
+        ax.set_xticklabels(violin_labels, rotation=15)
+        ax.set_ylabel('Prediction')
+        ax.legend(handles=legend_elements, handleheight=3, handlelength=4, loc='upper right')
+        self._save_fig(fig, 'prediction_comparison')
+
+    def _get_fig(self):
+        return plt.subplots(figsize=(10, 7), dpi=250)
+
+    def _save_fig(self, fig: Figure, name: str) -> None:
+        os.makedirs(self.plot_base_dir, exist_ok=True)
+        fig.savefig(os.path.join(self.plot_base_dir, f'{name}.png'))
