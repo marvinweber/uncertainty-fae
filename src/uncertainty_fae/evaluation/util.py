@@ -1,6 +1,7 @@
 import csv
 import logging
 import os
+import re
 from typing import Optional, TypedDict
 
 import torch
@@ -92,6 +93,43 @@ def evaluation_predictions_available(eval_base_dir: str, make_eval_dir: bool = F
                                           else None)
         return True, eval_result_file, eval_predictions_file, eval_distinct_predictions_file
     return False, eval_result_file, eval_predictions_file, eval_distinct_predictions_file
+
+
+def create_best_epoch_checkpoint_symlinks(base_dir: str, symlink_name: str = 'best.ckpt') -> None:
+    """Create symlinks to best epoch checkpoints in every checkpoint dir found under base_dir.
+
+    Note, this only works if the loss is written to the file itself: `val_loss=...`;
+    e.g. `epoch=8-val_loss=0.123.ckpt`.
+
+    Args:
+        base_dir: The directory in which to (recursively) search for `checkpoints` directories in
+            which to add the symlinks.
+        symlink_name: How the symlink should be named.
+    """
+    for dirname, dir_dirs, dir_files in os.walk(base_dir):
+        if not dirname.endswith('checkpoints'):
+            continue
+        checkpoint_files = []
+        for dir_file in dir_files:
+            result = re.search(r'val_loss=(-?\d*\.\d*)', dir_file)
+            if not result:
+                continue
+            val_loss = float(result.group(1))
+            checkpoint_files.append((val_loss, dir_file))
+        if not checkpoint_files:  # No checkpoint files found
+            continue
+        best_ckpt_path = os.path.abspath(
+            os.path.join(
+                dirname,
+                sorted(checkpoint_files, key=lambda cpt: cpt[0])[0][1],
+        ))
+        symlink_path = os.path.abspath(os.path.join(dirname, symlink_name))
+        # Make sure to not overwrite any file/dir
+        if not os.path.isfile(symlink_path) and not os.path.isdir(symlink_path):
+            # remove old link to ensure it is up to date
+            if os.path.islink(symlink_path):
+                os.remove(symlink_path)
+            os.symlink(best_ckpt_path, symlink_path)
 
 
 class EvalRunData(TypedDict):

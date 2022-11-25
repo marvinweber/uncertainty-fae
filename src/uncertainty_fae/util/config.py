@@ -251,8 +251,9 @@ class EvalRunConfig(BaseConfig):
         self.eval_configuration: dict
         self.ood_datasets: dict
         self.eval_dir = config_dict['eval_dir']
-        self.only_combined_plots = config_dict['only_combined_plots']
-        self.only_predictions = config_dict['only_predictions']
+        self.only_combined_plots: bool = config_dict['only_combined_plots']
+        self.only_predictions: bool = config_dict['only_predictions']
+        self.model_logs_dir: Optional[str] = config_dict['model_logs_dir']
 
         self._load_eval_configuration()
         assert isinstance(self.eval_configuration, dict)

@@ -8,7 +8,8 @@ from rsna_boneage.model_provider import RSNAModelProvider
 from rsna_boneage.ood_eval import RSNABoneAgeOutOfDomainEvaluator
 from uncertainty_fae.evaluation import EvalPlotGenerator, OutOfDomainEvaluator
 from uncertainty_fae.evaluation.plotting import EvalRunData
-from uncertainty_fae.evaluation.util import (evaluation_predictions_available,
+from uncertainty_fae.evaluation.util import (create_best_epoch_checkpoint_symlinks,
+                                             evaluation_predictions_available,
                                              generate_evaluation_predictions)
 from uncertainty_fae.model import UncertaintyAwareModel
 from uncertainty_fae.util import EvalRunConfig, parse_cli_args
@@ -35,6 +36,11 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
         return
     else:
         logger.info('Running Evaluations for: %s', ', '.join(eval_run_cfg.eval_only))
+
+    if eval_run_cfg.model_logs_dir:
+        logger.info('Creating best-epoch symlinks for all checkpoint dirs found in %s',
+                    eval_run_cfg.model_logs_dir)
+        create_best_epoch_checkpoint_symlinks(eval_run_cfg.model_logs_dir)
 
     eval_runs_data: dict[str, EvalRunData] = {}
 
