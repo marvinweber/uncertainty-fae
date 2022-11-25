@@ -68,6 +68,17 @@ models:
             lr: 0.0003
             weight_decay: 0.0001
 
+    rsna_resnet50_500_gender_de:
+        data: rsna_boneage
+        provider_config:
+            base_net: resnet50
+            uncertainty_method: deep_ensemble
+            img_input_dimensions: [500, 500]
+            variance_net: False
+            with_gender_input: True
+            rescale_boneage: True
+            rebalance_classes: True
+
     rsna_inception_500_gender_laplace:
         data: rsna_boneage
         provider_config:
@@ -153,6 +164,17 @@ models:
             rebalance_classes: True
         litmodel_config:
             n_samples: 100
+
+    rsna_resnet50_500_gender_variance_de:
+        data: rsna_boneage
+        provider_config:
+            base_net: resnet50
+            uncertainty_method: deep_ensemble
+            img_input_dimensions: [500, 500]
+            variance_net: True
+            with_gender_input: True
+            rescale_boneage: True
+            rebalance_classes: True
 
     rsna_resnet50_500_gender_variance_laplace:
         data: rsna_boneage
