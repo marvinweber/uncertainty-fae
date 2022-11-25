@@ -87,6 +87,9 @@ def parse_cli_args(type: str) -> dict:
         parser.add_argument('--only-predictions', action='store_true', default=False,
                             required=False,
                             help='Whether only predictions should be generated (no plotting).')
+        parser.add_argument('--model-logs-dir', required=False, default=None,
+                            help='Parent directory of all model logs used in the evaluation. '
+                                 'If provided, it will be walked to create best epoch symlinks.')
 
     args = parser.parse_args()
     return {key: val for key, val in args._get_kwargs()}
