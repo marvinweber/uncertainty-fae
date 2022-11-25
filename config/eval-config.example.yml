@@ -1,0 +1,166 @@
+ood_datasets:
+    rsna_boneage:
+        chest_xray:
+            base_dir: /data_fae_uq/chest_xray
+            annotations: /data_fae_uq/chest_xray/annotations.csv
+            name: "Chest X-Ray"
+        oct:
+            base_dir: /data_fae_uq/oct
+            annotations: /data_fae_uq/oct/annotations.csv
+            name: "OCT"
+
+evaluations:
+    rsna_final_eval_1:
+        # RSNA Bone Age Standard Net
+        rsna_resnet50_500_gender_mcd_10:
+            model: rsna_resnet50_500_gender_mcd
+            name: "MCDO-10"
+            color: "#9C27B0"
+            checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/1/checkpoints/last.ckpt
+            litmodel_config:
+                undo_boneage_rescale: True
+                n_samples: 10
+
+        rsna_resnet50_500_gender_mcd_100:
+            model: rsna_resnet50_500_gender_mcd
+            name: "MCDO-100"
+            color: "#4A148C"
+            checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/1/checkpoints/last.ckpt
+            litmodel_config:
+                undo_boneage_rescale: True
+                n_samples: 100
+
+        rsna_resnet50_500_gender_de_10:
+            model: rsna_resnet50_500_gender_de
+            name: "DE-10"
+            color: "#90CAF9"
+            checkpoint: null
+            litmodel_config:
+                undo_boneage_rescale: True
+                base_model_checkpoints:
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/1/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/2/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/3/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/4/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/5/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/6/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/7/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/8/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/9/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/10/checkpoints/last.ckpt
+
+        rsna_resnet50_500_gender_de_20:
+            model: rsna_resnet50_500_gender_de
+            name: "DE-20"
+            color: "#1976D2"
+            checkpoint: null
+            litmodel_config:
+                undo_boneage_rescale: True
+                base_model_checkpoints:
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/1/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/2/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/3/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/4/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/5/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/6/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/7/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/8/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/9/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/10/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/11/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/12/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/13/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/14/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/15/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/16/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/17/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/18/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/19/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd/20/checkpoints/last.ckpt
+
+        rsna_resnet50_500_gender_laplace:
+            model: rsna_resnet50_500_gender_laplace
+            name: "LA"
+            color: "#FF8A65"
+            checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_laplace/laplace/1/laplace_model.gz
+            litmodel_config:
+                undo_boneage_rescale: True
+                n_samples: 100
+                base_model_checkpoint_pth: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_laplace/laplace/1/checkpoints/best.ckpt
+
+        rsna_resnet50_500_gender_swag:
+            model: rsna_resnet50_500_gender_swag
+            name: "SWAG"
+            color: "#6D4C41"
+            checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_swag/swag/1/swag_model.gz
+            litmodel_config:
+                undo_boneage_rescale: True
+                n_samples: 30
+                base_model_checkpoint_pth: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_swag/swag/1/checkpoints/last.ckpt
+
+        # RSNA Bone Age Variance Net
+        rsna_resnet50_500_gender_variance_mcd_10:
+            model: rsna_resnet50_500_gender_variance_mcd
+            name: "VAR-MCDO-10"
+            color: "#DCE775"
+            checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/1/checkpoints/last.ckpt
+            litmodel_config:
+                undo_boneage_rescale: True
+                n_samples: 10
+
+        rsna_resnet50_500_gender_variance_mcd_100:
+            model: rsna_resnet50_500_gender_variance_mcd
+            name: "VAR-MCDO-100"
+            color: "#AFB42B"
+            checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/1/checkpoints/last.ckpt
+            litmodel_config:
+                undo_boneage_rescale: True
+                n_samples: 100
+
+        rsna_resnet50_500_gender_variance_de_10:
+            model: rsna_resnet50_500_gender_variance_de
+            name: "VAR-DE-10"
+            color: "#B0BEC5"
+            checkpoint: null
+            litmodel_config:
+                undo_boneage_rescale: True
+                base_model_checkpoints:
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/1/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/2/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/3/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/4/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/5/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/6/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/7/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/8/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/9/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/10/checkpoints/last.ckpt
+
+        rsna_resnet50_500_gender_variance_de_20:
+            model: rsna_resnet50_500_gender_variance_de
+            name: "VAR-DE-20"
+            color: "#546E7A"
+            checkpoint: null
+            litmodel_config:
+                undo_boneage_rescale: True
+                base_model_checkpoints:
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/1/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/2/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/3/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/4/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/5/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/6/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/7/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/8/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/9/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/10/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/11/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/12/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/13/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/14/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/15/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/16/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/17/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/18/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/19/checkpoints/last.ckpt
+                    - /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd/20/checkpoints/last.ckpt
