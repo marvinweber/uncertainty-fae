@@ -22,19 +22,24 @@ HATCHES = ['xxx', '***', 'ooo']
 
 class RSNABoneAgeOutOfDomainEvaluator(OutOfDomainEvaluator):
 
-    def __init__(self, base_dir: str, eval_run_cfg: EvalRunConfig) -> None:
-        super().__init__(base_dir, eval_run_cfg)
+    def __init__(self, data_base_dir: str, plot_base_dir: str, eval_run_cfg: EvalRunConfig) -> None:
+        super().__init__(data_base_dir, plot_base_dir, eval_run_cfg)
 
         self.ood_datasets: dict = self.eval_run_cfg.ood_datasets['rsna_boneage']
-        self.plot_base_dir = os.path.join(self.base_dir, 'plots', self.eval_run_cfg.start_time)
+        self.plot_dir = os.path.join(self.plot_base_dir, self.eval_run_cfg.start_time)
 
     @classmethod
-    def get_evaluator(cls, base_dir: str, eval_run_cfg: EvalRunConfig) -> 'OutOfDomainEvaluator':
-        evaluator = cls(base_dir, eval_run_cfg)
+    def get_evaluator(
+        cls,
+        data_base_dir: str,
+        plot_base_dir: str,
+        eval_run_cfg: EvalRunConfig
+    ) -> 'OutOfDomainEvaluator':
+        evaluator = cls(data_base_dir, plot_base_dir, eval_run_cfg)
         return evaluator
 
     def _get_pred_filepath(self, eval_cfg_name: str, ood_name: str) -> str:
-        return os.path.join(self.base_dir, f'{eval_cfg_name}_{ood_name}_ood_preds.csv')
+        return os.path.join(self.data_base_dir, f'{eval_cfg_name}_{ood_name}_ood_preds.csv')
 
     def ood_preds_avail(self, eval_cfg_name: str) -> bool:
         for ood_name in self.ood_datasets.keys():
@@ -75,7 +80,7 @@ class RSNABoneAgeOutOfDomainEvaluator(OutOfDomainEvaluator):
             score, predictions, targets, errors, uncertainties, metrics = results
 
             # Prediction and Uncertainty Stats
-            os.makedirs(self.base_dir, exist_ok=True)
+            os.makedirs(self.data_base_dir, exist_ok=True)
             with open(pred_file, 'w') as file:
                 writer = csv.writer(file)
                 writer.writerow(['index', 'prediction', 'uncertainty'])
@@ -217,5 +222,5 @@ class RSNABoneAgeOutOfDomainEvaluator(OutOfDomainEvaluator):
         return plt.subplots(figsize=(10, 7), dpi=250)
 
     def _save_fig(self, fig: Figure, name: str) -> None:
-        os.makedirs(self.plot_base_dir, exist_ok=True)
-        fig.savefig(os.path.join(self.plot_base_dir, f'{name}.png'))
+        os.makedirs(self.plot_dir, exist_ok=True)
+        fig.savefig(os.path.join(self.plot_dir, f'{name}.png'))

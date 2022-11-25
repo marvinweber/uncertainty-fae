@@ -51,10 +51,17 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
     )
     # We assume same data type for entire evaluation (no plots / evals accross different datasets)
     data_type = list(eval_run_cfg.model_configurations.values())[0]['data']
+
     # Base directory and Evaluator for out of domain tests
-    ood_base_dir = os.path.join(eval_base_dir, 'ood_eval')
+    # OOD Data must not be stored per data_type, as the OOD-datasets stay always the same.
+    ood_base_dir_data = os.path.join(eval_run_cfg.eval_dir, eval_run_cfg.eval_version_name, 'ood')
+    ood_base_dir_plots = os.path.join(eval_base_dir, 'ood_eval')
     ood_evaluator_cls = OOD_EVALUATOR_MAPPING[data_type]
-    ood_evaluator = ood_evaluator_cls.get_evaluator(ood_base_dir, eval_run_cfg)
+    ood_evaluator = ood_evaluator_cls.get_evaluator(
+        ood_base_dir_data,
+        ood_base_dir_plots,
+        eval_run_cfg,
+    )
 
     for eval_cfg_name, eval_cfg in eval_run_cfg.eval_configuration.items():
         if eval_cfg_name not in eval_run_cfg.eval_only:

@@ -7,18 +7,25 @@ from uncertainty_fae.util import EvalRunConfig, ModelProvider
 
 class OutOfDomainEvaluator(ABC):
 
-    def __init__(self, base_dir: str, eval_run_cfg: EvalRunConfig) -> None:
-        self.base_dir = base_dir
+    def __init__(self, data_base_dir: str, plot_base_dir: str, eval_run_cfg: EvalRunConfig) -> None:
+        self.data_base_dir = data_base_dir
+        self.plot_base_dir = plot_base_dir
         self.eval_run_cfg = eval_run_cfg
 
     @classmethod
     @abstractmethod
-    def get_evaluator(cls, base_dir: str, eval_run_cfg: EvalRunConfig) -> 'OutOfDomainEvaluator':
+    def get_evaluator(
+        cls,
+        data_base_dir: str,
+        plot_base_dir: str,
+        eval_run_cfg: EvalRunConfig
+    ) -> 'OutOfDomainEvaluator':
         """
         Create new instance of an `OutofDomainEvaluator`.
 
         Args:
-            base_dir: The directory in which to put predictions and plots.
+            data_base_dir: The directory in which to put predictions.
+            plot_base_dir: The directory in which to put evaluation plots.
             eval_run_cfg: The `EvalRunConfig` for the evaluation run.
         """
         ...
