@@ -84,6 +84,9 @@ def parse_cli_args(type: str) -> dict:
                                  'considered in this run (for parallel prediction generation).')
         parser.add_argument('--only-combined-plots', action='store_true', default=False,
                             required=False, help='Whether to only create the combined plots.')
+        parser.add_argument('--only-predictions', action='store_true', default=False,
+                            required=False,
+                            help='Whether only predictions should be generated (no plotting).')
 
     args = parser.parse_args()
     return {key: val for key, val in args._get_kwargs()}
@@ -249,6 +252,7 @@ class EvalRunConfig(BaseConfig):
         self.ood_datasets: dict
         self.eval_dir = config_dict['eval_dir']
         self.only_combined_plots = config_dict['only_combined_plots']
+        self.only_predictions = config_dict['only_predictions']
 
         self._load_eval_configuration()
         assert isinstance(self.eval_configuration, dict)

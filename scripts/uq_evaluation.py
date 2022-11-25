@@ -111,7 +111,7 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
             'color': eval_cfg['color'] if 'color' in eval_cfg else 'black',
         }
 
-        if eval_run_cfg.only_combined_plots:
+        if eval_run_cfg.only_combined_plots or eval_run_cfg.only_predictions:
             continue
 
         logger.info('Evaluating single model...')
@@ -153,7 +153,11 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
         plot_generator.plot_reliability_de_calibration_diagram(eval_cfg_name)
         plot_generator.plot_calibration_curve([eval_cfg_name])
 
-    logger.info('EVALUATION of DISTINCT UQ METHODS DONE!')
+    logger.info('DISTINCT UQ METHODS/MODELS DONE!')
+
+    if eval_run_cfg.only_predictions:
+        logger.info('All Predictions done; DONE!')
+        return
 
     # CREATE COMBINED PLOTS
     logger.info('Creating combined plots...')
