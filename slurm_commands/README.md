@@ -94,3 +94,12 @@ in the example file (`eval-config.example.yml`), for eval version
 ```bash
 ./submit_evaluation_jobs.sh rsna_final_eval_1 val rsna_resnet50_500_gender_mcd_10 rsna_resnet50_500_gender_mcd_100 rsna_resnet50_500_gender_de_10 rsna_resnet50_500_gender_de_20 rsna_resnet50_500_gender_laplace rsna_resnet50_500_gender_swag rsna_resnet50_500_gender_variance_mcd_10 rsna_resnet50_500_gender_variance_mcd_100 rsna_resnet50_500_gender_variance_de_10 rsna_resnet50_500_gender_variance_de_20
 ```
+
+This command only runs predictions, no plots are created yet (as the different
+jobs create predictions for different evaluation models which should be combined
+in comparison plots afterwards).
+
+To create plots, you can use the following srun command, for example:
+```
+./srun_eval_plot_generation.sh rsna_final_eval_1 val
+```
