@@ -43,12 +43,12 @@ do
     --export="UQ_FAE_SING_IMG=${UQ_FAE_SING_IMG},UQ_FAE_SING_MOUNTS=${UQ_FAE_SING_MOUNTS}" \
     generic_sbatch_uncertainty.sh \
     python /app/scripts/training.py \
-    --max-epochs 250 \
-    --batch-size 40 \
-    --early-stopping-patience 250 \
+    --max-epochs 150 \
+    --batch-size 20 \
+    --early-stopping-patience 150 \
     --dataloader-num-workers 32 \
     --save-dir /ml_logs \
-    --configuration /app/config/models.yml \
+    --configuration /app/config/models.ma.yml \
     --version "${version}" \
     --sub-version "${subversion}" \
     "${model}"
