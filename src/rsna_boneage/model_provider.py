@@ -1,6 +1,6 @@
 
 import logging
-from typing import Dict, Optional, Tuple
+from typing import Optional
 
 from pytorch_lightning import LightningDataModule
 from torch import nn
@@ -21,7 +21,7 @@ from .net.resnet import resnet50 as boneage_resnet50
 
 logger = logging.getLogger(__name__)
 
-RSNA_LITMODEL_MAPPING: Dict[str, TrainLoadMixin] = {
+RSNA_LITMODEL_MAPPING: dict[str, TrainLoadMixin] = {
     'base': boneage_litmodels.LitRSNABoneage,
     'mc_dropout': boneage_litmodels.LitRSNABoneageMCDropout,
     'deep_ensemble': boneage_litmodels.LitRSNABoneageDeepEnsemble,
@@ -29,7 +29,7 @@ RSNA_LITMODEL_MAPPING: Dict[str, TrainLoadMixin] = {
     'swag': boneage_litmodels.LitRSNABoneageSWAG,
 }
 
-RSNA_VARIANCE_LITMODEL_MAPPING: Dict[str, TrainLoadMixin] = {
+RSNA_VARIANCE_LITMODEL_MAPPING: dict[str, TrainLoadMixin] = {
     'base': boneage_litmodels.LitRSNABoneageVarianceNet,
     'mc_dropout': boneage_litmodels.LitRSNABoneageVarianceNetMCDropout,
     'deep_ensemble': boneage_litmodels.LitRSNABoneageVarianceNetDeepEnsemble,
@@ -44,7 +44,7 @@ class RSNAModelProvider(ModelProvider):
         self,
         base_net: str,
         uncertainty_method: str,
-        img_input_dimensions: Tuple[int, int],
+        img_input_dimensions: tuple[int, int],
         variance_net: bool,
         with_gender_input: bool,
         rescale_boneage: bool = True,
