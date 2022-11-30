@@ -284,8 +284,6 @@ class EvalRunConfig(BaseConfig):
         return {'eval_mode': True}, litmodel_kwargs
 
     def get_eval_dataloader(self, datamodule: LightningDataModule):
-        datamodule.setup('test')  # we always want to "test" the model during evaluation
-
         if self.dataset_type == 'train':
             return datamodule.train_dataloader()
         elif self.dataset_type == 'val':
