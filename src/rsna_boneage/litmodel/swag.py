@@ -16,7 +16,7 @@ from rsna_boneage.data import undo_boneage_rescale
 from rsna_boneage.litmodel.base import LitRSNABoneage, LitRSNABoneageVarianceNet
 from swa_gaussian.pl_callback.swag_callback import SWAGaussianCallback
 from swa_gaussian.posteriors.swag import SWAG
-from uncertainty_fae.model import ADT_STAT_MEAN_UNCERTAINTY, TrainLoadMixin, UncertaintyAwareModel
+from uncertainty_fae.model import EvaluationMetrics, TrainLoadMixin, UncertaintyAwareModel
 from uncertainty_fae.swag import SwagEvalCallback
 from uncertainty_fae.util import TrainConfig, TrainResult
 
@@ -79,7 +79,7 @@ class LitRSNABoneageSWAG(UncertaintyAwareModel, TrainLoadMixin):
     def evaluate_dataset(
         self,
         dataloader: DataLoader
-    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, Optional[dict[str, Any]]]:
+    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, EvaluationMetrics]:
         assert self.train_dataloader and isinstance(self.train_dataloader, DataLoader), \
             'SWAG requires the train dataloader to be set (c.f. `set_dataloaders(...)`!'
 
@@ -117,22 +117,19 @@ class LitRSNABoneageSWAG(UncertaintyAwareModel, TrainLoadMixin):
 
         targets = torch.cat(targets)
         preds_mean = torch.stack(n_predictions).mean(dim=0)
-        preds_var = torch.stack(n_predictions).var(dim=0)
         preds_std = torch.stack(n_predictions).std(dim=0)
 
         if self.undo_boneage_rescale:
             preds_mean = undo_boneage_rescale(preds_mean)
-            preds_var = undo_boneage_rescale(preds_var)
             preds_std = undo_boneage_rescale(preds_std)
 
         preds_abs_errors = torch.abs((preds_mean - targets))
         mae = torch.mean(preds_abs_errors)
 
-        metrics = {
-            ADT_STAT_MEAN_UNCERTAINTY: preds_std.mean(),
-            'mae': mae,
-        }
-        return mae, preds_mean, targets, preds_abs_errors, preds_std, metrics
+        eval_metrics = EvaluationMetrics(
+            mean_uncertainty=preds_std.mean(),
+        )
+        return mae, preds_mean, targets, preds_abs_errors, preds_std, eval_metrics
 
     @classmethod
     def load_model_from_disk(cls, checkpoint_path: str, base_model_checkpoint_pth: str = None,
@@ -223,7 +220,7 @@ class LitRSNABoneageVarianceNetSWAG(LitRSNABoneageSWAG):
     def evaluate_dataset(
         self,
         dataloader: DataLoader
-    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, Optional[dict[str, Any]]]:
+    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, EvaluationMetrics]:
         assert self.train_dataloader and isinstance(self.train_dataloader, DataLoader), \
             'SWAG requires the train dataloader to be set (c.f. `set_dataloaders(...)`!'
 
@@ -271,14 +268,12 @@ class LitRSNABoneageVarianceNetSWAG(LitRSNABoneageSWAG):
 
         if self.undo_boneage_rescale:
             preds_mean = undo_boneage_rescale(preds_mean)
-            preds_var = undo_boneage_rescale(preds_var)
             preds_std = undo_boneage_rescale(preds_std)
 
         preds_abs_errors = torch.abs((preds_mean - targets))
         mae = torch.mean(preds_abs_errors)
 
-        metrics = {
-            ADT_STAT_MEAN_UNCERTAINTY: preds_std.mean(),
-            'mae': mae,
-        }
-        return mae, preds_mean, targets, preds_abs_errors, preds_std, metrics
+        eval_metrics = EvaluationMetrics(
+            mean_uncertainty=preds_std.mean(),
+        )
+        return mae, preds_mean, targets, preds_abs_errors, preds_std, eval_metrics

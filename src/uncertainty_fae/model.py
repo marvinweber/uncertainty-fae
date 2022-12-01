@@ -20,6 +20,23 @@ ADT_STAT_PREDS_VAR = 'preds_var'
 ADT_STAT_MEAN_UNCERTAINTY = 'mean_uncertainty'
 
 
+class ForwardMetrics():
+    def __init__(self, preds_distinct: Optional[Tensor] = None) -> None:
+        self.preds_distinct = preds_distinct
+
+
+class EvaluationMetrics():
+    def __init__(
+        self,
+        preds_distinct: Optional[list[Tensor]] = None,
+        mean_uncertainty: Optional[Tensor] = None,
+        distinct_model_errors: Optional[list[Tensor]] = None,
+    ) -> None:
+        self.preds_distinct = preds_distinct
+        self.mean_uncertainty = mean_uncertainty
+        self.distinct_model_errors = distinct_model_errors
+
+
 class UncertaintyAwareModel:
     """
     A simple wrapper/ interface class that defines a model that is capable of providing uncertainty
@@ -43,18 +60,20 @@ class UncertaintyAwareModel:
         self.train_dataloader = train_dataloader
         self.val_dataloader = val_dataloader
 
-    def forward_with_uncertainty(self, input) -> tuple[Tensor, Tensor, Optional[dict[str, Any]]]:
+    def forward_with_uncertainty(self, input) -> tuple[Tensor, Tensor, ForwardMetrics]:
         """Forward a batch/input and return results including uncertainty.
 
         Note: Returned values should be located on the CPU device.
 
+        Args:
+            input: The input to process.
+
         Returns:
             A tuple with the results ("mean") values first, and the uncertainty values (e.g. std)
             second. The size on each of those two tensors corresponds to the input (batch) size.
-            Third, the method returns an `Optional[dict]`, with arbitrary more information (e.g.,
-            any other metrics (per dict entry)) about the predictions or anything else. Each dict
-            item should contain a tensor or list with the length == batch_size where each item
-            corresponds to the item from the batch with same index.
+            Third, the method returns `ForwardMetrics`, with (optional) more information. Each entry
+            in the `ForwardMetrics` object (if a list or Tensor) should have length == batch_size,
+            where each item corresponds to the item from the batch with same index.
 
         Example:
             For an input of batch size = 2 the result may look like shown below:
@@ -72,7 +91,7 @@ class UncertaintyAwareModel:
 
     def evaluate_dataset(
         self, dataloader: DataLoader
-    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, Optional[dict[str, Any]]]:
+    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, EvaluationMetrics]:
         """Evaluate the given given dataset (dataloader).
 
         TODO docs/ explanation
@@ -89,7 +108,7 @@ class UncertaintyAwareModel:
                 mean abs error for every sample).
             - uncertainties: A tensor containing the uncertainty value for each single sample of the
                 loader (e.g., the std of many predictions per sample).
-            - additional_stats: A dictionary containing any (additional) stats.
+            - evaluation_metrics: Aadditional stats.
         """
         raise NotImplementedError()
 
@@ -98,7 +117,7 @@ def uam_evaluate_dataset_default(
     model: UncertaintyAwareModel,
     device,
     dataloader: DataLoader,
-) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, Optional[dict[str, Any]]]:
+) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, EvaluationMetrics]:
     """Default implementation for `UncertaintyAwareModel::evaluate_dataset().
 
     TODO Documentation
@@ -116,10 +135,8 @@ def uam_evaluate_dataset_default(
         mean, std, batch_metrics = model.forward_with_uncertainty(input.to(device))
         preds_mean.append(mean)
         preds_std.append(std)
-        if ADT_STAT_PREDS_VAR in batch_metrics:
-            preds_var.append(batch_metrics[ADT_STAT_PREDS_VAR])
-        if ADT_STAT_PREDS_DISTINCT in batch_metrics:
-            preds_distinct.append(batch_metrics[ADT_STAT_PREDS_DISTINCT])
+        if batch_metrics.preds_distinct:
+            preds_distinct.append(batch_metrics.preds_distinct)
 
     targets = torch.cat(targets)
     preds_mean = torch.cat(preds_mean)
@@ -127,20 +144,14 @@ def uam_evaluate_dataset_default(
     preds_abs_errors = torch.abs((preds_mean - targets))
     mae = torch.mean(preds_abs_errors)
 
-    metrics = {
-        ADT_STAT_PREDS_VAR: torch.cat(preds_var),
-        ADT_STAT_MEAN_UNCERTAINTY: torch.mean(preds_std),
-    }
-    if len(preds_var) > 0:
-        preds_var = torch.cat(preds_var)
-        assert len(preds_var) == len(preds_mean)  # Verify we got vars for all samples
-        metrics[ADT_STAT_PREDS_VAR] = preds_var
+    eval_metrics = EvaluationMetrics(mean_uncertainty=torch.mean(preds_std))
+
     if len(preds_distinct) > 0:
         preds_distinct = [p for batch in preds_distinct for p in batch]
         assert len(preds_distinct) == len(preds_mean)  # Verify we got distincts for all samples
-        metrics[ADT_STAT_PREDS_DISTINCT] = preds_distinct
+        eval_metrics.preds_distinct = preds_distinct
 
-    return mae, preds_mean, targets, preds_abs_errors, preds_std, metrics
+    return mae, preds_mean, targets, preds_abs_errors, preds_std, eval_metrics
 
 
 class TrainLoadMixin:

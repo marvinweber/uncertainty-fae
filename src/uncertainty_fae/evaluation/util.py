@@ -10,8 +10,7 @@ from pandas import DataFrame, Series
 from torch import Tensor
 from torch.utils.data import DataLoader
 
-from uncertainty_fae.model import (ADT_STAT_MEAN_UNCERTAINTY, ADT_STAT_PREDS_DISTINCT,
-                                   UncertaintyAwareModel)
+from uncertainty_fae.model import UncertaintyAwareModel
 
 logger = logging.getLogger(__name__)
 
@@ -44,16 +43,16 @@ def generate_evaluation_predictions(
 
     # Result Stats
     eval_result_stats = {'score': float(score)}
-    if ADT_STAT_MEAN_UNCERTAINTY in metrics:
-        eval_result_stats[ADT_STAT_MEAN_UNCERTAINTY] = float(metrics[ADT_STAT_MEAN_UNCERTAINTY])
+    if metrics.mean_uncertainty:
+        eval_result_stats['mean_uncertainty'] = float(metrics.mean_uncertainty)
 
     # Distinct Predictions, if available...
-    if ADT_STAT_PREDS_DISTINCT in metrics:
+    if metrics.preds_distinct:
         with open(eval_distinct_predictions_file, 'w') as file:
             writer = csv.writer(file)
             writer.writerow(EVAL_DISTINCT_PREDICTIONS_COLUMNS)
 
-            for i, img_preds in enumerate(metrics[ADT_STAT_PREDS_DISTINCT]):
+            for i, img_preds in enumerate(metrics.preds_distinct):
                 assert isinstance(img_preds, Tensor)
                 tensor_size = (len(img_preds), )
                 img_target = torch.full(tensor_size, targets[i])

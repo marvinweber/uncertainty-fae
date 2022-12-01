@@ -8,7 +8,7 @@ from torch import Tensor, nn, squeeze
 from torchvision.models.inception import InceptionOutputs
 from rsna_boneage.data import undo_boneage_rescale
 
-from uncertainty_fae.model import ADT_STAT_PREDS_VAR, TrainLoadMixin, UncertaintyAwareModel
+from uncertainty_fae.model import ForwardMetrics, TrainLoadMixin, UncertaintyAwareModel
 from uncertainty_fae.util import nll_regression_loss
 from uncertainty_fae.util import TrainConfig
 
@@ -164,7 +164,7 @@ class LitRSNABoneageVarianceNet(UncertaintyAwareModel, LitRSNABoneage):
 
         return loss
 
-    def forward_with_uncertainty(self, input) -> tuple[Tensor, Tensor, Optional[dict]]:
+    def forward_with_uncertainty(self, input) -> tuple[Tensor, Tensor, ForwardMetrics]:
         pred_mean_var = self.forward(input)
         pred_mean = pred_mean_var[:, :1].cpu().flatten()
         pred_var = pred_mean_var[:, 1:].cpu().flatten()
@@ -172,10 +172,6 @@ class LitRSNABoneageVarianceNet(UncertaintyAwareModel, LitRSNABoneage):
 
         if self.undo_boneage_rescale:
             pred_mean = undo_boneage_rescale(pred_mean)
-            pred_var = undo_boneage_rescale(pred_var)
             pred_std = undo_boneage_rescale(pred_std)
 
-        metrics = {
-            ADT_STAT_PREDS_VAR: pred_var,
-        }
-        return pred_mean, pred_std, metrics
+        return pred_mean, pred_std, ForwardMetrics()

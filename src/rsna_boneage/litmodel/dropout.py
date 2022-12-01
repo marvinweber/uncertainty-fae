@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 import torch
 from torch import Tensor
@@ -6,18 +6,18 @@ from torch.utils.data import DataLoader
 
 from rsna_boneage.data import undo_boneage_rescale
 from rsna_boneage.litmodel.base import LitRSNABoneage, LitRSNABoneageVarianceNet
-from uncertainty_fae.model import (ADT_STAT_PREDS_DISTINCT, ADT_STAT_PREDS_VAR,
-                                   UncertaintyAwareModel, uam_evaluate_dataset_default)
+from uncertainty_fae.model import (EvaluationMetrics, ForwardMetrics, UncertaintyAwareModel,
+                                   uam_evaluate_dataset_default)
 from uncertainty_fae.util import dropout_train
 
 
 class LitRSNABoneageMCDropout(UncertaintyAwareModel, LitRSNABoneage):
 
-    def __init__(self, *args, n_samples: int = 100, **kwargs):
+    def __init__(self, *args, n_samples: int = 100, **kwargs) -> None:
         self.n_samples = n_samples
         super().__init__(*args, **kwargs)
 
-    def forward_with_uncertainty(self, batch) -> tuple[Tensor, Tensor, Optional[dict[str, Any]]]:
+    def forward_with_uncertainty(self, batch) -> tuple[Tensor, Tensor, ForwardMetrics]:
         # Enable Dropout Layers in Network for MC
         self.apply(dropout_train)
 
@@ -26,24 +26,21 @@ class LitRSNABoneageMCDropout(UncertaintyAwareModel, LitRSNABoneage):
             preds = torch.stack(preds)
 
         preds_mean = preds.mean(dim=0)
-        preds_var = preds.var(dim=0)
         preds_std = preds.std(dim=0)
 
         if self.undo_boneage_rescale:
             preds = undo_boneage_rescale(preds)
             preds_mean = undo_boneage_rescale(preds_mean)
-            preds_var = undo_boneage_rescale(preds_var)
             preds_std = undo_boneage_rescale(preds_std)
 
-        metrics = {
-            ADT_STAT_PREDS_DISTINCT: [preds[:, i:i+1].flatten() for i in range(len(preds_mean))],
-            ADT_STAT_PREDS_VAR: preds_var,
-        }
-        return preds_mean, preds_std, metrics
+        forward_metrics = ForwardMetrics(
+            preds_distinct=[preds[:, i:i+1].flatten() for i in range(len(preds_mean))],
+        )
+        return preds_mean, preds_std, forward_metrics
 
     def evaluate_dataset(
         self, dataloader: DataLoader
-    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, Optional[dict[str, Any]]]:
+    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, EvaluationMetrics]:
         self.eval()
         self.cuda()
         return uam_evaluate_dataset_default(self, self.device, dataloader)
@@ -51,11 +48,11 @@ class LitRSNABoneageMCDropout(UncertaintyAwareModel, LitRSNABoneage):
 
 class LitRSNABoneageVarianceNetMCDropout(LitRSNABoneageVarianceNet):
 
-    def __init__(self, *args, n_samples: int = 100, **kwargs):
+    def __init__(self, *args, n_samples: int = 100, **kwargs) -> None:
         self.n_samples = n_samples
         super().__init__(*args, **kwargs)
 
-    def forward_with_uncertainty(self, batch) -> tuple[Tensor, Tensor, Optional[dict[str, Any]]]:
+    def forward_with_uncertainty(self, batch) -> tuple[Tensor, Tensor, ForwardMetrics]:
         # Enable Dropout Layers in Network for MC
         self.apply(dropout_train)
 
@@ -77,17 +74,13 @@ class LitRSNABoneageVarianceNetMCDropout(LitRSNABoneageVarianceNet):
 
         if self.undo_boneage_rescale:
             preds_mean = undo_boneage_rescale(preds_mean)
-            preds_var = undo_boneage_rescale(preds_var)
             preds_std = undo_boneage_rescale(preds_std)
 
-        metrics = {
-            ADT_STAT_PREDS_VAR: preds_var,
-        }
-        return preds_mean, preds_std, metrics
+        return preds_mean, preds_std, ForwardMetrics()
 
     def evaluate_dataset(
         self, dataloader: DataLoader
-    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, Optional[dict[str, Any]]]:
+    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, EvaluationMetrics]:
         self.eval()
         self.cuda()
         return uam_evaluate_dataset_default(self, self.device, dataloader)

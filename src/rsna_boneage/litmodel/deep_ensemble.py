@@ -8,8 +8,7 @@ from torch.utils.data import DataLoader
 from rsna_boneage.data import undo_boneage_rescale
 from rsna_boneage.litmodel.dropout import (LitRSNABoneageMCDropout,
                                            LitRSNABoneageVarianceNetMCDropout)
-from uncertainty_fae.model import (ADT_STAT_MEAN_UNCERTAINTY, ADT_STAT_PREDS_DISTINCT,
-                                   TrainLoadMixin, UncertaintyAwareModel)
+from uncertainty_fae.model import EvaluationMetrics, TrainLoadMixin, UncertaintyAwareModel
 
 
 class LitRSNABoneageDeepEnsemble(UncertaintyAwareModel, TrainLoadMixin):
@@ -39,7 +38,7 @@ class LitRSNABoneageDeepEnsemble(UncertaintyAwareModel, TrainLoadMixin):
 
     def evaluate_dataset(
         self, dataloader: DataLoader
-    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, Optional[dict[str, Any]]]:
+    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, EvaluationMetrics]:
         assert self.base_model_checkpoints and len(self.base_model_checkpoints) > 0
 
         n_predictions = []  # list of tensors, each tensor is a prediction set for all samples
@@ -73,26 +72,23 @@ class LitRSNABoneageDeepEnsemble(UncertaintyAwareModel, TrainLoadMixin):
         targets = torch.cat(targets)
         n_predictions = torch.stack(n_predictions)
         preds_mean = n_predictions.mean(dim=0)
-        preds_var = n_predictions.var(dim=0)
         preds_std = n_predictions.std(dim=0)
 
         if self.undo_boneage_rescale:
             n_predictions = undo_boneage_rescale(n_predictions)
             preds_mean = undo_boneage_rescale(preds_mean)
-            preds_var = undo_boneage_rescale(preds_var)
             preds_std = undo_boneage_rescale(preds_std)
 
         preds_abs_errors = torch.abs((preds_mean - targets))
         mae = torch.mean(preds_abs_errors)
         distinct_model_maes = [torch.mean(torch.abs(preds - targets)) for preds in n_predictions]
 
-        metrics = {
-            ADT_STAT_PREDS_DISTINCT: [n_predictions[:, i:i+1].flatten()
-                                      for i in range(len(preds_mean))],
-            ADT_STAT_MEAN_UNCERTAINTY: preds_std.mean(),
-            'distinct_model_maes': distinct_model_maes,
-        }
-        return mae, preds_mean, targets, preds_abs_errors, preds_std, metrics
+        eval_metrics = EvaluationMetrics(
+            preds_distinct=[n_predictions[:, i:i+1].flatten() for i in range(len(preds_mean))],
+            mean_uncertainty=preds_std.mean(),
+            distinct_model_errors=distinct_model_maes,
+        )
+        return mae, preds_mean, targets, preds_abs_errors, preds_std, eval_metrics
 
     @classmethod
     def train_model(cls, *args, **kwargs):
@@ -119,7 +115,7 @@ class LitRSNABoneageVarianceNetDeepEnsemble(LitRSNABoneageDeepEnsemble):
 
     def evaluate_dataset(
         self, dataloader: DataLoader
-    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, Optional[dict[str, Any]]]:
+    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, EvaluationMetrics]:
         assert self.base_model_checkpoints and len(self.base_model_checkpoints) > 0
 
         n_predictions = []  # list of tensors, each tensor is a prediction set for all samples
@@ -164,19 +160,16 @@ class LitRSNABoneageVarianceNetDeepEnsemble(LitRSNABoneageDeepEnsemble):
 
         if self.undo_boneage_rescale:
             n_predictions = undo_boneage_rescale(n_predictions)
-            n_variances = undo_boneage_rescale(n_variances)
             preds_mean = undo_boneage_rescale(preds_mean)
-            preds_var = undo_boneage_rescale(preds_var)
             preds_std = undo_boneage_rescale(preds_std)
 
         preds_abs_errors = torch.abs((preds_mean - targets))
         mae = torch.mean(preds_abs_errors)
         distinct_model_maes = [torch.mean(torch.abs(preds - targets)) for preds in n_predictions]
 
-        metrics = {
-            ADT_STAT_PREDS_DISTINCT: [n_predictions[:, i:i+1].flatten()
-                                      for i in range(len(preds_mean))],
-            ADT_STAT_MEAN_UNCERTAINTY: preds_std.mean(),
-            'distinct_model_maes': distinct_model_maes,
-        }
-        return mae, preds_mean, targets, preds_abs_errors, preds_std, metrics
+        eval_metrics = EvaluationMetrics(
+            preds_distinct=[n_predictions[:, i:i+1].flatten() for i in range(len(preds_mean))],
+            mean_uncertainty=preds_std.mean(),
+            distinct_model_errors=distinct_model_maes,
+        )
+        return mae, preds_mean, targets, preds_abs_errors, preds_std, eval_metrics

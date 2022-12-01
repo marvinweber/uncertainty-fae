@@ -13,8 +13,8 @@ from torch.utils.data import DataLoader
 
 from rsna_boneage.data import undo_boneage_rescale
 from rsna_boneage.litmodel.base import LitRSNABoneage, LitRSNABoneageVarianceNet
-from uncertainty_fae.model import (ADT_STAT_PREDS_VAR, TrainLoadMixin, UncertaintyAwareModel,
-                                   uam_evaluate_dataset_default)
+from uncertainty_fae.model import (EvaluationMetrics, ForwardMetrics, TrainLoadMixin,
+                                   UncertaintyAwareModel, uam_evaluate_dataset_default)
 from uncertainty_fae.util import TrainConfig, TrainResult, nll_regression_loss
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,7 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
         """Decorator/ Wrapper for Laplace Backend Loss function; see train method for details."""
 
     @torch.no_grad()
-    def forward_with_uncertainty(self, input) -> tuple[Tensor, Tensor, Optional[dict[str, Any]]]:
+    def forward_with_uncertainty(self, input) -> tuple[Tensor, Tensor, ForwardMetrics]:
         assert isinstance(self.la_model, BaseLaplace), \
             'Loaded model has not yet been last-layer laplace approximated (no la_model available)!'
 
@@ -60,18 +60,14 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
 
         if self.undo_boneage_rescale:
             preds_mean = undo_boneage_rescale(preds_mean)
-            preds_var = undo_boneage_rescale(preds_var)
             preds_std = undo_boneage_rescale(preds_std)
 
-        metrics = {
-            ADT_STAT_PREDS_VAR: preds_var,
-        }
-        return preds_mean, preds_std, metrics
+        return preds_mean, preds_std, ForwardMetrics()
 
     def evaluate_dataset(
         self,
         dataloader: DataLoader
-    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, dict[Any, dict], dict[str, Any]]:
+    ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, EvaluationMetrics]:
         return uam_evaluate_dataset_default(self, 'cuda', dataloader)
 
     @classmethod
