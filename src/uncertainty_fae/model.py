@@ -15,10 +15,6 @@ from uncertainty_fae.util import TrainConfig, TrainResult
 
 logger = logging.getLogger(__name__)
 
-ADT_STAT_PREDS_DISTINCT = 'preds_distinct'
-ADT_STAT_PREDS_VAR = 'preds_var'
-ADT_STAT_MEAN_UNCERTAINTY = 'mean_uncertainty'
-
 
 class ForwardMetrics():
     def __init__(self, preds_distinct: Optional[Tensor] = None) -> None:
