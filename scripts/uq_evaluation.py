@@ -49,8 +49,11 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
         eval_run_cfg.eval_version_name,
         eval_run_cfg.dataset_type,
     )
+
+    # Determine Data-Type (RSNA Bone Age, Clavicle CT, ...) for this Evaluation Run
     # We assume same data type for entire evaluation (no plots / evals accross different datasets)
-    data_type = list(eval_run_cfg.model_configurations.values())[0]['data']
+    first_eval_model = list(eval_run_cfg.eval_configuration.values())[0]['model']
+    data_type = eval_run_cfg.model_configurations[first_eval_model]['data']
 
     # Base directory and Evaluator for out of domain tests
     # OOD Data must not be stored per data_type, as the OOD-datasets stay always the same.
