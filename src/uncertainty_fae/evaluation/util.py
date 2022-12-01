@@ -15,6 +15,9 @@ from uncertainty_fae.model import (ADT_STAT_MEAN_UNCERTAINTY, ADT_STAT_PREDS_DIS
 
 logger = logging.getLogger(__name__)
 
+EVAL_PREDICTION_COLUMNS = ['target', 'prediction', 'error', 'uncertainty']
+EVAL_DISTINCT_PREDICTIONS_COLUMNS = ['index', 'target', 'prediction', 'error']
+
 
 def generate_evaluation_predictions(
     eval_base_dir: str,
@@ -48,7 +51,7 @@ def generate_evaluation_predictions(
     if ADT_STAT_PREDS_DISTINCT in metrics:
         with open(eval_distinct_predictions_file, 'w') as file:
             writer = csv.writer(file)
-            writer.writerow(['index', 'target', 'prediction', 'error'])
+            writer.writerow(EVAL_DISTINCT_PREDICTIONS_COLUMNS)
 
             for i, img_preds in enumerate(metrics[ADT_STAT_PREDS_DISTINCT]):
                 assert isinstance(img_preds, Tensor)
@@ -66,7 +69,7 @@ def generate_evaluation_predictions(
     # Prediction and Uncertainty Stats
     with open(eval_predictions_file, 'w') as file:
         writer = csv.writer(file)
-        writer.writerow(['target', 'prediction', 'error', 'uncertainty'])
+        writer.writerow(EVAL_PREDICTION_COLUMNS)
         writer.writerows(
             zip(targets.tolist(), predictions.tolist(), errors.tolist(), uncertainties.tolist())
         )
