@@ -45,6 +45,10 @@ def generate_evaluation_predictions(
     eval_result_stats = {'score': float(score)}
     if metrics.mean_uncertainty:
         eval_result_stats['mean_uncertainty'] = float(metrics.mean_uncertainty)
+    if metrics.distinct_model_errors:
+        eval_result_stats['distinct_model_errors'] = [
+            float(err) for err in metrics.distinct_model_errors
+        ]
 
     # Distinct Predictions, if available...
     if metrics.preds_distinct:
