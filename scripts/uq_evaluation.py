@@ -8,7 +8,7 @@ from rsna_boneage.model_provider import RSNAModelProvider
 from rsna_boneage.ood_eval import RSNABoneAgeOutOfDomainEvaluator
 from uncertainty_fae.evaluation import EvalPlotGenerator, OutOfDomainEvaluator
 from uncertainty_fae.evaluation.plotting import EvalRunData
-from uncertainty_fae.evaluation.util import (create_best_epoch_checkpoint_symlinks,
+from uncertainty_fae.evaluation.util import (apply_df_age_transform, create_best_epoch_checkpoint_symlinks,
                                              evaluation_predictions_available,
                                              generate_evaluation_predictions)
 from uncertainty_fae.model import UncertaintyAwareModel
@@ -28,6 +28,14 @@ OOD_EVALUATOR_MAPPING: dict[str, OutOfDomainEvaluator] = {
 DATASET_NAMES = {
     'rsna_boneage': 'RSNA Bone Age',
     'clavicle_ct': 'Clavicle CT',
+}
+
+DATASET_AGE_TO_YEAR_TRANSFORMS = {
+    'rsna_boneage': lambda df_ser: df_ser / 12,  # month -> year
+}
+
+DATASET_AGE_TO_YEAR_TRANSFORMS_UNDO = {
+    'rsna_boneage': lambda df_ser: df_ser * 12,  # year -> month
 }
 
 def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
@@ -117,13 +125,21 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
             logger.info('SKIPPING PREDICTIONS, as all are already available!')
         eval_result_file, eval_predictions_file, eval_distinct_predictions_file = eval_files
 
-        prediction_log = pd.read_csv(eval_predictions_file)
+        prediction_log = apply_df_age_transform(
+            pd.read_csv(eval_predictions_file),
+            DATASET_AGE_TO_YEAR_TRANSFORMS[data_type],
+        )
+        distinct_prediction_log = None
+        if eval_distinct_predictions_file:
+            distinct_prediction_log = apply_df_age_transform(
+                pd.read_csv(eval_distinct_predictions_file),
+                DATASET_AGE_TO_YEAR_TRANSFORMS[data_type],
+            )
         eval_runs_data[eval_cfg_name] = {
             'display_name': eval_cfg['name'],
             'data_display_name': DATASET_NAMES[data_type],
             'prediction_log': prediction_log,
-            'distinct_prediction_log': (pd.read_csv(eval_distinct_predictions_file)
-                                        if eval_distinct_predictions_file else None),
+            'distinct_prediction_log': distinct_prediction_log,
             'color': eval_cfg['color'] if 'color' in eval_cfg else 'black',
         }
 
@@ -158,6 +174,7 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
             eval_runs_data,
             eval_plot_dir,
             img_prepend_str=eval_cfg_name,
+            undo_age_to_year_transform=DATASET_AGE_TO_YEAR_TRANSFORMS_UNDO[data_type]
         )
         plot_generator.plot_bonage_distribution(eval_cfg_name)
         plot_generator.plot_uncertainty_by_boneage(eval_cfg_name)
@@ -182,7 +199,11 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
         'combined_plots',
         eval_run_cfg.start_time,
     )
-    combined_plot_generator = EvalPlotGenerator(eval_runs_data, combined_plots_path)
+    combined_plot_generator = EvalPlotGenerator(
+        eval_runs_data,
+        combined_plots_path,
+        undo_age_to_year_transform=DATASET_AGE_TO_YEAR_TRANSFORMS_UNDO[data_type]
+    )
     combined_plot_generator.plot_correlation_comparison(method='pearson')
     combined_plot_generator.plot_correlation_comparison(method='kendall')
     combined_plot_generator.plot_correlation_comparison(method='spearman')
@@ -193,7 +214,7 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
     combined_plot_generator.plot_reliability_de_calibration_diagram_comparison()
     combined_plot_generator.plot_uncertainty_by_abs_error_comparison()
     combined_plot_generator.plot_abs_error_by_boneage_comparison()
-    combined_plot_generator.plot_calibration_curve()
+    combined_plot_generator.plot_calibration_curve(comparison_plot=True)
 
     logger.info('Creating OOD Plots...')
     ood_evaluator.generate_plots(eval_runs_data)

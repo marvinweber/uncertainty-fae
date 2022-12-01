@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import Optional
+from typing import Callable, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,7 +9,7 @@ from matplotlib.figure import Figure
 
 from uncertainty_fae.evaluation.calibration import (QUANTILE_SIGMA_ENV_SCALES,
                                                     observation_share_per_prediction_interval)
-from uncertainty_fae.evaluation.util import EvalRunData
+from uncertainty_fae.evaluation.util import EvalRunData, apply_df_age_transform
 
 TARGET_COLOR = 'green'
 """Color to use in plots for the target (ground truth)."""
@@ -26,7 +26,11 @@ class EvalPlotGenerator():
         show_interactive_plots = False,
         img_prepend_str: str = '',
         img_with_timestamp: bool = False,
+        undo_age_to_year_transform: Optional[Callable[[pandas.Series], pandas.Series]] = None,
     ) -> None:
+        """
+        TODO: Docs
+        """
         self.eval_runs_data = eval_runs_data
         self.img_save_dir = img_save_dir
         self.img_ext = img_ext
@@ -34,6 +38,10 @@ class EvalPlotGenerator():
         self.img_prepend_str = img_prepend_str
         self.img_with_timestamp = img_with_timestamp
         self.ts = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+
+        self.undo_age_to_year_transform = undo_age_to_year_transform
+        if self.undo_age_to_year_transform is None:
+            self.undo_age_to_year_transform = lambda x: x
 
         plt.style.use(plt_style)
 
@@ -342,27 +350,35 @@ class EvalPlotGenerator():
         plt.legend()
         self._save_and_show_plt('reliability_de_calibration_diagram')
 
-    def plot_calibration_curve(self, eval_cfg_names: Optional[list[str]] = None) -> None:
-        """Calibration Curve - adapted from Deep Ensemble Paper
+    def plot_calibration_curve(
+        self,
+        eval_cfg_names: Optional[list[str]] = None,
+        comparison_plot: bool = False,
+    ) -> None:
+        """Calibration Curve - adapted from Deep Ensemble Paper.
 
         See: https://arxiv.org/abs/1612.01474
 
         Args:
-            eval_cfg_names: A list of configuration names to include into the plot.
+            eval_cfg_names: A list of configuration names to include into the plot. Must be given,
+                if plot is NOT a `comparison_plot` (default).
+            comparison_plot: If the plots shows a single UQ method or a comparison of multiple ones.
         """
 
         if not eval_cfg_names:
+            if not comparison_plot:
+                raise ValueError('Only comparison plot allows empty `eval_cfg_names`!')
             eval_cfg_names = list(self.eval_runs_data.keys())
-        comparison_plot = len(eval_cfg_names) > 1
-        ci_intervals = [i/100 for i in range(0, 110, 10)]
 
         self._init_figure(
             title=f'Calibration Curve {"Comparison " if comparison_plot else ""}(WIP)',
             derive_suptitle_from_cfg=eval_cfg_names[0] if not comparison_plot else None,
-            suptitle=(self.eval_runs_data[list(eval_cfg_names)[0]]['data_display_name']
+            suptitle=(self.eval_runs_data[eval_cfg_names[0]]['data_display_name']
                       if comparison_plot else None),
         )
+
         # Ideal Line
+        ci_intervals = [i/100 for i in range(0, 110, 10)]
         plt.plot(
             ci_intervals,
             ci_intervals,
@@ -373,16 +389,19 @@ class EvalPlotGenerator():
 
         for eval_cfg_name in eval_cfg_names:
             data = self.eval_runs_data[eval_cfg_name]
-            df = data['prediction_log']
+            df = data['prediction_log'].copy(deep=True)
+            # Undo Age Transforms to operate on original metric (year, month, etc.)
+            df = apply_df_age_transform(df, self.undo_age_to_year_transform)
             # Observations from the (test) set
             observations = df['target'].tolist()
-            
+
             ci_shares = {k: [] for k in QUANTILE_SIGMA_ENV_SCALES.keys()}
             for i in range(len(df)):
                 mean = df.iloc[i]['prediction']
                 var = df.iloc[i]['uncertainty']**2
-                # observations = df_distinct.iloc[i]['prediction']
-                sample_ci_shares = observation_share_per_prediction_interval(mean, var, observations)
+
+                sample_ci_shares = observation_share_per_prediction_interval(
+                    mean, var, observations)
                 for sample_ci_share, val in sample_ci_shares.items():
                     ci_shares[sample_ci_share].append(val)
 
@@ -397,7 +416,7 @@ class EvalPlotGenerator():
                 ci_share_upper_stds.append(min(mean + 3 * std, 1))
 
             color_obs = data['color']
-            # Actual Observations Std; only if not a comparison plot
+            # 3*Std of Observed Fraction; only if not a comparison plot
             if not comparison_plot:
                 plt.fill_between(
                     ci_intervals,
@@ -407,7 +426,7 @@ class EvalPlotGenerator():
                     alpha=0.2,
                     label='Three Standard Deviations of Observed Fraction',
                 )
-            # Actual Observations
+            # Observed Fractions per Quantile
             plt.plot(
                 ci_intervals,
                 [0, *ci_share_means, 1],
@@ -415,6 +434,7 @@ class EvalPlotGenerator():
                 label=f'Observed Fraction - {data["display_name"]}',
                 color=color_obs,
             )
+
         plt.xlabel('Expected Fraction')
         plt.ylabel('Observed Fraction')
         plt.legend()

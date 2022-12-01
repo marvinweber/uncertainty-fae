@@ -2,11 +2,11 @@ import csv
 import logging
 import os
 import re
-from typing import Optional, TypedDict
+from typing import Callable, Optional, TypedDict
 
 import torch
 import yaml
-from pandas import DataFrame
+from pandas import DataFrame, Series
 from torch import Tensor
 from torch.utils.data import DataLoader
 
@@ -133,6 +133,36 @@ def create_best_epoch_checkpoint_symlinks(base_dir: str, symlink_name: str = 'be
             if os.path.islink(symlink_path):
                 os.remove(symlink_path)
             os.symlink(best_ckpt_path, symlink_path)
+
+
+def apply_df_age_transform(
+    df: DataFrame,
+    transform_fn: Callable[[Series], Series],
+    columns: Optional[list[str]] = None,
+) -> DataFrame:
+    """
+    Apply (Age) Tranformation to Evaluation DataFrame (e.g., convert days to years).
+
+    Can be used for any kind of transformation, however, default columns used correspond to age
+    transformation.
+
+    Args:
+        df: The dataframe to apply the transform to.
+        transform_fn: A function that transforms a single series (i.e., a single pandas column).
+        columns: A list of column names to tranform. If not given, default evaluation columns will
+            be used. Transform is skipped for column names not available in `df`.
+
+    Returns:
+        A DataFrame where the transform has been applied to all age related columns.
+    """
+    if not columns:
+        columns = EVAL_PREDICTION_COLUMNS
+
+    for col in columns:
+        if col not in df:
+            continue
+        df[col] = transform_fn(df[col])
+    return df
 
 
 class EvalRunData(TypedDict):
