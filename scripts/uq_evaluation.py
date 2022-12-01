@@ -4,13 +4,18 @@ import os
 import pandas as pd
 import yaml
 
+from clavicle_ct.model_provider import ClavicleModelProvider
+from clavicle_ct.ood_eval import ClavicleCtOutOfDomainEvaluator
 from rsna_boneage.model_provider import RSNAModelProvider
 from rsna_boneage.ood_eval import RSNABoneAgeOutOfDomainEvaluator
 from uncertainty_fae.evaluation import EvalPlotGenerator, OutOfDomainEvaluator
 from uncertainty_fae.evaluation.plotting import EvalRunData
-from uncertainty_fae.evaluation.util import (apply_df_age_transform, create_best_epoch_checkpoint_symlinks,
-                                             evaluation_predictions_available,
-                                             generate_evaluation_predictions)
+from uncertainty_fae.evaluation.util import (
+    apply_df_age_transform,
+    create_best_epoch_checkpoint_symlinks,
+    evaluation_predictions_available,
+    generate_evaluation_predictions,
+)
 from uncertainty_fae.model import UncertaintyAwareModel
 from uncertainty_fae.util import EvalRunConfig, parse_cli_args
 from uncertainty_fae.util.model_provider import ModelProvider
@@ -19,10 +24,12 @@ logger = logging.getLogger('UNCERTAINTY_FAE_EVALUATION')
 
 PROVIDER_MAPPING: dict[str, ModelProvider] = {
     'rsna_boneage': RSNAModelProvider,
+    'clavicle_ct': ClavicleModelProvider,
 }
 
 OOD_EVALUATOR_MAPPING: dict[str, OutOfDomainEvaluator] = {
     'rsna_boneage': RSNABoneAgeOutOfDomainEvaluator,
+    'clavicle_ct': ClavicleCtOutOfDomainEvaluator,
 }
 
 DATASET_NAMES = {
@@ -32,10 +39,12 @@ DATASET_NAMES = {
 
 DATASET_AGE_TO_YEAR_TRANSFORMS = {
     'rsna_boneage': lambda df_ser: df_ser / 12,  # month -> year
+    'clavicle_ct': lambda df_ser: df_ser / 365.25,  # days -> year
 }
 
 DATASET_AGE_TO_YEAR_TRANSFORMS_UNDO = {
     'rsna_boneage': lambda df_ser: df_ser * 12,  # year -> month
+    'clavicle_ct': lambda df_ser: df_ser * 365.25,  # year -> days
 }
 
 def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:

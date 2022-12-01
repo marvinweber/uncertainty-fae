@@ -4,6 +4,7 @@ import os
 import yaml
 
 from rsna_boneage.model_provider import RSNAModelProvider
+from clavicle_ct.model_provider import ClavicleModelProvider
 from uncertainty_fae.model import TrainLoadMixin
 from uncertainty_fae.util import ModelProvider, TrainConfig
 from uncertainty_fae.util.config import parse_cli_args
@@ -15,6 +16,7 @@ TRAIN_RESULT_FILENAME = 'train_result.yml'
 
 PROVIDER_MAPPING: dict[str, ModelProvider] = {
     'rsna_boneage': RSNAModelProvider,
+    'clavicle_ct': ClavicleModelProvider,
 }
 
 
