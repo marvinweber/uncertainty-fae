@@ -352,7 +352,7 @@ class EvalPlotGenerator():
         """
 
         if not eval_cfg_names:
-            eval_cfg_names = self.eval_runs_data.keys()
+            eval_cfg_names = list(self.eval_runs_data.keys())
         comparison_plot = len(eval_cfg_names) > 1
         ci_intervals = [i/100 for i in range(0, 110, 10)]
 
