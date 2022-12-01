@@ -2,9 +2,16 @@ import torch
 
 
 def nll_regression_loss(input: torch.Tensor, target: torch.Tensor):
-    """Negative Logliklihood for Regression Network with two outputs (mean and variance).
+    """
+    Negative Logliklihood for Regression Network with two outputs (mean and variance).
 
-    TODO Docs
+    Apply the NLL (negative-log-likelihood) loss function to a regression network outputting two
+    values, one for predicted mean and one for predicted variance.
+    See linked papers below for details.
+
+    See:
+        - Deep Ensembles Paper: https://arxiv.org/abs/1612.01474
+        - Mean/Variance Network Paper: https://doi.org/10.1109/ICNN.1994.374138
     """
     assert len(input.shape) == 2, 'Input Tensor in wrong Shape (probably batch dimension missing?)!'
     assert input.shape[1] == 2, 'Network outputs of wrong dimension!'
