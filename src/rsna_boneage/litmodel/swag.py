@@ -2,7 +2,7 @@ import gzip
 import logging
 import os
 from copy import deepcopy
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 import torch
 import tqdm
@@ -33,7 +33,7 @@ class LitRSNABoneageSWAG(UncertaintyAwareModel, TrainLoadMixin):
         lr: float = 0.0005,
         n_samples: int = 30,
         optim_type: str = 'sgd',
-        swa_lrs: Union[float, list[float]] = 0.0003,
+        swa_lrs: float | list[float] = 0.0003,
         swa_start_epoch: int = 31,
         swa_annealing_epochs: int = 10,
         swa_annealing_strategy: str = 'linear',
