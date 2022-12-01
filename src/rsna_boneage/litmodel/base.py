@@ -6,6 +6,7 @@ import torch.optim
 from pytorch_lightning.core.module import LightningModule
 from torch import Tensor, nn, squeeze
 from torchvision.models.inception import InceptionOutputs
+from rsna_boneage.data import undo_boneage_rescale
 
 from uncertainty_fae.model import ADT_STAT_PREDS_VAR, TrainLoadMixin, UncertaintyAwareModel
 from uncertainty_fae.util import nll_regression_loss
@@ -168,6 +169,11 @@ class LitRSNABoneageVarianceNet(UncertaintyAwareModel, LitRSNABoneage):
         pred_mean = pred_mean_var[:, :1].cpu().flatten()
         pred_var = pred_mean_var[:, 1:].cpu().flatten()
         pred_std = torch.sqrt(pred_var)
+
+        if self.undo_boneage_rescale:
+            pred_mean = undo_boneage_rescale(pred_mean)
+            pred_var = undo_boneage_rescale(pred_var)
+            pred_std = undo_boneage_rescale(pred_std)
 
         metrics = {
             ADT_STAT_PREDS_VAR: pred_var,
