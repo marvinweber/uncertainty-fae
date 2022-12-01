@@ -43,19 +43,6 @@ class LitRSNABoneageLaplace(UncertaintyAwareModel, TrainLoadMixin):
         """Decorator/ Wrapper for Laplace Backend Loss function; see train method for details."""
 
     @torch.no_grad()
-    def forward_without_uncertainty(self, x: torch.Tensor):
-        if self.la_model and isinstance(self.la_model, BaseLaplace):
-            # TODO: use la model for prediction and throw away uncertainty
-            raise NotImplementedError('Not yet ready!')
-        elif self.base_model and isinstance(self.base_model, self.BASE_MODEL_CLASS):
-            if torch.cuda.is_available():
-                self.base_model.cuda()
-            self.base_model.eval()
-            return self.base_model(x.to(self.base_model.device))
-        else:
-            raise ValueError('Neither base_model, nor la_model are available. No Forward possible!')
-
-    @torch.no_grad()
     def forward_with_uncertainty(self, input) -> tuple[Tensor, Tensor, Optional[dict[str, Any]]]:
         assert isinstance(self.la_model, BaseLaplace), \
             'Loaded model has not yet been last-layer laplace approximated (no la_model available)!'
