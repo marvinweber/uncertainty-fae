@@ -142,7 +142,7 @@ class LitRSNABoneageVarianceNet(UncertaintyAwareModel, LitRSNABoneage):
 
         # Calculate MAE between mean neurons ("first column") and targets (ignore variance neurons)
         mae = self.mae(logits[:, :1], y.unsqueeze(1))
-        self.log('val_mae', mae)
+        self.log('train_mae', mae)
 
         loss = nll_regression_loss(logits, y)
         self.log('loss', loss)
