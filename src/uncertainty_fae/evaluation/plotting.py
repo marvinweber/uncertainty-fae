@@ -225,7 +225,7 @@ class EvalPlotGenerator():
         ax2.set_ylabel('Percentage')
         self._save_and_show_plt('tolerated_uncertainty')
 
-    def plot_abstention_rate_vs_abs_error(
+    def plot_error_by_abstention_rate(
         self,
         eval_cfg_names: Optional[list[str]] = None,
         only_95_percentile: bool = False,
@@ -280,7 +280,7 @@ class EvalPlotGenerator():
             plt.legend(loc='upper right')
         plt.xlabel('Abstention Rate (%)')
         plt.ylabel('Absolute Error')
-        filename = 'abstention_rate_vs_abs_error'
+        filename = 'error_by_abstention_rate'
         if only_95_percentile:
             filename = f'{filename}_95_perct'
         self._save_and_show_plt(filename)
