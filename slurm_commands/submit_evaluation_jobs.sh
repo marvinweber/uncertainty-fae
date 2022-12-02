@@ -37,7 +37,7 @@ fi
 
 eval_version_name=$1
 dataset_type=$2
-eval_config_name=$3
+eval_configuration=$3
 
 for eval_cfg_name in "${@:4}"
 do

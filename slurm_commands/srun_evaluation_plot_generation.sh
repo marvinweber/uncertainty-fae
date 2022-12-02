@@ -24,7 +24,6 @@ eval_version_name=$1
 dataset_type=$2
 eval_configuration=$3
 
-
 jobname="${eval_version_name}_${dataset_type}_evaluation"
 
 srun \
