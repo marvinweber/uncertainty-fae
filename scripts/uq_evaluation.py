@@ -98,6 +98,14 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
         avail, *eval_files = evaluation_predictions_available(eval_cfg_name_base_dir)
         ood_avail = ood_evaluator.ood_preds_avail(eval_cfg_name)
         if not avail or not ood_avail:
+            # Skip, if no predictions should be made
+            if eval_run_cfg.only_plotting:
+                logger.warning(
+                    'Only Plotting (--only-plotting) enabled, but %s is missing predictions! Skip.',
+                    eval_cfg_name,
+                )
+                continue
+
             model, dm, model_provider = eval_run_cfg.get_model_and_datamodule(
                 PROVIDER_MAPPING,
                 eval_cfg['model'],
@@ -156,7 +164,7 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
         if eval_run_cfg.only_combined_plots or eval_run_cfg.only_predictions:
             continue
 
-        logger.info('Evaluating single model...')
+        logger.info('Evaluating Single Model...')
 
         # SAVE EXTENDED EVAL STATS
         stats = {}

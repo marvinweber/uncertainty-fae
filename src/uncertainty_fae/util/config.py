@@ -87,6 +87,10 @@ def parse_cli_args(type: str) -> dict:
         parser.add_argument('--only-predictions', action='store_true', default=False,
                             required=False,
                             help='Whether only predictions should be generated (no plotting).')
+        parser.add_argument('--only-plotting', action='store_true', default=False, required=False,
+                            help='Whether to only create plots (and never new predictions). This '
+                                 'will make the evaluation skip configs for which predictions are '
+                                 'not available.')
         parser.add_argument('--model-logs-dir', required=False, default=None,
                             help='Parent directory of all model logs used in the evaluation. '
                                  'If provided, it will be walked to create best epoch symlinks.')
@@ -256,6 +260,7 @@ class EvalRunConfig(BaseConfig):
         self.eval_dir = config_dict['eval_dir']
         self.only_combined_plots: bool = config_dict['only_combined_plots']
         self.only_predictions: bool = config_dict['only_predictions']
+        self.only_plotting: bool = config_dict['only_plotting']
         self.model_logs_dir: Optional[str] = config_dict['model_logs_dir']
 
         self._load_eval_configuration()
@@ -267,6 +272,9 @@ class EvalRunConfig(BaseConfig):
                               if cfg_name in self.eval_configuration.keys()]
         else:
             self.eval_only: list[str] = list(self.eval_configuration.keys())
+
+        assert not (self.only_predictions and self.only_plotting), \
+            'Cannot --only-predictions and --only-plotting at the same time!'
 
     def _load_eval_configuration(self) -> None:
         with open(self.eval_configuration_file, 'r') as f:

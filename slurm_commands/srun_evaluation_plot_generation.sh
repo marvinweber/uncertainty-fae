@@ -36,5 +36,6 @@ srun \
   --eval-dir /ml_eval \
   --configuration /app/config/models.yml \
   --eval-configuration /app/config/eval-config.example.yml \
+  --only-plotting \
   --dataset-type "${dataset_type}" \
   "${eval_version_name}"
