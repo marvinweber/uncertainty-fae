@@ -6,10 +6,14 @@ if [ $# -lt 3 ]
 then
   echo "Invalid Argument Amount!"
   cat <<EOF
-    Usage: ./submit_evaluation_jobs.sh EVAL_VERSION DATASET_TYPE EVAL_CFG_NAME_1 ... EVAL_CFG_NAME_2
+    Usage: ./submit_evaluation_jobs.sh EVAL_VERSION DATASET_TYPE EVAL_CONFIGURATION
+                                       EVAL_CFG_NAME_1 ... EVAL_CFG_NAME_2
 
       EVAL_VERSION: Name of the evaluation version.
-      DATASET_TYPE: Which dataset to use for evaluation.
+      DATASET_TYPE: Which dataset to use for evaluation (train/val/test).
+      EVAL_CONFIGURATION:
+          (Absolute) path to the eval configuration file (in the Singularity
+          container).
       EVAL_CFG_NAME_1 ... EVAL_CFG_NAME_2:
           One to many eval configuration names for each of which a separate job
           will be scheduled.
@@ -33,8 +37,9 @@ fi
 
 eval_version_name=$1
 dataset_type=$2
+eval_config_name=$3
 
-for eval_cfg_name in "${@:3}"
+for eval_cfg_name in "${@:4}"
 do
   jobname="${eval_version_name}_${dataset_type}_${eval_cfg_name}"
   logname="${jobname}_%A_%a.log"
@@ -55,8 +60,8 @@ do
     --dataloader-num-workers 32 \
     --eval-dir /ml_eval \
     --model-logs-dir /ml_logs \
-    --configuration /app/config/models.yml \
-    --eval-configuration /app/config/eval-config.example.yml \
+    --configuration /app/config/models.ma.yml \
+    --eval-configuration "${eval_configuration}" \
     --eval-only "${eval_cfg_name}" \
     --only-predictions \
     --dataset-type "${dataset_type}" \
