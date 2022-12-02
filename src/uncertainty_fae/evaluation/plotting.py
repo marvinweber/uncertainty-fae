@@ -4,7 +4,7 @@ from typing import Callable, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas
+import pandas as pd
 from matplotlib.figure import Figure
 
 from uncertainty_fae.evaluation.calibration import (QUANTILE_SIGMA_ENV_SCALES,
@@ -26,6 +26,7 @@ class EvalPlotGenerator():
         show_interactive_plots = False,
         img_prepend_str: str = '',
         img_with_timestamp: bool = False,
+        undo_age_to_year_transform: Optional[Callable[[pd.Series], pd.Series]] = None,
         undo_age_to_year_transform: Optional[Callable[[pandas.Series], pandas.Series]] = None,
     ) -> None:
         """
@@ -64,7 +65,7 @@ class EvalPlotGenerator():
 
     def plot_uncertainty_by_boneage(self, eval_cfg_name: str, bins=15) -> None:
         df = self.eval_runs_data[eval_cfg_name]['prediction_log']
-        bins_target = pandas.cut(df['target'], bins=bins)
+        bins_target = pd.cut(df['target'], bins=bins)
         df_binned_by_boneage = df.groupby(bins_target).agg({
             'error': [list, 'mean'],
             'uncertainty': [list, 'mean'],
@@ -107,7 +108,7 @@ class EvalPlotGenerator():
 
     def plot_uncertainty_by_abs_error(self, eval_cfg_name: str, bins=15) -> None:
         df = self.eval_runs_data[eval_cfg_name]['prediction_log']
-        bins_abs_error = pandas.cut(df['error'], bins=bins)
+        bins_abs_error = pd.cut(df['error'], bins=bins)
         df_binned_by_abs_error = df.groupby(bins_abs_error).agg(
             {'uncertainty': [list, 'mean']}).dropna()
 
@@ -146,7 +147,7 @@ class EvalPlotGenerator():
 
     def plot_abs_error_by_boneage(self, eval_cfg_name: str) -> None:
         df = self.eval_runs_data[eval_cfg_name]['prediction_log']
-        bins_boneage = pandas.cut(df['target'], bins=15)
+        bins_boneage = pd.cut(df['target'], bins=15)
         df_binned_by_boneage = df.groupby(bins_boneage).agg(
             {'error': [list, 'mean']}).dropna()
 
@@ -600,7 +601,7 @@ class EvalPlotGenerator():
 
         for eval_cfg_name in eval_cfg_names:
             df = self.eval_runs_data[eval_cfg_name]['prediction_log']
-            bins_abs_error = pandas.cut(df['error'], bins=bins)
+            bins_abs_error = pd.cut(df['error'], bins=bins)
             df_binned_by_abs_error = df.groupby(bins_abs_error).agg(
                 {'uncertainty': [list, 'mean']}).dropna()
 
@@ -638,7 +639,7 @@ class EvalPlotGenerator():
 
         for eval_cfg_name in eval_cfg_names:
             df = self.eval_runs_data[eval_cfg_name]['prediction_log']
-            bins_abs_error = pandas.cut(df['target'], bins=bins)
+            bins_abs_error = pd.cut(df['target'], bins=bins)
             df_binned_by_target = df.groupby(bins_abs_error).agg(
                 {'error': [list, 'mean']}).dropna()
 
