@@ -1,4 +1,7 @@
 from abc import ABC, abstractmethod
+from typing import Callable
+
+from pandas import Series
 
 from uncertainty_fae.evaluation.util import EvalRunData
 from uncertainty_fae.model import UncertaintyAwareModel
@@ -7,10 +10,17 @@ from uncertainty_fae.util import EvalRunConfig, ModelProvider
 
 class OutOfDomainEvaluator(ABC):
 
-    def __init__(self, data_base_dir: str, plot_base_dir: str, eval_run_cfg: EvalRunConfig) -> None:
+    def __init__(
+        self,
+        data_base_dir: str,
+        plot_base_dir: str,
+        eval_run_cfg: EvalRunConfig,
+        age_transform: Callable[[Series], Series],
+    ) -> None:
         self.data_base_dir = data_base_dir
         self.plot_base_dir = plot_base_dir
         self.eval_run_cfg = eval_run_cfg
+        self.age_transform = age_transform
 
     @classmethod
     @abstractmethod
@@ -18,7 +28,8 @@ class OutOfDomainEvaluator(ABC):
         cls,
         data_base_dir: str,
         plot_base_dir: str,
-        eval_run_cfg: EvalRunConfig
+        eval_run_cfg: EvalRunConfig,
+        age_transform: Callable[[Series], Series],
     ) -> 'OutOfDomainEvaluator':
         """
         Create new instance of an `OutofDomainEvaluator`.
@@ -27,6 +38,9 @@ class OutOfDomainEvaluator(ABC):
             data_base_dir: The directory in which to put predictions.
             plot_base_dir: The directory in which to put evaluation plots.
             eval_run_cfg: The `EvalRunConfig` for the evaluation run.
+            age_transform: The function that should be applied to columns that "represent" age
+                (e.g., prediction and uncertainty). Ensures comparison with "normal" dataset in the
+                same unit (year, month, etc.).
         """
         ...
 

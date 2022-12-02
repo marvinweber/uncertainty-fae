@@ -81,6 +81,7 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
         ood_base_dir_data,
         ood_base_dir_plots,
         eval_run_cfg,
+        DATASET_AGE_TO_YEAR_TRANSFORMS[data_type],
     )
 
     for eval_cfg_name, eval_cfg in eval_run_cfg.eval_configuration.items():

@@ -1,6 +1,7 @@
 import csv
 import logging
 import os
+from typing import Callable
 
 import numpy as np
 import pandas as pd
@@ -22,8 +23,14 @@ HATCHES = ['xxx', '***', 'ooo']
 
 class RSNABoneAgeOutOfDomainEvaluator(OutOfDomainEvaluator):
 
-    def __init__(self, data_base_dir: str, plot_base_dir: str, eval_run_cfg: EvalRunConfig) -> None:
-        super().__init__(data_base_dir, plot_base_dir, eval_run_cfg)
+    def __init__(
+        self,
+        data_base_dir: str,
+        plot_base_dir: str,
+        eval_run_cfg: EvalRunConfig,
+        age_transform: Callable[[pd.Series], pd.Series],
+    ) -> None:
+        super().__init__(data_base_dir, plot_base_dir, eval_run_cfg, age_transform)
 
         self.ood_datasets: dict = self.eval_run_cfg.ood_datasets['rsna_boneage']
         self.plot_dir = os.path.join(self.plot_base_dir, self.eval_run_cfg.start_time)
@@ -33,13 +40,27 @@ class RSNABoneAgeOutOfDomainEvaluator(OutOfDomainEvaluator):
         cls,
         data_base_dir: str,
         plot_base_dir: str,
-        eval_run_cfg: EvalRunConfig
+        eval_run_cfg: EvalRunConfig,
+        age_transform: Callable[[pd.Series], pd.Series],
     ) -> 'OutOfDomainEvaluator':
-        evaluator = cls(data_base_dir, plot_base_dir, eval_run_cfg)
+        evaluator = cls(data_base_dir, plot_base_dir, eval_run_cfg, age_transform)
         return evaluator
 
     def _get_pred_filepath(self, eval_cfg_name: str, ood_name: str) -> str:
         return os.path.join(self.data_base_dir, f'{eval_cfg_name}_{ood_name}_ood_preds.csv')
+
+    def _load_pred_file(self, eval_cfg_name: str, ood_name: str) -> pd.DataFrame | None:
+        """Load Prediction DataFrame and apply Age Transforms."""
+        ood_pred_file = self._get_pred_filepath(eval_cfg_name, ood_name)
+        if not os.path.isfile(ood_pred_file):
+            logger.warning(
+                'No OoD-Pred file for %s, %s (%s)', eval_cfg_name, ood_name, ood_pred_file
+            )
+            return None
+        ood_preds = pd.read_csv(ood_pred_file)
+        for col in ['prediction', 'uncertainty']:
+            ood_preds[col] = self.age_transform(ood_preds[col])
+        return ood_preds
 
     def ood_preds_avail(self, eval_cfg_name: str) -> bool:
         for ood_name in self.ood_datasets.keys():
@@ -121,14 +142,11 @@ class RSNABoneAgeOutOfDomainEvaluator(OutOfDomainEvaluator):
             violin_edge_color.append('black')
 
             for ood_name, ood_cfg in self.ood_datasets.items():
-                ood_pred_file = self._get_pred_filepath(eval_cfg_name, ood_name)
-                if not os.path.isfile(ood_pred_file):
-                    logger.warning('No OOD-Pred file for %s, %s (%s)',
-                                   eval_cfg_name, ood_name, ood_pred_file)
+                ood_preds = self._load_pred_file(eval_cfg_name, ood_name)
+                if ood_preds is None:
                     continue
-                v_pos += 1
 
-                ood_preds = pd.read_csv(ood_pred_file)
+                v_pos += 1
                 violin_positions.append(v_pos)
                 # violin_labels.append(f'{uq_name} - {ood_cfg["name"]}')
                 violin_labels.append('')
@@ -179,14 +197,11 @@ class RSNABoneAgeOutOfDomainEvaluator(OutOfDomainEvaluator):
             avail_hatches = HATCHES.copy()
 
             for ood_name, ood_cfg in self.ood_datasets.items():
-                ood_pred_file = self._get_pred_filepath(eval_cfg_name, ood_name)
-                if not os.path.isfile(ood_pred_file):
-                    logger.warning('No OOD-Pred file for %s, %s (%s)',
-                                   eval_cfg_name, ood_name, ood_pred_file)
+                ood_preds = self._load_pred_file(eval_cfg_name, ood_name)
+                if ood_preds is None:
                     continue
-                v_pos += 1
 
-                ood_preds = pd.read_csv(ood_pred_file)
+                v_pos += 1
                 violin_positions.append(v_pos)
                 violin_labels.append(uq_name)
                 violin_datas.append(ood_preds['prediction'].tolist())
@@ -214,7 +229,7 @@ class RSNABoneAgeOutOfDomainEvaluator(OutOfDomainEvaluator):
             vplots[partname].set_linewidth(1)
         ax.set_xticks(violin_positions)
         ax.set_xticklabels(violin_labels, rotation=15)
-        ax.set_ylabel('Prediction')
+        ax.set_ylabel('Prediction (Age in Years)')
         ax.legend(handles=legend_elements, handleheight=3, handlelength=4, loc='upper right')
         self._save_fig(fig, 'prediction_comparison')
 
