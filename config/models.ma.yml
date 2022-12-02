@@ -209,7 +209,7 @@ models:
             optim_type: adam
             weight_decay: 0.0000001
             swa_lrs: 0.0003
-            swa_start_epoch: 15
+            swa_start_epoch: 80
             n_samples: 30
 
     clavicle_variance_mcd:
