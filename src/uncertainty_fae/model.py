@@ -27,10 +27,12 @@ class EvaluationMetrics():
         preds_distinct: Optional[list[Tensor]] = None,
         mean_uncertainty: Optional[Tensor] = None,
         distinct_model_errors: Optional[list[Tensor]] = None,
+        mae: Optional[Tensor] = None,
     ) -> None:
         self.preds_distinct = preds_distinct
         self.mean_uncertainty = mean_uncertainty
         self.distinct_model_errors = distinct_model_errors
+        self.mae = mae
 
 
 class UncertaintyAwareModel:

@@ -133,6 +133,7 @@ class LitClavicleSWAG(UncertaintyAwareModel, TrainLoadMixin):
 
         eval_metrics = EvaluationMetrics(
             mean_uncertainty=preds_std.mean(),
+            mae=mae,
         )
         return mae, preds_mean, targets, preds_abs_errors, preds_std, eval_metrics
 

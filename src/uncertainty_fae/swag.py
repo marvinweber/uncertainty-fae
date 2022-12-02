@@ -49,9 +49,10 @@ class SwagEvalCallback(Callback):
             return
 
         logger.info('Running SWAG Evaluation...')
+        assert isinstance(self.validation_dataloader, DataLoader)
         score, _, _, _, _, metrics = self.swag_model.evaluate_dataset(self.validation_dataloader)
-        logs = {f'swag_val_{key}': val
-                for key, val in metrics.items() if key in self.metrics_to_log}
+        logs = {f'swag_val_{key}': getattr(metrics, key)
+                for key in self.metrics_to_log if hasattr(metrics, key)}
         for l in trainer.loggers:
             l.log_metrics(logs, step=trainer.fit_loop.epoch_loop._batches_that_stepped)
         logger.info(f'SWAG Evaluation done; Score={score}')
