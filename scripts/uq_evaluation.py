@@ -217,10 +217,18 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
         'combined_plots',
         eval_run_cfg.start_time,
     )
+    baseline_model_error_df = eval_run_cfg.get_baseline_error_dataframe(data_type)
+    if baseline_model_error_df is not None:
+        baseline_model_error_df = apply_df_age_transform(
+            baseline_model_error_df,
+            DATASET_AGE_TO_YEAR_TRANSFORMS[data_type],
+            ['error'],
+        )
     combined_plot_generator = EvalPlotGenerator(
         eval_runs_data,
         combined_plots_path,
-        undo_age_to_year_transform=DATASET_AGE_TO_YEAR_TRANSFORMS_UNDO[data_type]
+        undo_age_to_year_transform=DATASET_AGE_TO_YEAR_TRANSFORMS_UNDO[data_type],
+        baseline_model_error_df=baseline_model_error_df,
     )
     combined_plot_generator.plot_correlation_comparison(method='pearson')
     combined_plot_generator.plot_correlation_comparison(method='kendall')

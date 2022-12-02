@@ -14,6 +14,9 @@ from uncertainty_fae.evaluation.util import EvalRunData, apply_df_age_transform
 TARGET_COLOR = 'green'
 """Color to use in plots for the target (ground truth)."""
 
+BASELINE_MODEL_COLOR = 'black'
+"""Color to use in plots for the baseline model, i.e., model without UQ."""
+
 
 class EvalPlotGenerator():
 
@@ -27,7 +30,7 @@ class EvalPlotGenerator():
         img_prepend_str: str = '',
         img_with_timestamp: bool = False,
         undo_age_to_year_transform: Optional[Callable[[pd.Series], pd.Series]] = None,
-        undo_age_to_year_transform: Optional[Callable[[pandas.Series], pandas.Series]] = None,
+        baseline_model_error_df: Optional[pd.DataFrame] = None,
     ) -> None:
         """
         TODO: Docs
@@ -39,6 +42,7 @@ class EvalPlotGenerator():
         self.img_prepend_str = img_prepend_str
         self.img_with_timestamp = img_with_timestamp
         self.ts = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        self.baseline_model_error_df = baseline_model_error_df
 
         self.undo_age_to_year_transform = undo_age_to_year_transform
         if self.undo_age_to_year_transform is None:
@@ -552,8 +556,13 @@ class EvalPlotGenerator():
         labels = []
         colors = []
 
+        if self.baseline_model_error_df is not None:
+            labels.append('Baseline')
+            colors.append(BASELINE_MODEL_COLOR)
+            abs_errors.append(self.baseline_model_error_df['error'].tolist())
+
         self._init_figure(
-            title=f'Comparison of Absolute Error by (UQ) Method',
+            title=f'Comparison of Error by (UQ) Method',
             suptitle=self.eval_runs_data[list(eval_cfg_names)[0]]['data_display_name'],
         )
 
