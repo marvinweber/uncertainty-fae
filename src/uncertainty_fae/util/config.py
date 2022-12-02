@@ -1,6 +1,8 @@
 import argparse
 from datetime import datetime
+import os
 from typing import Any, Optional, Type
+import pandas as pd
 
 from pytorch_lightning import LightningDataModule, Trainer
 from torch.optim import Optimizer
@@ -9,20 +11,20 @@ import yaml
 
 from uncertainty_fae.util.model_provider import ModelProvider
 
+SCRIPT_DESCRIPTIONS = {
+    'training': 'Generic Model Training Script',
+    'evaluation': 'Generic Model UQ Evaluatin Script',
+    'baseline_model_predictions': 'Script to Create (no UQ) Baseline Model Predictions',
+}
 
-def parse_cli_args(type: str) -> dict:
-    if type == 'training':
-        description = 'Model Training'
-    elif type == 'evaluation':
-        description = 'Model Evaluation'
-    else:
-        description = ''
 
+def parse_cli_args(script_type: str) -> dict:
+    description = SCRIPT_DESCRIPTIONS[script_type] if script_type in SCRIPT_DESCRIPTIONS else ''
     parser = argparse.ArgumentParser(description=description)
 
     # General Arguments
-    parser.add_argument('--configuration', metavar='CONFIGURATION', type=str, required=False,
-                        default='./config/models.yml',
+    parser.add_argument('--configuration', type=str, required=False,
+                        default='./config/models.ma.yml',
                         help='Path to the configuration file for available models.')
     parser.add_argument('--debug', action='store_true', required=False, default=False,
                         help='Flag to enable output of DEBUG logs.')
@@ -31,7 +33,7 @@ def parse_cli_args(type: str) -> dict:
                         help='Amount of workers to use for dataloading.')
 
     # Training Arguments
-    if type == 'training':
+    if script_type == 'training':
         parser.add_argument('model_name', metavar='MODEL_NAME', type=str,
                             help='Name of the model to train or evaluate (from model config file).')
         parser.add_argument('--max-epochs', metavar='MAX_EPOCHS', type=int, default=100,
@@ -66,18 +68,21 @@ def parse_cli_args(type: str) -> dict:
         parser.add_argument('--lrs-reduce-on-plateau-patience', type=int, required=False,
                             default=10)
 
-    # Evaluation Arguments
-    if type == 'evaluation':
-        parser.add_argument('eval_version_name', type=str,
-                            help='Name of the evaluation run (key of the eval config yaml file).')
+    # Arguments for Evaluation and Creation of Baseline Predictions
+    if script_type in ['evaluation', 'baseline_model_predictions']:
         parser.add_argument('--dataset-type', choices=['val', 'test', 'train'], default='val',
                             required=False,
                             help='Which dataset to use (of the Lightning DataModule); Default=val.')
+        parser.add_argument('--eval-dir', type=str, required=False, default='eval_logs',
+                            help='Base directory to store evaluation results in.')
+
+    # Evaluation Args
+    if script_type == 'evaluation':
+        parser.add_argument('eval_version_name', type=str,
+                            help='Name of the evaluation run (key of the eval config yaml file).')
         parser.add_argument('--eval-configuration', type=str, required=False,
                             default='./config/eval-config.yml',
                             help='Path to the file containing the evaluation configuration.')
-        parser.add_argument('--eval-dir', type=str, required=False, default='eval_logs',
-                            help='Base directory to store evaluation results in.')
         parser.add_argument('--eval-only', type=str, required=False, default=None,
                             help='Optionally, comma-separated list of eval config keys/names ('
                                  'corresponding to the eval-configuration) that should only be '
@@ -94,6 +99,13 @@ def parse_cli_args(type: str) -> dict:
         parser.add_argument('--model-logs-dir', required=False, default=None,
                             help='Parent directory of all model logs used in the evaluation. '
                                  'If provided, it will be walked to create best epoch symlinks.')
+
+    # Baseline Prediction Creation Args
+    if script_type == 'baseline_model_predictions':
+        parser.add_argument('model_name', metavar='MODEL_NAME', type=str,
+                            help='Name of the model to use (from model config file).')
+        parser.add_argument('checkpoint', metavar='CHECKPOINT', type=str,
+                            help='Path to the checkpoint file to use.')
 
     args = parser.parse_args()
     return {key: val for key, val in args._get_kwargs()}
@@ -144,6 +156,10 @@ class BaseConfig():
             or config_defaults[model_config['data']]['datasets']['img_base_dirs'][dataset]
         )
         return annotation_file, img_base_dir
+
+    def get_model_data_type(self, model_name: str) -> str:
+        model_config = self.model_configurations[model_name]
+        return model_config['data']
 
     def get_model_and_datamodule(
         self,
@@ -201,6 +217,17 @@ class BaseConfig():
         Return tuple of additional kwargs for ModelProvider creation first, and Litmodel second.
         """
         return {}, {}
+
+    def _get_baseline_model_errors_csv_path(
+        self,
+        base_dir: str,
+        data_type: str,
+        dataset_type: str
+    ) -> str:
+        return os.path.join(
+            base_dir,
+            f'baseline_model_errors_{data_type}_{dataset_type}.csv',
+        )
 
 
 class TrainConfig(BaseConfig):
@@ -300,6 +327,48 @@ class EvalRunConfig(BaseConfig):
             return datamodule.test_dataloader()
         else:
             raise ValueError('EvalRunConfig: Invalid DataSet Type: "%s"!', self.dataset_type)
+
+    def get_baseline_error_dataframe(self, data_type: str) -> pd.DataFrame | None:
+        """
+        Load the CSV file containing errors of baseline (no UQ) model into Pandas DataFrame.
+
+        Args:
+            data_type: Data type of data to get the errors for.
+
+        Returns:
+            A `DataFrame` of the errors of the baseline model or, if the corresponding CSV file is
+            not found, `None`.
+        """
+        filepath = self._get_baseline_model_errors_csv_path(
+            self.eval_dir, data_type, self.dataset_type
+        )
+        if not os.path.isfile(filepath):
+            return None
+        df = pd.read_csv(filepath)
+        return df
+
+
+class BaselinePredictionConfig(BaseConfig):
+    def __init__(self, config_dict: dict) -> None:
+        super().__init__(config_dict)
+        self.dataset_type: str = self.config_dict['dataset_type']
+        self.model_name: str = self.config_dict['model_name']
+        self.eval_dir: str = self.config_dict['eval_dir']
+        self.checkpoint: str = self.config_dict['checkpoint']
+
+    def _get_additional_model_providing_kwargs(
+        self,
+        model_name: str,
+        eval_cfg_name: Optional[str] = None
+    ) -> tuple[dict, dict]:
+        return {'eval_mode': True}, {}
+
+    def get_baseline_model_errors_csv_path(self) -> str:
+        return self._get_baseline_model_errors_csv_path(
+            self.eval_dir,
+            self.get_model_data_type(self.model_name),
+            self.dataset_type,
+        )
 
 
 class TrainResult():
