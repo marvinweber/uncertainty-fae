@@ -184,7 +184,7 @@ class CTDataset(Dataset):
         new_image_files = []
 
         for old_filename in image_files:
-            _, _, _, full_ct_file = get_patient_pseudonyms_from_ct_name(old_filename)
+            _, _, _, full_ct_file = patient_pseudonyms_from_preprocessed_img_name(old_filename)
             full_ct_filepath = os.path.join(self.full_ct_image_base_dir, full_ct_file)
             new_image_files.append(full_ct_filepath)
 
@@ -496,7 +496,7 @@ class ClavicleDataModule(LightningDataModule):
         )
 
 
-def get_patient_pseudonyms_from_ct_name(filename: str) -> tuple[int, int, int, str]:
+def patient_pseudonyms_from_preprocessed_img_name(filename: str) -> tuple[int, int, int, str]:
     """
     Extract patient, study, and series from given (preprocessed) file name.
 
