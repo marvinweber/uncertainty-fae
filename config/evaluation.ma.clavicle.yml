@@ -161,3 +161,158 @@ evaluations:
                     - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/18/checkpoints/best.ckpt
                     - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/19/checkpoints/best.ckpt
                     - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/20/checkpoints/best.ckpt
+
+    clavicle_evaluation_last_ckpt:
+        # Clavicle Standard Net
+        clavicle_mcd_10:
+            model: clavicle_mcd
+            name: "MCDO-10"
+            color: "#9C27B0"
+            checkpoint: /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/1/checkpoints/last.ckpt
+            litmodel_config:
+                undo_boneage_rescale: True
+                n_samples: 10
+
+        clavicle_mcd_100:
+            model: clavicle_mcd
+            name: "MCDO-100"
+            color: "#4A148C"
+            checkpoint: /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/1/checkpoints/last.ckpt
+            litmodel_config:
+                undo_boneage_rescale: True
+                n_samples: 100
+
+        clavicle_de_10:
+            model: clavicle_de
+            name: "DE-10"
+            color: "#90CAF9"
+            checkpoint: null
+            litmodel_config:
+                undo_boneage_rescale: True
+                base_model_checkpoints:
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/1/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/2/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/3/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/4/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/5/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/6/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/7/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/8/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/9/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/10/checkpoints/last.ckpt
+
+        clavicle_de_20:
+            model: clavicle_de
+            name: "DE-20"
+            color: "#1976D2"
+            checkpoint: null
+            litmodel_config:
+                undo_boneage_rescale: True
+                base_model_checkpoints:
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/1/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/2/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/3/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/4/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/5/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/6/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/7/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/8/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/9/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/10/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/11/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/12/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/13/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/14/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/15/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/16/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/17/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/18/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/19/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/20/checkpoints/last.ckpt
+
+        clavicle_laplace:
+            model: clavicle_laplace
+            name: "LA"
+            color: "#FF8A65"
+            checkpoint: /ml_logs/clavicle_ct/clavicle_laplace/laplace_150/1/laplace_model.gz
+            litmodel_config:
+                undo_boneage_rescale: True
+                n_samples: 100
+                base_model_checkpoint_pth: /ml_logs/clavicle_ct/clavicle_laplace/laplace_150/1/checkpoints/best.ckpt
+
+        clavicle_swag:
+            model: clavicle_swag
+            name: "SWAG"
+            color: "#6D4C41"
+            checkpoint: /data/core-rad/mweber1/ml_logs/clavicle_ct/clavicle_swag/swag_150/1/swag_model.gz
+            litmodel_config:
+                undo_boneage_rescale: True
+                n_samples: 30
+                base_model_checkpoint_pth: /ml_logs/clavicle_ct/clavicle_swag/swag_150/1/checkpoints/last.ckpt
+
+        # Clavicle Variance Net
+        clavicle_variance_mcd_10:
+            model: clavicle_variance_mcd
+            name: "VAR-MCDO-10"
+            color: "#DCE775"
+            checkpoint: /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/1/checkpoints/last.ckpt
+            litmodel_config:
+                undo_boneage_rescale: True
+                n_samples: 10
+
+        clavicle_variance_mcd_100:
+            model: clavicle_variance_mcd
+            name: "VAR-MCDO-100"
+            color: "#AFB42B"
+            checkpoint: /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/1/checkpoints/last.ckpt
+            litmodel_config:
+                undo_boneage_rescale: True
+                n_samples: 100
+
+        clavicle_variance_de_10:
+            model: clavicle_variance_de
+            name: "VAR-DE-10"
+            color: "#B0BEC5"
+            checkpoint: null
+            litmodel_config:
+                undo_boneage_rescale: True
+                base_model_checkpoints:
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/1/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/2/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/3/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/4/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/5/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/6/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/7/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/8/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/9/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/10/checkpoints/last.ckpt
+
+        clavicle_variance_de_20:
+            model: clavicle_variance_de
+            name: "VAR-DE-20"
+            color: "#546E7A"
+            checkpoint: null
+            litmodel_config:
+                undo_boneage_rescale: True
+                base_model_checkpoints:
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/1/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/2/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/3/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/4/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/5/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/6/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/7/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/8/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/9/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/10/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/11/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/12/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/13/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/14/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/15/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/16/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/17/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/18/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/19/checkpoints/last.ckpt
+                    - /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/20/checkpoints/last.ckpt
