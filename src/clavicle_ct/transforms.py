@@ -1,4 +1,10 @@
+import logging
+
+import numpy as np
+import SimpleITK as sitk
 import torchio as tio
+
+logger = logging.getLogger(__file__)
 
 
 def get_transforms(
@@ -113,3 +119,64 @@ def get_autoencoder_transforms(
         )
 
     return transforms
+
+
+def resample_sitk_image(
+    sitk_image: sitk.Image, new_spacing: list[float] = [1.0, 1.0, 1.0]
+) -> tuple[sitk.Image, np.ndarray]:
+    """
+    Resample SITK Image.
+    """
+    # Get information about the orginal image
+    num_dim = sitk_image.GetDimension()
+    orig_pixelid = sitk_image.GetPixelIDValue()
+    orig_origin = sitk_image.GetOrigin()
+    orig_direction = sitk_image.GetDirection()
+    orig_spacing = np.array(sitk_image.GetSpacing())
+    orig_size = np.array(sitk_image.GetSize(), dtype=np.int32)
+
+    logger.debug("Orginal image properties:")
+    logger.debug("num_dim", num_dim)
+    logger.debug("orig_pixelid", orig_pixelid)
+    logger.debug("orig_origin", orig_origin)
+    logger.debug("orig_direction", orig_direction)
+    logger.debug("orig_spacing", orig_spacing)
+    logger.debug("orig_size", orig_size)
+
+    # Calculate scaling factor
+    scaling_factor = orig_spacing / new_spacing
+    logger.debug("Scaling factor:", scaling_factor)
+
+    # Calculate new size
+    new_size = orig_size * scaling_factor
+    new_size = np.ceil(new_size).astype(np.int32)
+    new_size = [int(s) for s in new_size]
+
+    # Define resampler
+    resampler = sitk.ResampleImageFilter()
+    resampler.SetInterpolator(sitk.sitkLinear)
+    resampler.SetOutputOrigin(orig_origin)
+    resampler.SetOutputDirection(orig_direction)
+    resampler.SetOutputSpacing(new_spacing)
+    resampler.SetSize(new_size)
+
+    # Perform resampling
+    resampled_sitk_image = resampler.Execute(sitk_image)
+
+    # Get information about the resampled image
+    num_dim = resampled_sitk_image.GetDimension()
+    orig_pixelid = resampled_sitk_image.GetPixelIDValue()
+    orig_origin = resampled_sitk_image.GetOrigin()
+    orig_direction = resampled_sitk_image.GetDirection()
+    orig_spacing = np.array(resampled_sitk_image.GetSpacing())
+    orig_size = np.array(resampled_sitk_image.GetSize(), dtype=np.int32)
+
+    logger.debug("Resampled image properties:")
+    logger.debug("num_dim", num_dim)
+    logger.debug("orig_pixelid", orig_pixelid)
+    logger.debug("orig_origin", orig_origin)
+    logger.debug("orig_direction", orig_direction)
+    logger.debug("orig_spacing", orig_spacing)
+    logger.debug("orig_size", orig_size)
+
+    return resampled_sitk_image, scaling_factor
