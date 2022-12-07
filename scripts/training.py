@@ -3,16 +3,15 @@ import os
 
 import yaml
 
-from rsna_boneage.model_provider import RSNAModelProvider
 from clavicle_ct.model_provider import ClavicleModelProvider
+from rsna_boneage.model_provider import RSNAModelProvider
 from uncertainty_fae.model import TrainLoadMixin
 from uncertainty_fae.util import ModelProvider, TrainConfig
-from uncertainty_fae.util.config import parse_cli_args
+from uncertainty_fae.util.config import TRAIN_RESULT_FILENAME, parse_cli_args
 
 logger = logging.getLogger('UNCERTAINTY_FAE_TRAINING')
 
 TRAIN_CONFIG_FILENAME = 'config.yml'
-TRAIN_RESULT_FILENAME = 'train_result.yml'
 
 PROVIDER_MAPPING: dict[str, ModelProvider] = {
     'rsna_boneage': RSNAModelProvider,

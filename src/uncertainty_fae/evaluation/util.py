@@ -11,6 +11,7 @@ from torch import Tensor
 from torch.utils.data import DataLoader
 
 from uncertainty_fae.model import UncertaintyAwareModel
+from uncertainty_fae.util.config import TRAIN_RESULT_FILENAME
 
 logger = logging.getLogger(__name__)
 
@@ -102,10 +103,13 @@ def evaluation_predictions_available(eval_base_dir: str, make_eval_dir: bool = F
 
 
 def create_best_epoch_checkpoint_symlinks(base_dir: str, symlink_name: str = 'best.ckpt') -> None:
-    """Create symlinks to best epoch checkpoints in every checkpoint dir found under base_dir.
+    """
+    Create symlinks to best epoch checkpoints in every model dir found under base_dir.
+    A model dir is one where the `uncertainty_fae.util.config.TRAIN_RESULT_FILENAME` file exists.
+    From this file the path to the best model checkpoint is also retrieved.
 
-    Note, this only works if the loss is written to the file itself: `val_loss=...`;
-    e.g. `epoch=8-val_loss=0.123.ckpt`.
+    Note: This only works if the above mentioned train-results file is correctly created and filled
+    with the `TrainResult` class values (as the `scripts/training.py` does).
 
     Args:
         base_dir: The directory in which to (recursively) search for `checkpoints` directories in
@@ -113,33 +117,44 @@ def create_best_epoch_checkpoint_symlinks(base_dir: str, symlink_name: str = 'be
         symlink_name: How the symlink should be named.
     """
     for dirname, dir_dirs, dir_files in os.walk(base_dir):
-        if not dirname.endswith('checkpoints'):
+        if TRAIN_RESULT_FILENAME not in dir_files:
             continue
-        checkpoint_files = []
-        for dir_file in dir_files:
-            result = re.search(r'val_loss=(-?\d*\.\d*)', dir_file)
-            if not result:
-                continue
-            val_loss = float(result.group(1))
-            checkpoint_files.append((val_loss, dir_file))
-        if not checkpoint_files:  # No checkpoint files found
+
+        with open(os.path.join(dirname, TRAIN_RESULT_FILENAME), 'r') as f:
+            train_results = yaml.safe_load(f)
+
+        best_ckpt_path = None
+        # Laplace and SWAG
+        if (
+            'additional_info' in train_results
+            and train_results['additional_info'] is not None
+            and 'base_model_best_model_path' in train_results['additional_info']
+            and train_results['additional_info']['base_model_best_model_path'] is not None
+        ):
+            best_ckpt_path = train_results['additional_info']['base_model_best_model_path']
+        # MCD / DE / etc
+        elif 'best_model_path' in train_results:
+            best_ckpt_path = train_results['best_model_path']
+
+        if not best_ckpt_path:
+            logger.warning('No Best-Model-Path found for directory: %s - Skip!', dirname)
             continue
-        best_ckpt_path = os.path.abspath(
-            os.path.join(
-                dirname,
-                sorted(checkpoint_files, key=lambda cpt: cpt[0])[0][1],
-        ))
-        symlink_path = os.path.abspath(os.path.join(dirname, symlink_name))
+
+        # Best Checkpoint Symlink should be in "checkpoints" directory
+        symlink_path = os.path.abspath(os.path.join(dirname, 'checkpoints', symlink_name))
 
         # Continue if symlink is already correct set
-        if os.path.exists(symlink_path) and os.path.realpath(symlink_path) == best_ckpt_path:
+        if os.path.islink(symlink_path) and os.path.realpath(symlink_path) == best_ckpt_path:
+            logger.debug('Skip already existing symlink: %s -> %s', symlink_path, best_ckpt_path)
             continue
 
         # Make sure to not overwrite any file/dir
         if not os.path.isfile(symlink_path) and not os.path.isdir(symlink_path):
             # remove old link to ensure it is up to date
             if os.path.islink(symlink_path):
+                logger.info('Deleting invalid symlink: %s', symlink_path)
                 os.remove(symlink_path)
+            logger.info('Creating Best-Checkpoint Symlink: %s -> %s', symlink_path, best_ckpt_path)
             os.symlink(best_ckpt_path, symlink_path)
 
 

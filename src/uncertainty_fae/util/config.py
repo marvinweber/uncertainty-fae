@@ -17,6 +17,8 @@ SCRIPT_DESCRIPTIONS = {
     'baseline_model_predictions': 'Script to Create (no UQ) Baseline Model Predictions',
 }
 
+TRAIN_RESULT_FILENAME = 'train_result.yml'
+
 
 def parse_cli_args(script_type: str) -> dict:
     description = SCRIPT_DESCRIPTIONS[script_type] if script_type in SCRIPT_DESCRIPTIONS else ''
