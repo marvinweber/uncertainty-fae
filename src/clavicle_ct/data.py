@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 import re
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
@@ -38,9 +38,10 @@ class CTDataset(Dataset):
         include_sex: bool = False,
         use_full_ct: bool = False,
         full_ct_image_base_dir: Optional[str] = None,
-        cropping: str = "random",
+        cropping_random_seed: Optional[Any] = None,
         transforms_input: Optional[tio.Compose] = None,
         transforms_target: Optional[tio.Compose] = None,
+        patch_size: int = 112,
     ) -> None:
         super().__init__()
 
@@ -50,35 +51,55 @@ class CTDataset(Dataset):
         self.include_sex = include_sex
         self.use_full_ct = use_full_ct
         self.full_ct_image_base_dir = full_ct_image_base_dir
-        self.cropping = cropping
+        self.cropping_random_seed = cropping_random_seed
         self.transforms_input = transforms_input
         self.transforms_target = transforms_target
+        self.patch_size = patch_size
 
-        self.annotations = pd.read_csv(annotation_file)
+        self.annotations_full = pd.read_csv(annotation_file)
         if self.use_full_ct:
             if not self.full_ct_image_base_dir:
                 raise ValueError("Cannot use full-CT wihtout `full_ct_image_base_dir`!")
-            self.annotations["image"] = self._use_original_images(
-                self.annotations["image"].to_list()
+            self.annotations_full["image"] = self._use_original_images(
+                self.annotations_full["image"].to_list()
             )
 
+        self.target_dataset_length = max(int(len(self.annotations_full) / batch_size), batch_size)
+        self.annotations: pd.DataFrame
+        self._resample_annotations()
+
+    def _resample_annotations(self) -> None:
+        self.annotations = self.annotations_full.sample(self.target_dataset_length)
+
+    def reload_dataset(self) -> None:
+        """Reload Dataset Annotations (Resample from Full Annoation CSV)."""
+        self._resample_annotations()
+
     def __len__(self) -> int:
-        return len(self.annotations)
+        return self.target_dataset_length
 
     def __getitem__(self, idx) -> tuple:
         """
-        Typically, a Dataset returns a single sample. However, this Dataset will return a batch of samples.
-        The corresponding DataLoader is adjusted accordingly, by providing a 'collate_fn' function.
+        Get an item (batch in this case) from the Dataset.
+
+        This Datset returns - in contrast to "typical" datasets - a batch of samples (not a single
+        one). The PyTorch Dataloader must either set the batch_size to `None` (to disable automatic
+        batching), or must provide an appropriate `collate_fn` function. The default `collate_fn`
+        function with disabled automatic batching (!), i.e. `batch_size=None` is compatible with
+        this Dataset.
+
+        See:
+            - https://pytorch.org/docs/stable/data.html#disable-automatic-batching
         """
 
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        # Get image filepath
-        image_file = str(self.annotations.loc[idx, "image"])
+        image_file = str(self.annotations.iloc[idx]["image"])
 
-        # Adjust filepath if necessary
-        if self.img_base_dir:
+        # Adjust filepath if necessary (only if not using full CT images: they are injected with
+        # full absolute path.)
+        if self.img_base_dir and not self.use_full_ct:
             image_file = os.path.join(self.img_base_dir, image_file)
 
         # Load image from disk
@@ -96,41 +117,29 @@ class CTDataset(Dataset):
         # Get image dimensions
         x, y, z = image.shape[0], image.shape[1], image.shape[2]
 
-        # Prepare cropping
-        patch_size = 112
-
-        if self.cropping == "random":
-            rng = np.random.default_rng()
-        elif self.cropping == "fixed":
-            rng = np.random.default_rng(seed=0)
-        else:
-            raise ValueError(
-                '"cropping" has to be set to "random" or "fixed", got "{:s}"'.format(self.cropping)
-            )
-
         # Fill batch with patches from the same image to increase performance
         X_batch = []
         y_batch = []
 
+        rng = np.random.default_rng(seed=self.cropping_random_seed)
         for i in range(self.batch_size):
-
             x0, x1 = 0, x
             y0, y1 = 0, y
             z0, z1 = 0, z
 
             # Generate patch position
-            if x > patch_size:
-                upper_x0_bound = x - patch_size
+            if x > self.patch_size:
+                upper_x0_bound = x - self.patch_size
                 x0 = rng.integers(low=0, high=upper_x0_bound, endpoint=True)
-                x1 = x0 + patch_size
-            if y > patch_size:
-                upper_y0_bound = y - patch_size
+                x1 = x0 + self.patch_size
+            if y > self.patch_size:
+                upper_y0_bound = y - self.patch_size
                 y0 = rng.integers(low=0, high=upper_y0_bound, endpoint=True)
-                y1 = y0 + patch_size
-            if z > patch_size:
-                upper_z0_bound = z - patch_size
+                y1 = y0 + self.patch_size
+            if z > self.patch_size:
+                upper_z0_bound = z - self.patch_size
                 z0 = rng.integers(low=0, high=upper_z0_bound, endpoint=True)
-                z1 = z0 + patch_size
+                z1 = z0 + self.patch_size
 
             # Do cropping
             patch = image[x0:x1, y0:y1, z0:z1]
@@ -146,8 +155,7 @@ class CTDataset(Dataset):
             if self.transforms_target:
                 y_patch = self.transforms_target(y_patch)
 
-            # Add batch dimension. The DataLoader will use this dimension
-            # to concatenate all patches inside the batch list
+            # Add batch dimension; will be "catted" below
             X_patch = torch.unsqueeze(X_patch, dim=0)
             y_patch = torch.unsqueeze(y_patch, dim=0)
 
@@ -158,7 +166,6 @@ class CTDataset(Dataset):
         # Fill metadata batch (always the same because the image is also the same)
         z_batch = []
         if self.include_sex:
-
             sex = self.annotations.loc[idx, "sex"]
 
             if sex == "M":
@@ -168,11 +175,14 @@ class CTDataset(Dataset):
             else:
                 raise ValueError('Sex must be "M" or "F". Got <{}>.'.format(sex))
 
-            # Add batch dimension. The DataLoader will use this dimension
-            # to concatenate all patches inside the batch list
+            # Add batch dimension; will be "catted" below
             sex = torch.unsqueeze(sex, dim=0)
 
             z_batch = [sex] * self.batch_size
+            z_batch = torch.cat(z_batch)
+
+        X_batch = torch.cat(X_batch)
+        y_batch = torch.cat(y_batch)
 
         if not self.include_sex:
             return X_batch, y_batch
@@ -319,11 +329,12 @@ class CTDataModule(LightningDataModule):
         img_val_base_dir: str = None,
         batch_size: int = 1,
         include_sex: bool = False,
-        cropping: str = "random",
+        cropping_random_seed: Optional[Any] = None,
         transforms_input: Optional[tio.Compose] = None,
         transforms_target: Optional[tio.Compose] = None,
         num_workers=12,
         full_ct_image_base_dir: Optional[str] = None,
+        use_full_cts: bool = False,
     ) -> None:
         super().__init__()
 
@@ -333,11 +344,12 @@ class CTDataModule(LightningDataModule):
         self.img_val_base_dir = img_val_base_dir
         self.batch_size = batch_size
         self.include_sex = include_sex
-        self.cropping = cropping
+        self.cropping_random_seed = cropping_random_seed
         self.transforms_input = transforms_input
         self.transforms_target = transforms_target
         self.num_workers = num_workers
         self.full_ct_image_base_dir = full_ct_image_base_dir
+        self.use_full_cts = use_full_cts
 
     def setup(self, stage: str) -> None:
         if stage == "fit" or "validate":
@@ -346,60 +358,44 @@ class CTDataModule(LightningDataModule):
                 img_base_dir=self.img_train_base_dir,
                 batch_size=self.batch_size,
                 include_sex=self.include_sex,
-                cropping=self.cropping,
+                cropping_random_seed=self.cropping_random_seed,
                 transforms_input=self.transforms_input,
                 transforms_target=self.transforms_target,
                 full_ct_image_base_dir=self.full_ct_image_base_dir,
+                use_full_ct=self.use_full_cts,
             )
             self.dataset_val = CTDataset(
                 annotation_file=self.annotation_file_val,
                 img_base_dir=self.img_val_base_dir,
                 batch_size=self.batch_size,
                 include_sex=self.include_sex,
-                cropping=self.cropping,
+                cropping_random_seed=self.cropping_random_seed,
                 transforms_input=self.transforms_input,
                 transforms_target=self.transforms_target,
                 full_ct_image_base_dir=self.full_ct_image_base_dir,
+                use_full_ct=self.use_full_cts,
             )
         else:
             raise ValueError(
                 "This DataModule is for training and validation only and not for testing!"
             )
 
-    def collate_fn(self, data):
-        if not self.include_sex:
-            X_batch, y_batch = data[0]
-        else:
-            X_batch, y_batch, z_batch = data[0]
-
-        X_batch = torch.cat(X_batch)
-        y_batch = torch.cat(y_batch)
-        if self.include_sex:
-            z_batch = torch.cat(z_batch)
-
-        if not self.include_sex:
-            return X_batch, y_batch
-        else:
-            return X_batch, y_batch, z_batch
-
     def train_dataloader(self):
+        self.dataset_train.reload_dataset()
         return DataLoader(
             self.dataset_train,
-            batch_size=1,
+            batch_size=None,
             shuffle=True,
             num_workers=self.num_workers,
-            collate_fn=self.collate_fn,
-            persistent_workers=True,
         )
 
     def val_dataloader(self):
+        self.dataset_val.reload_dataset()
         return DataLoader(
             self.dataset_val,
-            batch_size=1,
+            batch_size=None,
             shuffle=False,
             num_workers=self.num_workers,
-            collate_fn=self.collate_fn,
-            persistent_workers=True,
         )
 
 
