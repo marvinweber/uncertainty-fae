@@ -67,7 +67,12 @@ docker run -d \
 
 ## Notebook Usage
 If you want to write and/or use the notebooks, you should install the
-`ipykernel` and `ipywidgets` packages.
+`ipykernel` and `ipywidgets` packages:
+
+```bash
+# Inside the Container
+python -m pip install ipykernel ipywidgets
+```
 
 ## Uncertainty Framework
 The `uncertainty_fae` together with the provided `scripts` can be seen as a
