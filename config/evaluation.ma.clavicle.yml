@@ -89,7 +89,7 @@ evaluations:
             model: clavicle_swag
             name: "SWAG"
             color: "#6D4C41"
-            checkpoint: /data/core-rad/mweber1/ml_logs/clavicle_ct/clavicle_swag/swag_150/1/swag_model.gz
+            checkpoint: /ml_logs/clavicle_ct/clavicle_swag/swag_150/1/swag_model.gz
             litmodel_config:
                 undo_boneage_rescale: True
                 n_samples: 30
@@ -244,7 +244,7 @@ evaluations:
             model: clavicle_swag
             name: "SWAG"
             color: "#6D4C41"
-            checkpoint: /data/core-rad/mweber1/ml_logs/clavicle_ct/clavicle_swag/swag_150/1/swag_model.gz
+            checkpoint: /ml_logs/clavicle_ct/clavicle_swag/swag_150/1/swag_model.gz
             litmodel_config:
                 undo_boneage_rescale: True
                 n_samples: 30
