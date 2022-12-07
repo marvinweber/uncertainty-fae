@@ -26,7 +26,7 @@ dataset_type=$1
 model_name=$2
 checkpoint_path=$3
 
-jobname="basline_preds_${dataset_type}_${model_name}"
+jobname="baseline_preds_${dataset_type}_${model_name}"
 logname="${jobname}_%A_%a.log"
 echo "Submitting Baseline Prediction Generation - Dataset-Type=${dataset_type} Model=${model_name} Checkpoint=${checkpoint_patch} "
 echo "Job: Name=${jobname} Logname=${logname}"
