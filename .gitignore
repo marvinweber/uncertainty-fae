@@ -3,7 +3,8 @@
 __pycache__
 *.egg-info
 
+# Logs and Models
+**/*train_logs*
+**/*eval_logs*
 lightning_logs
-train_logs*
-eval_logs*
 results
