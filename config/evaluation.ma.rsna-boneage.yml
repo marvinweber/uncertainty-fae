@@ -4,10 +4,12 @@ ood_datasets:
             base_dir: /data_fae_uq/chest_xray
             annotations: /data_fae_uq/chest_xray/annotations.csv
             name: "Chest X-Ray"
+            hatch: "xxx"
         oct:
             base_dir: /data_fae_uq/oct
             annotations: /data_fae_uq/oct/annotations.csv
             name: "OCT"
+            hatch: "***"
 
 evaluations:
     rsna_evaluation_last_ckpt:

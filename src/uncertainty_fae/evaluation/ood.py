@@ -15,8 +15,6 @@ from uncertainty_fae.util import EvalRunConfig, ModelProvider
 
 logger = logging.getLogger(__file__)
 
-HATCHES = ["xxx", "***", "ooo"]
-
 
 class OutOfDomainEvaluator(ABC):
     def __init__(
@@ -139,8 +137,6 @@ class OutOfDomainEvaluator(ABC):
             uq_preds = eval_run_data["prediction_log"]
             color = eval_run_data["color"]
 
-            avail_hatches = HATCHES.copy()
-
             # Base Entry: UQ with "normal" dataset
             violin_positions.append(v_pos)
             violin_labels.append(uq_name)
@@ -159,13 +155,15 @@ class OutOfDomainEvaluator(ABC):
                 violin_labels.append("")
                 violin_datas.append(ood_preds["uncertainty"].tolist())
                 violin_colors.append(color)
-                hatch = avail_hatches.pop(0)
-                violin_hatches.append(hatch)
+                violin_hatches.append(ood_cfg["hatch"])
                 violin_edge_color.append("white")
 
                 if len(legend_elements) < len(self.ood_datasets.items()) + 1:
                     patch = Patch(
-                        facecolor="white", edgecolor="grey", hatch=hatch, label=ood_cfg["name"]
+                        facecolor="white",
+                        edgecolor="grey",
+                        hatch=ood_cfg["hatch"],
+                        label=ood_cfg["name"],
                     )
                     legend_elements.append(patch)
             v_pos += 1
@@ -206,8 +204,6 @@ class OutOfDomainEvaluator(ABC):
             uq_name = eval_run_data["display_name"]
             color = eval_run_data["color"]
 
-            avail_hatches = HATCHES.copy()
-
             for ood_name, ood_cfg in self.ood_datasets.items():
                 ood_preds = self._load_pred_file(eval_cfg_name, ood_name)
                 if ood_preds is None:
@@ -218,13 +214,15 @@ class OutOfDomainEvaluator(ABC):
                 violin_labels.append(uq_name)
                 violin_datas.append(ood_preds["prediction"].tolist())
                 violin_colors.append(color)
-                hatch = avail_hatches.pop(0)
-                violin_hatches.append(hatch)
+                violin_hatches.append(ood_cfg["hatch"])
                 violin_edge_color.append("white")
 
                 if len(legend_elements) < len(self.ood_datasets.items()):
                     patch = Patch(
-                        facecolor="white", edgecolor="grey", hatch=hatch, label=ood_cfg["name"]
+                        facecolor="white",
+                        edgecolor="grey",
+                        hatch=ood_cfg["hatch"],
+                        label=ood_cfg["name"],
                     )
                     legend_elements.append(patch)
             v_pos += 1
