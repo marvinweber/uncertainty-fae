@@ -58,7 +58,6 @@ def parse_cli_args(script_type: str) -> dict:
         )
         parser.add_argument(
             "--max-epochs",
-            metavar="MAX_EPOCHS",
             type=int,
             default=100,
             required=False,
@@ -80,7 +79,6 @@ def parse_cli_args(script_type: str) -> dict:
         )
         parser.add_argument(
             "--save-dir",
-            metavar="SAVE_DIR",
             type=str,
             default="/ml_logs",
             required=False,
@@ -88,7 +86,6 @@ def parse_cli_args(script_type: str) -> dict:
         )
         parser.add_argument(
             "--save-top-k-checkpoints",
-            metavar="SAVE_TOP_K_CHECKPOINTS",
             type=int,
             default=2,
             required=False,
@@ -103,7 +100,6 @@ def parse_cli_args(script_type: str) -> dict:
         )
         parser.add_argument(
             "--version",
-            metavar="VERSION",
             type=str,
             required=False,
             default=None,
