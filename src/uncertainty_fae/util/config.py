@@ -82,7 +82,7 @@ def parse_cli_args(script_type: str) -> dict:
             "--save-dir",
             metavar="SAVE_DIR",
             type=str,
-            default="train_logs",
+            default="/ml_logs",
             required=False,
             help="Directory to save training logs (checkpoints, metrics) to.",
         )
@@ -155,7 +155,7 @@ def parse_cli_args(script_type: str) -> dict:
             "--eval-dir",
             type=str,
             required=False,
-            default="eval_logs",
+            default="/ml_eval",
             help="Base directory to store evaluation results in.",
         )
 
