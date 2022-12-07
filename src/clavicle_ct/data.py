@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+import re
 from typing import Optional
 
 import numpy as np
@@ -182,17 +184,9 @@ class CTDataset(Dataset):
         new_image_files = []
 
         for old_filename in image_files:
-            # Extract info
-            patient = old_filename.split("_")[1]
-            study = old_filename.split("_")[2]
-            series = old_filename.split("_")[3].replace(".npy", "")
-
-            # Create new filename
-            new_filename = "ae_{:s}/ae_{:s}/ae_{:s}.nii.gz".format(patient, study, series)
-            new_filename = os.path.join(self.full_ct_image_base_dir, new_filename)
-
-            # Replace old filename with new filename
-            new_image_files.append(new_filename)
+            _, _, _, full_ct_file = get_patient_pseudonyms_from_ct_name(old_filename)
+            full_ct_filepath = os.path.join(self.full_ct_image_base_dir, full_ct_file)
+            new_image_files.append(full_ct_filepath)
 
         return new_image_files
 
@@ -500,6 +494,29 @@ class ClavicleDataModule(LightningDataModule):
             shuffle=False,
             num_workers=self.num_workers,
         )
+
+
+def get_patient_pseudonyms_from_ct_name(filename: str) -> tuple[int, int, int, str]:
+    """
+    Extract patient, study, and series from given (preprocessed) file name.
+
+    Args:
+        filename: Filename of the preprocessed image, from wich info should be extracted.
+    
+    Returns:
+        A tuple `(patient, study, series, full_ct_file)` where the first three integers correspond
+        to the patient, study and series pseudonyms, while `full_ct_file` corresponds to the
+        Nifiti image path (with directory structure).
+    """
+    filename = Path(filename).stem
+    regex = re.compile(r"ae_(?P<patient>\d+)_(?P<study>\d+)_(?P<series>\d+)")
+    res = regex.search(filename)
+    patient, study, series = [
+        int(res.group("patient")), int(res.group("study")), int(res.group("series"))
+    ]
+
+    full_ct_file = "ae_{:n}/ae_{:n}/ae_{:n}.nii.gz".format(patient, study, series)
+    return patient, study, series, full_ct_file
 
 
 def clavicle_age_rescale(age):
