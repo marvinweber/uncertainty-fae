@@ -130,6 +130,11 @@ def create_best_epoch_checkpoint_symlinks(base_dir: str, symlink_name: str = 'be
                 sorted(checkpoint_files, key=lambda cpt: cpt[0])[0][1],
         ))
         symlink_path = os.path.abspath(os.path.join(dirname, symlink_name))
+
+        # Continue if symlink is already correct set
+        if os.path.exists(symlink_path) and os.path.realpath(symlink_path) == best_ckpt_path:
+            continue
+
         # Make sure to not overwrite any file/dir
         if not os.path.isfile(symlink_path) and not os.path.isdir(symlink_path):
             # remove old link to ensure it is up to date
