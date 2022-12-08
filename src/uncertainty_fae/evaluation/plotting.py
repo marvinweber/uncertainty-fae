@@ -5,10 +5,13 @@ from typing import Callable, Optional
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn
 from matplotlib.figure import Figure
 
-from uncertainty_fae.evaluation.calibration import (QUANTILE_SIGMA_ENV_SCALES,
-                                                    observation_share_per_prediction_interval)
+from uncertainty_fae.evaluation.calibration import (
+    QUANTILE_SIGMA_ENV_SCALES,
+    observation_share_per_prediction_interval,
+)
 from uncertainty_fae.evaluation.util import EvalRunData, apply_df_age_transform
 
 TARGET_COLOR = 'green'
@@ -25,7 +28,7 @@ class EvalPlotGenerator():
         eval_runs_data: dict[str, EvalRunData],
         img_save_dir: str,
         img_ext: str = 'png',
-        plt_style: str = 'seaborn',
+        plt_style: Optional[str] = None,
         show_interactive_plots = False,
         img_prepend_str: str = '',
         img_with_timestamp: bool = False,
@@ -48,7 +51,10 @@ class EvalPlotGenerator():
         if self.undo_age_to_year_transform is None:
             self.undo_age_to_year_transform = lambda x: x
 
-        plt.style.use(plt_style)
+        if not plt_style:
+            seaborn.set_theme(context='paper')
+        else:
+            plt.style.use(plt_style)
 
     def plot_bonage_distribution(self, eval_cfg_name: str, bins=25) -> None:
         df = self.eval_runs_data[eval_cfg_name]['prediction_log']
