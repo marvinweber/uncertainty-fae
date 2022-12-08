@@ -65,7 +65,7 @@ def main(args: argparse.Namespace) -> None:
         monitor="val_loss",
         save_last=True,
         save_top_k=2,
-        filename="{step}-{epoch}-{val_loss:.2f}",
+        filename="{epoch}-{val_loss:.7f}",
         save_on_train_epoch_end=True,
     )
     early_stopping_cb = EarlyStopping(
