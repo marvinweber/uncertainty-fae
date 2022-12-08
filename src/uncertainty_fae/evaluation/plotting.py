@@ -568,7 +568,9 @@ class EvalPlotGenerator():
         plt.ylabel(f'({method.title()}) Correlation of Uncertainty and Error')
         plt.bar(labels, corrs, color=colors)
         plt.xticks(rotation = 30)
-        plt.ylim((-1, 1))
+        y_lim_min = max(-1, min(corrs) - 0.05)
+        y_lim_max = min(1, max(corrs) + 0.05)
+        plt.ylim((y_lim_min, y_lim_max))
         self._save_and_show_plt(f'correlation_comparison_{method}')
 
     def plot_abs_error_comparison(
