@@ -242,50 +242,65 @@ class EvalPlotGenerator():
         only_95_percentile: bool = False,
     ) -> None:
         if not eval_cfg_names:
-            eval_cfg_names = self.eval_runs_data.keys()
+            eval_cfg_names = list(self.eval_runs_data.keys())
 
         fig = self._init_figure(
-            title='Absolute Error by Abstention Rate',
-            suptitle=self.eval_runs_data[list(eval_cfg_names)[0]]['data_display_name'],
+            title='Error by Abstention Rate',
+            suptitle=self.eval_runs_data[eval_cfg_names[0]]['data_display_name'],
         )
 
+        error_by_abstention_aucs = pd.DataFrame(
+            columns=[
+                'eval_cfg_name',
+                'error_auc',
+                'error_auc_norm',
+                'error_95p_auc',
+                'error_95p_auc_norm',
+            ],
+        ).set_index('eval_cfg_name')
         for eval_cfg_name in eval_cfg_names:
             df = self.eval_runs_data[eval_cfg_name]['prediction_log']
-            df = df.copy(True).sort_values('uncertainty')
+            df = df.copy(deep=True).sort_values('uncertainty')
             df_rolling = df.set_index('uncertainty').rolling(len(df), min_periods=1)
-            df['abs_error_running_avg'] = df_rolling['error'].mean().values
-            df['abs_error_running_max'] = df_rolling['error'].max().values
-            df['abs_error_running_95_percentile'] = df_rolling['error'].quantile(0.95).values
+            df['error_running_max'] = df_rolling['error'].max().values
+            df['error_95p_running'] = df_rolling['error'].quantile(0.95).values
             df_rolling = df.set_index('uncertainty').rolling(len(df), min_periods=1)
-            df['abs_error_running_95_percentile_max'] = df_rolling['abs_error_running_95_percentile'].max().values
+            df['error_95p_running_max'] = df_rolling['error_95p_running'].max().values
             df['pos'] = np.arange(len(df))
             df['prediction_abstention_rate'] = 1 - (df['pos'] + 1) / len(df)
 
             color = self.eval_runs_data[eval_cfg_name]['color']
-            uncertainties = df['uncertainty'].tolist()
-            abs_error_avg = df['abs_error_running_avg'].tolist()
-            abs_error_max = df['abs_error_running_max'].tolist()
-            abs_error_95_percentile = df['abs_error_running_95_percentile'].tolist()
-            abs_error_95_percentile_max = df['abs_error_running_95_percentile_max'].tolist()
+            error_max = df['error_running_max'].tolist()
+            error_95p_max = df['error_95p_running_max'].tolist()
             abstention_rate = df['prediction_abstention_rate'].tolist()
+
+            # AUC Calculation
+            width = 1 / len(df)
+            error_auc = sum([error * width for error in df['error_running_max'].tolist()])
+            error_auc_norm = error_auc / df['error_running_max'].max()
+            error_95p_auc = sum([error * width for error in df['error_95p_running_max'].tolist()])
+            error_95p_auc_norm = error_95p_auc / df['error_95p_running_max'].max()
+            error_by_abstention_aucs.loc[eval_cfg_name, 'error_auc'] = error_auc
+            error_by_abstention_aucs.loc[eval_cfg_name, 'error_auc_norm'] = error_auc_norm
+            error_by_abstention_aucs.loc[eval_cfg_name, 'error_95p_auc'] = error_95p_auc
+            error_by_abstention_aucs.loc[eval_cfg_name, 'error_95p_auc_norm'] = error_95p_auc_norm
 
             if not only_95_percentile:
                 plt.plot(
                     abstention_rate,
-                    abs_error_max,
+                    error_max,
                     label=f'{self.eval_runs_data[eval_cfg_name]["display_name"]} - Max',
                     color=color,
                     linestyle='dotted'
                 )
             plt.plot(
                 abstention_rate,
-                abs_error_95_percentile_max,
+                error_95p_max,
                 label=f'{self.eval_runs_data[eval_cfg_name]["display_name"]} - 95% Percentile',
                 color=color,
             )
 
         if len(eval_cfg_names) >= 2:
-            # plt.legend(bbox_to_anchor=(0, 1.02, 1, 0.2), loc='lower left', mode='expand', ncol=2)
             plt.legend(loc='lower left')
         else:
             plt.legend(loc='upper right')
@@ -293,8 +308,14 @@ class EvalPlotGenerator():
         plt.ylabel('Absolute Error')
         filename = 'error_by_abstention_rate'
         if only_95_percentile:
-            filename = f'{filename}_95_perct'
+            filename = f'{filename}_95p'
+        if len(eval_cfg_names) > 1:
+            filename = f'{filename}_comparison'
         self._save_and_show_plt(filename)
+        self._save_dataframe(
+            error_by_abstention_aucs.sort_values('error_95p_auc'),
+            'error_by_abstention_aucs',
+        )
 
     def plot_reliability_de_calibration_diagram(self, eval_cfg_name: str) -> None:
         """Calibration/ Reliability Diagram - DEPRECATED"""
@@ -709,18 +730,28 @@ class EvalPlotGenerator():
         return suptitle
 
     def _save_and_show_plt(self, name: str) -> None:
+        """Save and optionally show Plot."""
         os.makedirs(self.img_save_dir, exist_ok=True)
 
-        # Generate Filename
-        filename = f'{name}.{self.img_ext}'
-        if self.img_with_timestamp:
-            filename = f'{self.ts}_{filename}'
-        if self.img_prepend_str:
-            filename = f'{self.img_prepend_str}_{filename}'
-
-        # Save and (optionally) show figure
-        plt.savefig(os.path.join(self.img_save_dir, filename))
+        filepath = self._get_save_filepath(name)
+        plt.savefig(filepath)
         if self.show_interactive_plots:
             plt.show(block=False)
         else:
             plt.close()
+
+    def _save_dataframe(self, df: pd.DataFrame, name: str) -> None:
+        filepath = self._get_save_filepath(name, 'csv')
+        df.to_csv(filepath)
+
+    def _get_save_filepath(self, name: str, extension: Optional[str] = None) -> str:
+        """Generate Filename based on settings (prepend-str, with timestamp)."""
+        if extension is None:
+            extension = self.img_ext
+
+        filename = f'{name}.{extension}'
+        if self.img_with_timestamp:
+            filename = f'{self.ts}_{filename}'
+        if self.img_prepend_str:
+            filename = f'{self.img_prepend_str}_{filename}'
+        return os.path.join(self.img_save_dir, filename)
