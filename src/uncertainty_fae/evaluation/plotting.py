@@ -701,6 +701,37 @@ class EvalPlotGenerator():
         plt.legend()
         self._save_and_show_plt('abs_error_by_boneage_comparison')
 
+    def _get_figure(
+        self,
+        nrows: int = 1,
+        ncols: int = 1,
+        figsize: tuple[int, int] = (10, 7),
+        dpi: int = 250,
+        title: Optional[str] = None,
+        suptitle: Optional[str] = None,
+        derive_suptitle_from_cfg: Optional[str] = None,
+    ):
+        if suptitle and derive_suptitle_from_cfg:
+            raise ValueError("Either suptitle given, or derive_suptitle - not both!")
+        if title and (nrows > 1 or ncols > 1):
+            raise ValueError("Title only allowed for single Axes Plot!")
+
+        fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize, dpi=dpi)
+        if title:
+            assert isinstance(ax, Axes)
+            ax.set_title(title)
+        if derive_suptitle_from_cfg:
+            suptitle = self._get_suptitle(derive_suptitle_from_cfg)
+        if suptitle:
+            fig.suptitle(suptitle)
+        return fig, ax
+
+    def _save_figure(self, fig: Figure, name: str) -> None:
+        """Save Given Figure."""
+        os.makedirs(self.img_save_dir, exist_ok=True)
+        filepath = self._get_save_filepath(name)
+        fig.savefig(filepath)
+
     def _init_figure(
         self,
         figsize: tuple[int, int] = (10, 7),
