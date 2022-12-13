@@ -6,7 +6,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn
+from matplotlib.axes import Axes
+from matplotlib.colors import to_rgba
 from matplotlib.figure import Figure
+from matplotlib.lines import Line2D
+from matplotlib.patches import Patch
 
 from uncertainty_fae.evaluation.calibration import (
     QUANTILE_SIGMA_ENV_SCALES,
@@ -19,6 +23,18 @@ TARGET_COLOR = 'green'
 
 BASELINE_MODEL_COLOR = 'black'
 """Color to use in plots for the baseline model, i.e., model without UQ."""
+
+MEAN_POINT_PROPS = dict(
+    marker="D",
+    markeredgecolor="black",
+    markerfacecolor="firebrick",
+)
+
+BOXPLOT_FLIER_PROPS = dict(
+    marker="x",
+    markersize=5,
+    markeredgecolor="black"
+)
 
 
 class EvalPlotGenerator():
@@ -573,55 +589,83 @@ class EvalPlotGenerator():
         plt.ylim((y_lim_min, y_lim_max))
         self._save_and_show_plt(f'correlation_comparison_{method}')
 
-    def plot_abs_error_comparison(
+    def plot_error_comparison(
         self,
         eval_cfg_names: Optional[list[str]] = None,
-        plot_type: str = 'violin',
+        plot_type: str = "boxplot",
     ) -> None:
+        """Plot comparison of errors by different UQ method (Boxplot or Violin Plot)."""
         if not eval_cfg_names:
-            eval_cfg_names = self.eval_runs_data.keys()
+            eval_cfg_names = list(self.eval_runs_data.keys())
 
-        abs_errors = []
+        errors = []
         labels = []
         colors = []
 
         if self.baseline_model_error_df is not None:
-            labels.append('Baseline')
+            labels.append("Baseline")
             colors.append(BASELINE_MODEL_COLOR)
-            abs_errors.append(self.baseline_model_error_df['error'].tolist())
-
-        self._init_figure(
-            title=f'Comparison of Error by (UQ) Method',
-            suptitle=self.eval_runs_data[list(eval_cfg_names)[0]]['data_display_name'],
-        )
+            errors.append(self.baseline_model_error_df["error"].tolist())
 
         for eval_cfg_name in eval_cfg_names:
             eval_run_data = self.eval_runs_data[eval_cfg_name]
-            df = eval_run_data['prediction_log']
-            abs_errors.append(df['error'].tolist())
-            labels.append(eval_run_data['display_name'])
-            colors.append(eval_run_data['color'])
+            df = eval_run_data["prediction_log"]
+            errors.append(df["error"].tolist())
+            labels.append(eval_run_data["display_name"])
+            colors.append(eval_run_data["color"])
 
-        if plot_type == 'boxplot':
-            bplot = plt.boxplot(abs_errors, labels=labels, patch_artist=True)
-            for patch, color in zip(bplot['boxes'], colors):
-                patch.set_facecolor(color)
-        elif plot_type == 'violin':
-            vplot = plt.violinplot(abs_errors, showmedians=True)
-            for patch, color in zip(vplot['bodies'], colors):
-                patch.set_facecolor(color)
-            # Make all the violin statistics marks red:
-            for partname in ('cbars', 'cmins', 'cmaxes', 'cmedians'):
-                vplot[partname].set_edgecolor('black')
+
+        fig, ax = self._get_figure(
+            title=f"Comparison of Error by (UQ) Method",
+            suptitle=self.eval_runs_data[eval_cfg_names[0]]["data_display_name"],
+        )
+
+        if plot_type == "boxplot":
+            bplot = ax.boxplot(
+                errors,
+                labels=labels,
+                patch_artist=True,
+                vert=False,
+                showmeans=True,
+                meanline=False,
+                meanprops=MEAN_POINT_PROPS,
+                flierprops=BOXPLOT_FLIER_PROPS,
+            )
+
+            box_patches: Patch
+            for box_patches, color in zip(bplot["boxes"], colors):
+                color = to_rgba(color, alpha=.5)
+                box_patches.set_facecolor(color)
+            median_lines: Line2D
+            for median_lines in bplot["medians"]:
+                median_lines.set_color("black")
+            whisker_lines: Line2D
+            for whisker_lines in [*bplot["whiskers"], *bplot["caps"]]:
+                whisker_lines.set_dashes((2, 2))
+
+        elif plot_type == "violin":
+            positions = np.arange(1, len(labels) + 1)
+            vplot = ax.violinplot(errors, showmeans=False, showmedians=True, vert=False)
+
+            # Violin Facecolors
+            for box_patches, color in zip(vplot["bodies"], colors):
+                box_patches.set_facecolor(color)
+            # Black Body Lines
+            for partname in ("cbars", "cmins", "cmaxes", "cmedians"):
+                vplot[partname].set_edgecolor("black")
                 vplot[partname].set_linewidth(1)
-            # plt.tick_params('x', direction='out', position='bottom')
-            plt.xticks(np.arange(1, len(labels) + 1), labels=labels)
-            plt.xlim(0.25, len(labels) + 0.75)
+            # Mean Markers
+            for pos, err in zip(positions, errors):
+                ax.plot(np.mean(err), pos, **MEAN_POINT_PROPS)
+
+            ax.set_yticks(positions, labels=labels)
+            ax.set_ylim(0.25, len(labels) + 0.75)
+
         else:
-            raise ValueError(f'Invalid Plot-Type {plot_type}!')
-        plt.ylabel(f'Absolute Error')
-        plt.xticks(rotation = 30)
-        self._save_and_show_plt(f'abs_error_comparison_{plot_type}')
+            raise ValueError(f"Invalid Plot-Type {plot_type}!")
+
+        ax.set_xlabel(f"Absolute Error")
+        self._save_figure(fig, f"error_comparison_{plot_type}")
 
     def plot_uncertainty_by_abs_error_comparison(
         self,
