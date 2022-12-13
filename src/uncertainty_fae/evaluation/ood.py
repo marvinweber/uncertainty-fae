@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 from matplotlib.collections import PolyCollection
 from matplotlib.figure import Figure
 from matplotlib.patches import Patch
+from uncertainty_fae.evaluation.plotting import MEAN_POINT_PROPS
 
 from uncertainty_fae.evaluation.util import EvalRunData
 from uncertainty_fae.model import UncertaintyAwareModel
@@ -98,10 +99,11 @@ class OutOfDomainEvaluator(ABC):
         return ood_preds
 
     def _get_fig(self):
-        return plt.subplots(figsize=(10, 7), dpi=250)
+        return plt.subplots(figsize=(11, 6), dpi=250)
 
     def _save_fig(self, fig: Figure, name: str) -> None:
         os.makedirs(self.plot_dir, exist_ok=True)
+        fig.tight_layout()
         fig.savefig(os.path.join(self.plot_dir, f"{name}.png"))
 
     def _generate_uq_comparison_plot(
@@ -121,7 +123,9 @@ class OutOfDomainEvaluator(ABC):
             orig_data_label: The name of the "regular" data (in the legend and title).
         """
         violin_positions = []
+        violin_means = []
         violin_labels = []
+        violin_label_positions = []
         violin_datas = []
         violin_colors = []
         violin_hatches = []
@@ -140,7 +144,9 @@ class OutOfDomainEvaluator(ABC):
             # Base Entry: UQ with "normal" dataset
             violin_positions.append(v_pos)
             violin_labels.append(uq_name)
+            violin_label_positions.append(v_pos + (len(self.ood_datasets) / 2))
             violin_datas.append(uq_preds["uncertainty"].tolist())
+            violin_means.append(uq_preds["uncertainty"].mean())
             violin_colors.append(color)
             violin_hatches.append(None)  # no hatch for baseline dataset
             violin_edge_color.append("black")
@@ -152,8 +158,8 @@ class OutOfDomainEvaluator(ABC):
 
                 v_pos += 1
                 violin_positions.append(v_pos)
-                violin_labels.append("")
                 violin_datas.append(ood_preds["uncertainty"].tolist())
+                violin_means.append(ood_preds["uncertainty"].mean())
                 violin_colors.append(color)
                 violin_hatches.append(ood_cfg["hatch"])
                 violin_edge_color.append("white")
@@ -169,18 +175,24 @@ class OutOfDomainEvaluator(ABC):
             v_pos += 1
 
         fig, ax = self._get_fig()
-        vplots = ax.violinplot(violin_datas, violin_positions, showmeans=True, widths=1)
+        vplots = ax.violinplot(violin_datas, violin_positions, showmeans=False, widths=1)
         v_patch: PolyCollection
         for v_patch, color, hatch in zip(vplots["bodies"], violin_colors, violin_hatches):
             v_patch.set_facecolor(color)
             if hatch:
                 v_patch.set_hatch(hatch)
                 v_patch.set_edgecolor(color)
-        for partname in ("cbars", "cmins", "cmaxes", "cmeans"):
+        for partname in ("cbars", "cmins", "cmaxes"):
             vplots[partname].set_edgecolor("black")
             vplots[partname].set_linewidth(1)
-        ax.set_xticks(violin_positions)
-        ax.set_xticklabels(violin_labels, rotation=15)
+
+        # Mean Markers
+        for pos, mean in zip(violin_positions, violin_means):
+            ax.plot(pos, mean, **MEAN_POINT_PROPS)
+
+        ax.set_xticks(violin_label_positions)
+        ax.set_xticklabels(violin_labels)
+        ax.grid(False, axis='x')
         ax.set_ylabel("Uncertainty")
         ax.legend(handles=legend_elements, handleheight=3, handlelength=4, loc="upper left")
         fig.suptitle(f"Out-of-Domain Data Uncertainty Comparison - {orig_data_label}")
@@ -228,14 +240,14 @@ class OutOfDomainEvaluator(ABC):
             v_pos += 1
 
         fig, ax = self._get_fig()
-        vplots = ax.violinplot(violin_datas, violin_positions, showmeans=True, widths=1)
+        vplots = ax.violinplot(violin_datas, violin_positions, showmedians=True, widths=1)
         v_patch: PolyCollection
         for v_patch, color, hatch in zip(vplots["bodies"], violin_colors, violin_hatches):
             v_patch.set_facecolor(color)
             if hatch:
                 v_patch.set_hatch(hatch)
                 v_patch.set_edgecolor(color)
-        for partname in ("cbars", "cmins", "cmaxes", "cmeans"):
+        for partname in ("cbars", "cmins", "cmaxes", "cmedians"):
             vplots[partname].set_edgecolor("black")
             vplots[partname].set_linewidth(1)
         ax.set_xticks(violin_positions)
