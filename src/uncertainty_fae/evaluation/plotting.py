@@ -743,6 +743,7 @@ class EvalPlotGenerator():
         fig, ax = self._get_figure(
             title="Error by Age - Comparison",
             suptitle=meta_cfg["data_display_name"],
+            figsize=(11, 7),
         )
 
         target_min = int(np.floor(meta_cfg["prediction_log"]["target"].min()))
@@ -780,10 +781,10 @@ class EvalPlotGenerator():
                 Line2D([0], [0], color=(0, 0, 0, 0), label=eval_cfg["display_name"], **markerprops)
             )
 
+        ax.set_xticks(age_bins)
         ax.set_xlabel("Age (Binned by Year)")
         ax.set_ylabel("Absolute Error (Average / Year-Bin)")
-        ax.set_xticks(age_bins)
-        ax.legend(handles=legend_elements)
+        ax.legend(handles=legend_elements, bbox_to_anchor=(1.0, 0.5), loc="center left")
         self._save_figure(fig, "error_by_age_comparison")
 
     def _get_figure(
