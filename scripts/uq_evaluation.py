@@ -195,10 +195,10 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
             img_prepend_str=eval_cfg_name,
             undo_age_to_year_transform=DATASET_AGE_TO_YEAR_TRANSFORMS_UNDO[data_type]
         )
-        plot_generator.plot_bonage_distribution(eval_cfg_name)
-        plot_generator.plot_uncertainty_by_boneage(eval_cfg_name)
-        plot_generator.plot_uncertainty_by_abs_error(eval_cfg_name)
-        plot_generator.plot_abs_error_by_boneage(eval_cfg_name)
+        plot_generator.plot_age_distribution(eval_cfg_name)
+        plot_generator.plot_uncertainty_by_age(eval_cfg_name)
+        plot_generator.plot_uncertainty_by_error(eval_cfg_name)
+        plot_generator.plot_error_by_age(eval_cfg_name)
         plot_generator.plot_prediction_vs_truth(eval_cfg_name)
         plot_generator.plot_tolerated_uncertainty_abs_error(eval_cfg_name)
         plot_generator.plot_error_by_abstention_rate([eval_cfg_name])

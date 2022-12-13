@@ -72,152 +72,172 @@ class EvalPlotGenerator():
         else:
             plt.style.use(plt_style)
 
-    def plot_bonage_distribution(self, eval_cfg_name: str, bins=25) -> None:
-        df = self.eval_runs_data[eval_cfg_name]['prediction_log']
-        p_color = self.eval_runs_data[eval_cfg_name]['color']
-        self._init_figure(
-            title='Distribution of Predicted and True Bone Age',
+    def plot_age_distribution(self, eval_cfg_name: str, bins=25) -> None:
+        df = self.eval_runs_data[eval_cfg_name]["prediction_log"]
+        p_color = self.eval_runs_data[eval_cfg_name]["color"]
+        fig, ax = self._get_figure(
+            title="Distribution of Predicted and Ground Truth Age",
             derive_suptitle_from_cfg=eval_cfg_name,
         )
-        plt.xlabel('(Predicted) Bone Age')
-        plt.hist(
-            [df['prediction'].tolist(), df['target'].tolist()],
-            label=['Predicted Bone Age', 'True Bone Age'],
+        ax.set_xlabel("(Predicted) Age")
+        ax.hist(
+            [df["prediction"].tolist(), df["target"].tolist()],
+            label=["Predicted Age", "Ground Truth Age"],
             color=[p_color, TARGET_COLOR],
             bins=bins,
         )
-        plt.legend()
-        self._save_and_show_plt('bonage_distribution')
+        ax.legend()
+        self._save_figure(fig, "age_distribution")
 
-    def plot_uncertainty_by_boneage(self, eval_cfg_name: str, bins=15) -> None:
-        df = self.eval_runs_data[eval_cfg_name]['prediction_log']
-        bins_target = pd.cut(df['target'], bins=bins)
-        df_binned_by_boneage = df.groupby(bins_target).agg({
-            'error': [list, 'mean'],
-            'uncertainty': [list, 'mean'],
-            'target': 'mean',
-        })
-
-        bin_values = []
-        positions = []
-        widths = []
-        ticks = []
-        tick_labels = []
-        for i, bin in enumerate(df_binned_by_boneage.iterrows()):
-            bin_values.append(bin[1]['uncertainty']['list'])
-            width = bin[0].right - bin[0].left
-            position = (width / 2) + bin[0].left
-            positions.append(position)
-            widths.append(width)
-
-            if i == 0:
-                ticks.append(bin[0].left)
-                tick_labels.append(round(bin[0].left, 1))
-            ticks.append(bin[0].right)
-            tick_labels.append(round(bin[0].right, 1))
-
-        self._init_figure(
-            title='Uncertainty by Bone Age',
-            derive_suptitle_from_cfg=eval_cfg_name,
-        )
-        plt.xlabel('Bone Age')
-        plt.ylabel('Uncertainty')
-        vplot = plt.violinplot(bin_values, positions=positions, widths=widths, showmedians=True)
-        for patch in vplot['bodies']:
-            patch.set_facecolor(self.eval_runs_data[eval_cfg_name]['color'])
-        # Make all the violin statistics marks red:
-        for partname in ('cbars', 'cmins', 'cmaxes', 'cmedians'):
-            vplot[partname].set_edgecolor('black')
-            vplot[partname].set_linewidth(1)
-        plt.xticks(ticks, tick_labels, rotation=45)
-        self._save_and_show_plt('uncertainty_by_boneage')
-
-    def plot_uncertainty_by_abs_error(self, eval_cfg_name: str, bins=15) -> None:
-        df = self.eval_runs_data[eval_cfg_name]['prediction_log']
-        bins_abs_error = pd.cut(df['error'], bins=bins)
-        df_binned_by_abs_error = df.groupby(bins_abs_error).agg(
-            {'uncertainty': [list, 'mean']}).dropna()
+    def plot_uncertainty_by_age(self, eval_cfg_name: str) -> None:
+        df = self.eval_runs_data[eval_cfg_name]["prediction_log"]
+        target_min = int(np.floor(df["target"].min()))
+        target_max = int(np.ceil(df["target"].max()))
+        age_bins = np.linspace(start=target_min, stop=target_max, num=target_max-target_min+1)
+        age_bins_series = pd.cut(df["target"], bins=age_bins)
+        df_binned_by_age = df.groupby(age_bins_series).agg(
+            {"uncertainty": [list, "mean"]}
+        ).dropna()
 
         bin_values = []
         positions = []
         widths = []
-        ticks = []
-        tick_labels = []
-        for i, bin in enumerate(df_binned_by_abs_error.iterrows()):
-            bin_values.append(bin[1]['uncertainty']['list'])
-            width = bin[0].right - bin[0].left
-            positions.append((width / 2) + bin[0].left)
+        means = []
+        for bin, val in df_binned_by_age.iterrows():
+            bin_values.append(val["uncertainty"]["list"])
+            means.append(val["uncertainty"]["mean"])
+            width = bin.right - bin.left
+            positions.append((width / 2) + bin.left)
             widths.append(width)
 
-            if i == 0:
-                ticks.append(bin[0].left)
-                tick_labels.append(round(bin[0].left, 1))
-            ticks.append(bin[0].right)
-            tick_labels.append(round(bin[0].right, 1))
-
-        self._init_figure(
-            title='Uncertainty by Absolute Error',
+        fig, ax = self._get_figure(
+            title="Uncertainty by Age",
             derive_suptitle_from_cfg=eval_cfg_name,
         )
-        plt.xlabel('Absolute Error')
-        plt.ylabel('Uncertainty')
-        vplot = plt.violinplot(bin_values, positions=positions, widths=widths, showmedians=True)
-        for patch in vplot['bodies']:
-            patch.set_facecolor(self.eval_runs_data[eval_cfg_name]['color'])
-        # Make all the violin statistics marks red:
-        for partname in ('cbars', 'cmins', 'cmaxes', 'cmedians'):
-            vplot[partname].set_edgecolor('black')
-            vplot[partname].set_linewidth(1)
-        plt.xticks(ticks, tick_labels, rotation=45)
-        self._save_and_show_plt('uncertainty_by_abs_error')
 
-    def plot_abs_error_by_boneage(self, eval_cfg_name: str) -> None:
-        df = self.eval_runs_data[eval_cfg_name]['prediction_log']
-        bins_boneage = pd.cut(df['target'], bins=15)
-        df_binned_by_boneage = df.groupby(bins_boneage).agg(
-            {'error': [list, 'mean']}).dropna()
+        vplot = ax.violinplot(bin_values, positions=positions, widths=widths, showmedians=False)
+        for patch in vplot["bodies"]:
+            patch.set_facecolor(self.eval_runs_data[eval_cfg_name]["color"])
+        for partname in ("cbars", "cmins", "cmaxes"):
+            vplot[partname].set_edgecolor("black")
+            vplot[partname].set_linewidth(1)
+
+        for pos, mean in zip(positions, means):
+            ax.plot(pos, mean, **MEAN_POINT_PROPS)
+
+        ax.set_xlabel("Age (Binned by Year)")
+        ax.set_ylabel("Uncertainty")
+        ax.set_xticks(age_bins)
+        self._save_figure(fig, "uncertainty_by_age")
+
+    def plot_uncertainty_by_error(
+        self,
+        eval_cfg_name: str,
+        bin_width: float = 0.5,
+    ) -> None:
+        df = self.eval_runs_data[eval_cfg_name]["prediction_log"]
+        error_min = int(np.floor(df["error"].min()))
+        error_max = int(np.ceil(df["error"].max()))
+        error_bins = np.linspace(
+            start=error_min,
+            stop=error_max + bin_width,
+            endpoint=False,
+            num=int(((error_max-error_min) / bin_width) + 1)
+        )
+        error_bins_series = pd.cut(df["error"], bins=error_bins)
+        df_binned_by_age = df.groupby(error_bins_series).agg(
+            {"uncertainty": [list, "mean"]}
+        ).dropna()
 
         bin_values = []
         positions = []
         widths = []
-        for bin in df_binned_by_boneage.iterrows():
-            bin_values.append(bin[1]['error']['list'])
-            width = bin[0].right - bin[0].left
-            positions.append((width / 2) + bin[0].left)
+        means = []
+        for bin, val in df_binned_by_age.iterrows():
+            bin_values.append(val["uncertainty"]["list"])
+            means.append(val["uncertainty"]["mean"])
+            width = bin.right - bin.left
+            positions.append((width / 2) + bin.left)
             widths.append(width)
 
-        self._init_figure(
-            title='Absolute Error by Bone Age',
+        fig, ax = self._get_figure(
+            title="Uncertainty by Error",
             derive_suptitle_from_cfg=eval_cfg_name,
         )
-        plt.xlabel('Bone Age')
-        plt.ylabel('Absolute Error')
-        vplot = plt.violinplot(bin_values, positions=positions, widths=widths, showmedians=True)
-        for patch in vplot['bodies']:
-            patch.set_facecolor(self.eval_runs_data[eval_cfg_name]['color'])
-        # Make all the violin statistics marks red:
-        for partname in ('cbars', 'cmins', 'cmaxes', 'cmedians'):
-            vplot[partname].set_edgecolor('black')
+
+        vplot = ax.violinplot(bin_values, positions=positions, widths=widths, showmedians=False)
+        for patch in vplot["bodies"]:
+            patch.set_facecolor(self.eval_runs_data[eval_cfg_name]["color"])
+        for partname in ("cbars", "cmins", "cmaxes"):
+            vplot[partname].set_edgecolor("black")
             vplot[partname].set_linewidth(1)
-        self._save_and_show_plt('abs_error_by_boneage')
+
+        for pos, mean in zip(positions, means):
+            ax.plot(pos, mean, **MEAN_POINT_PROPS)
+
+        ax.set_xlabel("Error (Binned by Year)")
+        ax.set_ylabel("Uncertainty")
+        ax.set_xticks(error_bins)
+        self._save_figure(fig, "uncertainty_by_error")
+
+    def plot_error_by_age(self, eval_cfg_name: str) -> None:
+        df = self.eval_runs_data[eval_cfg_name]["prediction_log"]
+        target_min = int(np.floor(df["target"].min()))
+        target_max = int(np.ceil(df["target"].max()))
+        age_bins = np.linspace(start=target_min, stop=target_max, num=target_max-target_min+1)
+        age_bins_series = pd.cut(df["target"], bins=age_bins)
+        df_binned_by_age = df.groupby(age_bins_series).agg(
+            {"error": [list, "mean"]}
+        ).dropna()
+
+        bin_values = []
+        positions = []
+        widths = []
+        means = []
+        for bin, val in df_binned_by_age.iterrows():
+            bin_values.append(val["error"]["list"])
+            means.append(val["error"]["mean"])
+            width = bin.right - bin.left
+            positions.append((width / 2) + bin.left)
+            widths.append(width)
+
+        fig, ax = self._get_figure(
+            title="Error by Age",
+            derive_suptitle_from_cfg=eval_cfg_name,
+        )
+
+        vplot = ax.violinplot(bin_values, positions=positions, widths=widths, showmedians=False)
+        for patch in vplot["bodies"]:
+            patch.set_facecolor(self.eval_runs_data[eval_cfg_name]["color"])
+        for partname in ("cbars", "cmins", "cmaxes"):
+            vplot[partname].set_edgecolor("black")
+            vplot[partname].set_linewidth(1)
+
+        for pos, mean in zip(positions, means):
+            ax.plot(pos, mean, **MEAN_POINT_PROPS)
+
+        ax.set_xlabel("Age (Binned by Year)")
+        ax.set_ylabel("Absolute Error")
+        ax.set_xticks(age_bins)
+        self._save_figure(fig, "error_by_age")
 
     def plot_prediction_vs_truth(self, eval_cfg_name: str) -> None:
-        df = self.eval_runs_data[eval_cfg_name]['prediction_log']
-        target = df['target'].tolist()
-        prediction = df['prediction'].tolist()
+        df = self.eval_runs_data[eval_cfg_name]["prediction_log"]
+        target = df["target"].tolist()
+        prediction = df["prediction"].tolist()
 
-        self._init_figure(
-            title='Boneage Prediction vs. Ground Truth',
+        fig, ax = self._get_figure(
+            title="Age Prediction vs. Ground Truth",
             figsize=(10, 10),
             derive_suptitle_from_cfg=eval_cfg_name,
         )
-        color = self.eval_runs_data[eval_cfg_name]['color']
-        plt.plot(target, prediction, '.', label='predictions', color=color)
-        plt.plot(target, target, '-', label='actual', color=TARGET_COLOR)
-        plt.legend()
-        plt.xlabel('Boneage (Ground Truth)')
-        plt.ylabel('Predicted Boneage')
-        self._save_and_show_plt('prediction_vs_truth')
+        color = self.eval_runs_data[eval_cfg_name]["color"]
+        ax.plot(target, prediction, ".", label="Predictions", color=color)
+        ax.plot(target, target, "-", label="Ground Truth", color=TARGET_COLOR)
+        ax.legend()
+        ax.set_xlabel("Age (Ground Truth)")
+        ax.set_ylabel("Predicted Age")
+        self._save_figure(fig, "prediction_vs_truth")
 
     def plot_tolerated_uncertainty_abs_error(self, eval_cfg_name: str) -> None:
         df = self.eval_runs_data[eval_cfg_name]['prediction_log']
@@ -596,7 +616,7 @@ class EvalPlotGenerator():
     def plot_correlation_comparison(
         self,
         eval_cfg_names: Optional[list[str]] = None,
-        method: str = 'pearson',
+        method: str = "pearson",
     ) -> None:
         corrs = []
         labels = []
@@ -607,23 +627,24 @@ class EvalPlotGenerator():
 
         for eval_cfg_name in eval_cfg_names:
             eval_run_data = self.eval_runs_data[eval_cfg_name]
-            df = eval_run_data['prediction_log']
-            corr = float(df['uncertainty'].corr(df['error'], method=method))
+            df = eval_run_data["prediction_log"]
+            corr = float(df["uncertainty"].corr(df["error"], method=method))
             corrs.append(corr)
-            labels.append(eval_run_data['display_name'])
-            colors.append(eval_run_data['color'])
+            labels.append(eval_run_data["display_name"])
+            colors.append(eval_run_data["color"])
 
-        self._init_figure(
-            title=f'Uncertainty-Error {method.title()} Correlation Comparison',
-            suptitle=eval_run_data['data_display_name']  # Use data display name of last entry
+        fig, ax = self._get_figure(
+            title=f"Uncertainty-Error {method.title()} Correlation Comparison",
+            suptitle=eval_run_data["data_display_name"]  # Use data display name of last entry
         )
-        plt.ylabel(f'({method.title()}) Correlation of Uncertainty and Error')
-        plt.bar(labels, corrs, color=colors)
-        plt.xticks(rotation = 30)
+        ax.set_ylabel(f"({method.title()}) Correlation of Uncertainty and Error")
+        ax.bar(labels, corrs, color=colors)
+        ax.set_xticklabels(labels, rotation=30)
+        ax.set_yticks(np.linspace(start=-1, stop=1, num=21))
         y_lim_min = max(-1, min(corrs) - 0.05)
         y_lim_max = min(1, max(corrs) + 0.05)
-        plt.ylim((y_lim_min, y_lim_max))
-        self._save_and_show_plt(f'correlation_comparison_{method}')
+        ax.set_ylim((y_lim_min, y_lim_max))
+        self._save_figure(fig, f"correlation_comparison_{method}")
 
     def plot_error_comparison(
         self,
