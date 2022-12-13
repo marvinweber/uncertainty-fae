@@ -855,6 +855,7 @@ class EvalPlotGenerator():
         if tight_layout:
             fig.tight_layout()
         fig.savefig(filepath, bbox_inches="tight")
+        plt.close()
 
     def _init_figure(
         self,
