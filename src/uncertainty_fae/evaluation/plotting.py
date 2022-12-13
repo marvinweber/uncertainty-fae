@@ -811,11 +811,13 @@ class EvalPlotGenerator():
             fig.suptitle(suptitle)
         return fig, ax
 
-    def _save_figure(self, fig: Figure, name: str) -> None:
+    def _save_figure(self, fig: Figure, name: str, tight_layout: bool = True) -> None:
         """Save Given Figure."""
         os.makedirs(self.img_save_dir, exist_ok=True)
         filepath = self._get_save_filepath(name)
-        fig.savefig(filepath)
+        if tight_layout:
+            fig.tight_layout()
+        fig.savefig(filepath, bbox_inches="tight")
 
     def _init_figure(
         self,
