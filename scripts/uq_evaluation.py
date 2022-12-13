@@ -239,7 +239,7 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
     combined_plot_generator.plot_error_comparison(plot_type='boxplot')
     combined_plot_generator.plot_error_comparison(plot_type='violin')
     combined_plot_generator.plot_reliability_de_calibration_diagram_comparison()
-    combined_plot_generator.plot_uncertainty_by_abs_error_comparison()
+    combined_plot_generator.plot_uncertainty_by_error_comparison()
     combined_plot_generator.plot_error_by_age_comparison()
     combined_plot_generator.plot_calibration_curve(comparison_plot=True)
 

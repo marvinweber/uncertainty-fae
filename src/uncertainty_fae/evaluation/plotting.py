@@ -667,43 +667,70 @@ class EvalPlotGenerator():
         ax.set_xlabel(f"Absolute Error")
         self._save_figure(fig, f"error_comparison_{plot_type}")
 
-    def plot_uncertainty_by_abs_error_comparison(
+    def plot_uncertainty_by_error_comparison(
         self,
         eval_cfg_names: Optional[list[str]] = None,
-        bins=20
+        bin_width: float = 0.5,
+        bin_padding: float = 0.05,
     ) -> None:
-
         if not eval_cfg_names:
-            eval_cfg_names = self.eval_runs_data.keys()
+            eval_cfg_names = list(self.eval_runs_data.keys())
 
-        self._init_figure(
-            title='Uncertainty by Absolute Error - Comparison',
-            suptitle=self.eval_runs_data[list(eval_cfg_names)[0]]['data_display_name'],
+        meta_cfg = self.eval_runs_data[eval_cfg_names[0]]
+        fig, ax = self._get_figure(
+            figsize=(11, 7),
+            title="Uncertainty by Error - Comparison",
+            suptitle=meta_cfg["data_display_name"],
         )
 
+        errors = []
         for eval_cfg_name in eval_cfg_names:
-            df = self.eval_runs_data[eval_cfg_name]['prediction_log']
-            bins_abs_error = pd.cut(df['error'], bins=bins)
-            df_binned_by_abs_error = df.groupby(bins_abs_error).agg(
-                {'uncertainty': [list, 'mean']}).dropna()
+            errors.extend(self.eval_runs_data[eval_cfg_name]["prediction_log"]["error"].tolist())
 
-            uncertainty_means = []
-            positions = []
-            for bin in df_binned_by_abs_error.iterrows():
-                uncertainty_means.append(bin[1]['uncertainty']['mean'])
-                width = bin[0].right - bin[0].left
-                positions.append((width / 2) + bin[0].left)
-            plt.plot(
-                positions,
-                uncertainty_means,
-                '.:',
-                color=self.eval_runs_data[eval_cfg_name]['color'],
-                label=self.eval_runs_data[eval_cfg_name]['display_name'],
+        error_min = int(np.floor(np.min(errors)))
+        error_max = int(np.ceil(np.max(errors)))
+        error_bins = np.linspace(
+            start=error_min,
+            stop=error_max + bin_width,
+            endpoint=False,
+            num=int(((error_max-error_min) / bin_width) + 1)
+        )
+        legend_elements = []
+
+        uq_method_distance = (bin_width - (2 * bin_padding)) / (len(eval_cfg_names) - 1)
+
+        for i, eval_cfg_name in enumerate(eval_cfg_names):
+            eval_cfg = self.eval_runs_data[eval_cfg_name]
+            df = eval_cfg["prediction_log"]
+            df_error_bins = pd.cut(df["error"], bins=error_bins)
+            df_binned_by_error = df.groupby(df_error_bins).agg({"uncertainty": ["mean"]}).dropna()
+
+            markerprops = dict(
+                marker=eval_cfg["marker"],
+                markeredgecolor="black",
+                markerfacecolor=eval_cfg["color"],
+                markersize=8,
             )
-        plt.xlabel('Absolute Error')
-        plt.ylabel('Uncertainty (Average)')        
-        plt.legend()
-        self._save_and_show_plt('uncertainty_by_abs_error_comparison')
+
+            # Plot Mean for UQ Method for Bins
+            for bin, val in df_binned_by_error.iterrows():
+                position = bin.left + bin_padding + i * uq_method_distance
+                ax.plot(
+                    position,
+                    val["uncertainty"]["mean"],
+                    **markerprops,
+                )
+
+            # Legend Entry
+            legend_elements.append(
+                Line2D([0], [0], color=(0, 0, 0, 0), label=eval_cfg["display_name"], **markerprops)
+            )
+
+        ax.set_xticks(error_bins)
+        ax.set_xlabel(f"Absolute Error (Binned by Years)")
+        ax.set_ylabel("Uncertainty (Average / Error-Bin)")
+        ax.legend(handles=legend_elements, bbox_to_anchor=(1.0, 0.5), loc="center left")
+        self._save_figure(fig, "uncertainty_by_error_comparison")
 
     def plot_error_by_age_comparison(
         self,
