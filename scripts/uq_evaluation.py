@@ -159,6 +159,7 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
             'prediction_log': prediction_log,
             'distinct_prediction_log': distinct_prediction_log,
             'color': eval_cfg['color'] if 'color' in eval_cfg else 'black',
+            'marker': eval_cfg['marker'] if 'marker' in eval_cfg else 'D',
         }
 
         if eval_run_cfg.only_combined_plots or eval_run_cfg.only_predictions:
@@ -239,7 +240,7 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
     combined_plot_generator.plot_error_comparison(plot_type='violin')
     combined_plot_generator.plot_reliability_de_calibration_diagram_comparison()
     combined_plot_generator.plot_uncertainty_by_abs_error_comparison()
-    combined_plot_generator.plot_abs_error_by_boneage_comparison()
+    combined_plot_generator.plot_error_by_age_comparison()
     combined_plot_generator.plot_calibration_curve(comparison_plot=True)
 
     logger.info('Creating OOD Plots...')

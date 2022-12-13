@@ -196,3 +196,4 @@ class EvalRunData(TypedDict):
     prediction_log: DataFrame
     distinct_prediction_log: Optional[DataFrame]
     color: str
+    marker: str

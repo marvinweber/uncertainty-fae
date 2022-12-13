@@ -705,45 +705,59 @@ class EvalPlotGenerator():
         plt.legend()
         self._save_and_show_plt('uncertainty_by_abs_error_comparison')
 
-    def plot_abs_error_by_boneage_comparison(
+    def plot_error_by_age_comparison(
         self,
         eval_cfg_names: Optional[list[str]] = None,
-        bins=20
     ) -> None:
-
         if not eval_cfg_names:
-            eval_cfg_names = self.eval_runs_data.keys()
+            eval_cfg_names = list(self.eval_runs_data.keys())
 
-        self._init_figure(
-            title='Absolute Error by Bone Age - Comparison',
-            suptitle=self.eval_runs_data[list(eval_cfg_names)[0]]['data_display_name'],
+        meta_cfg = self.eval_runs_data[eval_cfg_names[0]]
+        fig, ax = self._get_figure(
+            title="Error by Age - Comparison",
+            suptitle=meta_cfg["data_display_name"],
         )
 
-        for eval_cfg_name in eval_cfg_names:
-            df = self.eval_runs_data[eval_cfg_name]['prediction_log']
-            bins_abs_error = pd.cut(df['target'], bins=bins)
-            df_binned_by_target = df.groupby(bins_abs_error).agg(
-                {'error': [list, 'mean']}).dropna()
+        target_min = int(np.floor(meta_cfg["prediction_log"]["target"].min()))
+        target_max = int(np.ceil(meta_cfg["prediction_log"]["target"].max()))
+        age_bins = np.linspace(start=target_min, stop=target_max, num=target_max-target_min+1)
+        legend_elements = []
 
-            error_means = []
-            positions = []
-            for bin in df_binned_by_target.iterrows():
-                error_means.append(bin[1]['error']['mean'])
-                width = bin[0].right - bin[0].left
-                positions.append((width / 2) + bin[0].left)
-            plt.plot(
-                positions,
-                error_means,
-                '.:',
-                # linestyle=':',
-                # marker='.',
-                color=self.eval_runs_data[eval_cfg_name]['color'],
-                label=self.eval_runs_data[eval_cfg_name]['display_name'],
+        bin_padding = 0.05  # space between bin border and first/ last marker
+        uq_method_distance = (1 - (2 * bin_padding)) / (len(eval_cfg_names) - 1)
+
+        for i, eval_cfg_name in enumerate(eval_cfg_names):
+            eval_cfg = self.eval_runs_data[eval_cfg_name]
+            df = eval_cfg["prediction_log"]
+            df_age_bins = pd.cut(df["target"], bins=age_bins)
+            df_binned_by_target = df.groupby(df_age_bins).agg({"error": ["mean"]}).dropna()
+
+            markerprops = dict(
+                marker=eval_cfg["marker"],
+                markeredgecolor="black",
+                markerfacecolor=eval_cfg["color"],
+                markersize=8,
             )
-        plt.xlabel('Bone Age')
-        plt.ylabel('Absolute Error (Average)')        
-        plt.legend()
-        self._save_and_show_plt('abs_error_by_boneage_comparison')
+
+            # Plot Mean for UQ Method for Bins
+            for bin, val in df_binned_by_target.iterrows():
+                position = bin.left + bin_padding + i * uq_method_distance
+                ax.plot(
+                    position,
+                    val["error"]["mean"],
+                    **markerprops,
+                )
+
+            # Legend Entry
+            legend_elements.append(
+                Line2D([0], [0], color=(0, 0, 0, 0), label=eval_cfg["display_name"], **markerprops)
+            )
+
+        ax.set_xlabel("Age (Binned by Year)")
+        ax.set_ylabel("Absolute Error (Average / Year-Bin)")
+        ax.set_xticks(age_bins)
+        ax.legend(handles=legend_elements)
+        self._save_figure(fig, "error_by_age_comparison")
 
     def _get_figure(
         self,
