@@ -158,7 +158,6 @@ class RSNABoneageDataModule(LightningDataModule):
         rescale_boneage=False,
         rebalance_classes=False,
         with_gender_input=False,
-        split_seed: Optional[int] = None,
         shuffle_train: bool = True,
         shuffle_val: bool = False,
         shuffle_test: bool = False,
@@ -176,7 +175,6 @@ class RSNABoneageDataModule(LightningDataModule):
         self.train_transform  = train_transform
         self.val_transform = val_transform
         self.test_transform = test_transform
-        self.split_seed = split_seed
         self.target_dimensions = target_dimensions
         self.rescale_boneage = rescale_boneage
         self.rebalance_classes = rebalance_classes
