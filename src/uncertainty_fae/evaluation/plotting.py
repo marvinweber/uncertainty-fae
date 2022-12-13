@@ -260,77 +260,113 @@ class EvalPlotGenerator():
         if not eval_cfg_names:
             eval_cfg_names = list(self.eval_runs_data.keys())
 
-        fig = self._init_figure(
-            title='Error by Abstention Rate',
-            suptitle=self.eval_runs_data[eval_cfg_names[0]]['data_display_name'],
+        is_comparison = len(eval_cfg_names) > 1
+        fig, ax = self._get_figure(
+            title="Error by Abstention Rate",
+            suptitle=self.eval_runs_data[eval_cfg_names[0]]["data_display_name"],
         )
+        legend_handles = []
+
+        global_error_max = 0
+        global_error_95p_max = 0
 
         error_by_abstention_aucs = pd.DataFrame(
             columns=[
-                'eval_cfg_name',
-                'error_auc',
-                'error_auc_norm',
-                'error_95p_auc',
-                'error_95p_auc_norm',
+                "eval_cfg_name",
+                "error_auc",
+                "error_auc_norm",
+                "error_auc_norm_glob",
+                "error_95p_auc",
+                "error_95p_auc_norm",
+                "error_95p_auc_norm_glob",
             ],
-        ).set_index('eval_cfg_name')
+        ).set_index("eval_cfg_name")
         for eval_cfg_name in eval_cfg_names:
-            df = self.eval_runs_data[eval_cfg_name]['prediction_log']
-            df = df.copy(deep=True).sort_values('uncertainty')
-            df_rolling = df.set_index('uncertainty').rolling(len(df), min_periods=1)
-            df['error_running_max'] = df_rolling['error'].max().values
-            df['error_95p_running'] = df_rolling['error'].quantile(0.95).values
-            df_rolling = df.set_index('uncertainty').rolling(len(df), min_periods=1)
-            df['error_95p_running_max'] = df_rolling['error_95p_running'].max().values
-            df['pos'] = np.arange(len(df))
-            df['prediction_abstention_rate'] = 1 - (df['pos'] + 1) / len(df)
+            df = self.eval_runs_data[eval_cfg_name]["prediction_log"]
+            df = df.copy(deep=True).sort_values("uncertainty")
+            df_rolling = df.set_index("uncertainty").rolling(len(df), min_periods=1)
+            df["error_running_max"] = df_rolling["error"].max().values
+            df["error_95p_running"] = df_rolling["error"].quantile(0.95).values
+            df_rolling = df.set_index("uncertainty").rolling(len(df), min_periods=1)
+            df["error_95p_running_max"] = df_rolling["error_95p_running"].max().values
+            df["pos"] = np.arange(len(df))
+            df["prediction_abstention_rate"] = 1 - (df["pos"] + 1) / len(df)
 
-            color = self.eval_runs_data[eval_cfg_name]['color']
-            error_max = df['error_running_max'].tolist()
-            error_95p_max = df['error_95p_running_max'].tolist()
-            abstention_rate = df['prediction_abstention_rate'].tolist()
+            color = self.eval_runs_data[eval_cfg_name]["color"]
+            error_max = df["error_running_max"].tolist()
+            error_95p_max = df["error_95p_running_max"].tolist()
+            abstention_rate = df["prediction_abstention_rate"].tolist()
+
+            global_error_max = max(global_error_max, np.max(error_max))
+            global_error_95p_max = max(global_error_95p_max, np.max(error_95p_max))
 
             # AUC Calculation
             width = 1 / len(df)
-            error_auc = sum([error * width for error in df['error_running_max'].tolist()])
-            error_auc_norm = error_auc / df['error_running_max'].max()
-            error_95p_auc = sum([error * width for error in df['error_95p_running_max'].tolist()])
-            error_95p_auc_norm = error_95p_auc / df['error_95p_running_max'].max()
-            error_by_abstention_aucs.loc[eval_cfg_name, 'error_auc'] = error_auc
-            error_by_abstention_aucs.loc[eval_cfg_name, 'error_auc_norm'] = error_auc_norm
-            error_by_abstention_aucs.loc[eval_cfg_name, 'error_95p_auc'] = error_95p_auc
-            error_by_abstention_aucs.loc[eval_cfg_name, 'error_95p_auc_norm'] = error_95p_auc_norm
+            error_auc = sum([error * width for error in df["error_running_max"].tolist()])
+            error_auc_norm = error_auc / df["error_running_max"].max()
+            error_95p_auc = sum([error * width for error in df["error_95p_running_max"].tolist()])
+            error_95p_auc_norm = error_95p_auc / df["error_95p_running_max"].max()
+            error_by_abstention_aucs.loc[eval_cfg_name, "error_auc"] = error_auc
+            error_by_abstention_aucs.loc[eval_cfg_name, "error_auc_norm"] = error_auc_norm
+            error_by_abstention_aucs.loc[eval_cfg_name, "error_95p_auc"] = error_95p_auc
+            error_by_abstention_aucs.loc[eval_cfg_name, "error_95p_auc_norm"] = error_95p_auc_norm
 
             if not only_95_percentile:
-                plt.plot(
+                ax.plot(
                     abstention_rate,
                     error_max,
-                    label=f'{self.eval_runs_data[eval_cfg_name]["display_name"]} - Max',
                     color=color,
-                    linestyle='dotted'
+                    linestyle="dotted"
                 )
-            plt.plot(
+            ax.plot(
                 abstention_rate,
                 error_95p_max,
-                label=f'{self.eval_runs_data[eval_cfg_name]["display_name"]} - 95% Percentile',
                 color=color,
             )
 
-        if len(eval_cfg_names) >= 2:
-            plt.legend(loc='lower left')
-        else:
-            plt.legend(loc='upper right')
-        plt.xlabel('Abstention Rate (%)')
-        plt.ylabel('Absolute Error')
-        filename = 'error_by_abstention_rate'
+            legend_handles.append(
+                Patch(
+                    facecolor=color,
+                    edgecolor="black",
+                    label=self.eval_runs_data[eval_cfg_name]["display_name"],
+                ),
+            )
+
+        # Calculate Global Normalized AUCs
+        error_by_abstention_aucs["error_auc_norm_glob"] = (
+            error_by_abstention_aucs["error_auc"] / global_error_max
+        )
+        error_by_abstention_aucs["error_95p_auc_norm_glob"] = (
+            error_by_abstention_aucs["error_95p_auc"] / global_error_95p_max
+        )
+
+        if not only_95_percentile:
+            percentile_handles = [
+                Line2D([0], [0], color="black", linestyle="dotted", label="Max Error"),
+                Line2D([0], [0], color="black", linestyle="solid", label="95% Percentile Error"),
+            ]
+            ax.add_artist(
+                ax.legend(
+                    loc="lower left",
+                    bbox_to_anchor=(0.18, 0) if is_comparison else (0, 0),
+                    handles=percentile_handles,
+                    title="Eval Method",
+                )
+            )
+        if is_comparison:
+            ax.legend(loc="lower left", handles=legend_handles, title="UQ Method")
+
+        ax.set_xlabel("Abstention Rate (%)")
+        ax.set_ylabel("Absolute Error (95% Percentile)" if only_95_percentile else "Absolute Error")
+        filename = "error_by_abstention_rate"
         if only_95_percentile:
-            filename = f'{filename}_95p'
-        if len(eval_cfg_names) > 1:
-            filename = f'{filename}_comparison'
-        self._save_and_show_plt(filename)
+            filename = f"{filename}_95p"
+        if is_comparison > 1:
+            filename = f"{filename}_comparison"
+        self._save_figure(fig, filename)
         self._save_dataframe(
-            error_by_abstention_aucs.sort_values('error_95p_auc'),
-            'error_by_abstention_aucs',
+            error_by_abstention_aucs.sort_values("error_95p_auc"),
+            "error_by_abstention_aucs",
         )
 
     def plot_reliability_de_calibration_diagram(self, eval_cfg_name: str) -> None:
