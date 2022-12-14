@@ -198,7 +198,7 @@ class OutOfDomainEvaluator(ABC):
 
         ax.set_xticks(violin_label_positions)
         ax.set_xticklabels(violin_labels)
-        ax.grid(False, axis='x')
+        ax.grid(False, axis="x")
         ax.set_ylabel("Uncertainty")
         ax.legend(handles=legend_elements, handleheight=3, handlelength=4, loc="upper left")
         fig.suptitle(f"Out-of-Domain Data Uncertainty Comparison - {orig_data_label}")
@@ -212,25 +212,26 @@ class OutOfDomainEvaluator(ABC):
         """Violin-Plot Comparison of the Predictions for the OOD Datasets by the UQ-Models."""
         violin_positions = []
         violin_labels = []
+        violin_label_positions = []
         violin_datas = []
         violin_colors = []
         violin_hatches = []
         violin_edge_color = []
         legend_elements = []
 
-        v_pos = 0
+        v_pos = 1
         for eval_cfg_name, eval_run_data in eval_runs_data.items():
             uq_name = eval_run_data["display_name"]
             color = eval_run_data["color"]
+            violin_labels.append(uq_name)
+            violin_label_positions.append(v_pos + (len(self.ood_datasets) - 1) / 2)
 
             for ood_name, ood_cfg in self.ood_datasets.items():
                 ood_preds = self._load_pred_file(eval_cfg_name, ood_name)
                 if ood_preds is None:
                     continue
 
-                v_pos += 1
                 violin_positions.append(v_pos)
-                violin_labels.append(uq_name)
                 violin_datas.append(ood_preds["prediction"].tolist())
                 violin_colors.append(color)
                 violin_hatches.append(ood_cfg["hatch"])
@@ -244,6 +245,9 @@ class OutOfDomainEvaluator(ABC):
                         label=ood_cfg["name"],
                     )
                     legend_elements.append(patch)
+
+                v_pos += 1
+
             v_pos += 1
 
         fig, ax = self._get_fig()
@@ -257,8 +261,10 @@ class OutOfDomainEvaluator(ABC):
         for partname in ("cbars", "cmins", "cmaxes", "cmedians"):
             vplots[partname].set_edgecolor("black")
             vplots[partname].set_linewidth(1)
-        ax.set_xticks(violin_positions)
-        ax.set_xticklabels(violin_labels, rotation=15)
+
+        ax.set_xticks(violin_label_positions)
+        ax.set_xticklabels(violin_labels, rotation=30, ha="right", rotation_mode="anchor")
+        ax.grid(False, axis="x")
         ax.set_ylabel("Prediction (Age in Years)")
         ax.legend(handles=legend_elements, handleheight=3, handlelength=4, loc="upper right")
         fig.suptitle(f"Out-of-Domain Data Prediction Comparison - {orig_data_label}")
