@@ -368,13 +368,17 @@ class EvalPlotGenerator():
             ax.add_artist(
                 ax.legend(
                     loc="lower left",
-                    bbox_to_anchor=(0.18, 0) if is_comparison else (0, 0),
                     handles=percentile_handles,
-                    title="Eval Method",
+                    title="Evaluation Method",
                 )
             )
         if is_comparison:
-            ax.legend(loc="lower left", handles=legend_handles, title="UQ Method")
+            ax.legend(
+                loc="center left",
+                bbox_to_anchor=(1, 0.5),
+                handles=legend_handles,
+                title="UQ Method",
+            )
 
         ax.set_xlabel("Abstention Rate (%)")
         ax.set_ylabel("Absolute Error (95% Percentile)" if only_95_percentile else "Absolute Error")
@@ -787,7 +791,12 @@ class EvalPlotGenerator():
         ax.set_xticks(error_bins)
         ax.set_xlabel(f"Absolute Error (Binned by Years)")
         ax.set_ylabel("Uncertainty (Average / Error-Bin)")
-        ax.legend(handles=legend_elements, bbox_to_anchor=(1.0, 0.5), loc="center left")
+        ax.legend(
+            handles=legend_elements,
+            bbox_to_anchor=(1.0, 0.5),
+            loc="center left",
+            title="UQ Methods",
+        )
         self._save_figure(fig, "uncertainty_by_error_comparison")
 
     def plot_error_by_age_comparison(
@@ -842,7 +851,12 @@ class EvalPlotGenerator():
         ax.set_xticks(age_bins)
         ax.set_xlabel("Age (Binned by Year)")
         ax.set_ylabel("Absolute Error (Average / Year-Bin)")
-        ax.legend(handles=legend_elements, bbox_to_anchor=(1.0, 0.5), loc="center left")
+        ax.legend(
+            handles=legend_elements,
+            bbox_to_anchor=(1.0, 0.5),
+            loc="center left",
+            title="UQ Methods",
+        )
         self._save_figure(fig, "error_by_age_comparison")
 
     def _get_figure(
