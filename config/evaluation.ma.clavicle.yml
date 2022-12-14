@@ -116,7 +116,7 @@ evaluations:
         clavicle_variance_mcd_10:
             model: clavicle_variance_mcd
             name: "VAR-MCDO-10"
-            color: "#DCE775"
+            color: "#36C27C"
             marker: "h"
             checkpoint: /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/1/checkpoints/best.ckpt
             litmodel_config:
@@ -126,7 +126,7 @@ evaluations:
         clavicle_variance_mcd_100:
             model: clavicle_variance_mcd
             name: "VAR-MCDO-100"
-            color: "#AFB42B"
+            color: "#238051"
             marker: "H"
             checkpoint: /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/1/checkpoints/best.ckpt
             litmodel_config:
@@ -292,7 +292,7 @@ evaluations:
         clavicle_variance_mcd_10:
             model: clavicle_variance_mcd
             name: "VAR-MCDO-10"
-            color: "#DCE775"
+            color: "#36C27C"
             marker: "h"
             checkpoint: /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/1/checkpoints/last.ckpt
             litmodel_config:
@@ -302,7 +302,7 @@ evaluations:
         clavicle_variance_mcd_100:
             model: clavicle_variance_mcd
             name: "VAR-MCDO-100"
-            color: "#AFB42B"
+            color: "#238051"
             marker: "H"
             checkpoint: /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/1/checkpoints/last.ckpt
             litmodel_config:
