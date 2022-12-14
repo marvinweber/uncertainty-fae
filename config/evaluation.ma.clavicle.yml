@@ -101,6 +101,17 @@ evaluations:
                 n_samples: 30
                 base_model_checkpoint_pth: /ml_logs/clavicle_ct/clavicle_swag/swag_150/1/checkpoints/last.ckpt
 
+        clavicle_swag_no_wd:
+            model: clavicle_swag
+            name: "SWAG-NO-WD"
+            color: "#B58372"
+            marker: "s"
+            checkpoint: /ml_logs/clavicle_ct/clavicle_swag_no_wd/swag_150/1/swag_model.gz
+            litmodel_config:
+                undo_boneage_rescale: True
+                n_samples: 30
+                base_model_checkpoint_pth: /ml_logs/clavicle_ct/clavicle_swag_no_wd/swag_150/1/checkpoints/last.ckpt
+
         # Clavicle Variance Net
         clavicle_variance_mcd_10:
             model: clavicle_variance_mcd
@@ -265,6 +276,17 @@ evaluations:
                 undo_boneage_rescale: True
                 n_samples: 30
                 base_model_checkpoint_pth: /ml_logs/clavicle_ct/clavicle_swag/swag_150/1/checkpoints/last.ckpt
+
+        clavicle_swag_no_wd:
+            model: clavicle_swag
+            name: "SWAG-NO-WD"
+            color: "#B58372"
+            marker: "s"
+            checkpoint: /ml_logs/clavicle_ct/clavicle_swag_no_wd/swag_150/1/swag_model.gz
+            litmodel_config:
+                undo_boneage_rescale: True
+                n_samples: 30
+                base_model_checkpoint_pth: /ml_logs/clavicle_ct/clavicle_swag_no_wd/swag_150/1/checkpoints/last.ckpt
 
         # Clavicle Variance Net
         clavicle_variance_mcd_10:
