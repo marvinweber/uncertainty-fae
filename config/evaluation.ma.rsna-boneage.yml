@@ -286,7 +286,7 @@ evaluations:
             model: rsna_resnet50_500_gender_swag_adam_no_wd
             name: "SWAG-NO-WD"
             color: "#B58372"
-            marker: "x"
+            marker: "s"
             checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_swag_adam_no_wd/swag150/1/swag_model.gz
             litmodel_config:
                 undo_boneage_rescale: True
