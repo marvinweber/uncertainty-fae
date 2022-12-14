@@ -212,6 +212,19 @@ models:
             swa_start_epoch: 80
             n_samples: 30
 
+    clavicle_swag_no_wd:
+        data: clavicle_ct
+        provider_config:
+            variance_net: False
+            uncertainty_method: swag
+            rescale_boneage: True
+        litmodel_config:
+            lr: 0.0003
+            optim_type: adam
+            swa_lrs: 0.0003
+            swa_start_epoch: 80
+            n_samples: 30
+
     clavicle_variance_mcd:
         data: clavicle_ct
         provider_config:
