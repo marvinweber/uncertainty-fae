@@ -13,6 +13,7 @@ evaluations:
             model: clavicle_mcd
             name: "MCDO-10"
             color: "#9C27B0"
+            marker: "v"
             checkpoint: /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/1/checkpoints/best.ckpt
             litmodel_config:
                 undo_boneage_rescale: True
@@ -22,6 +23,7 @@ evaluations:
             model: clavicle_mcd
             name: "MCDO-100"
             color: "#4A148C"
+            marker: "^"
             checkpoint: /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/1/checkpoints/best.ckpt
             litmodel_config:
                 undo_boneage_rescale: True
@@ -31,6 +33,7 @@ evaluations:
             model: clavicle_de
             name: "DE-10"
             color: "#90CAF9"
+            marker: "D"
             checkpoint: null
             litmodel_config:
                 undo_boneage_rescale: True
@@ -50,6 +53,7 @@ evaluations:
             model: clavicle_de
             name: "DE-20"
             color: "#1976D2"
+            marker: "d"
             checkpoint: null
             litmodel_config:
                 undo_boneage_rescale: True
@@ -79,6 +83,7 @@ evaluations:
             model: clavicle_laplace
             name: "LA"
             color: "#FF8A65"
+            marker: "*"
             checkpoint: /ml_logs/clavicle_ct/clavicle_laplace/laplace_150/1/laplace_model.gz
             litmodel_config:
                 undo_boneage_rescale: True
@@ -89,6 +94,7 @@ evaluations:
             model: clavicle_swag
             name: "SWAG"
             color: "#6D4C41"
+            marker: "o"
             checkpoint: /ml_logs/clavicle_ct/clavicle_swag/swag_150/1/swag_model.gz
             litmodel_config:
                 undo_boneage_rescale: True
@@ -100,6 +106,7 @@ evaluations:
             model: clavicle_variance_mcd
             name: "VAR-MCDO-10"
             color: "#DCE775"
+            marker: "h"
             checkpoint: /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/1/checkpoints/best.ckpt
             litmodel_config:
                 undo_boneage_rescale: True
@@ -109,6 +116,7 @@ evaluations:
             model: clavicle_variance_mcd
             name: "VAR-MCDO-100"
             color: "#AFB42B"
+            marker: "H"
             checkpoint: /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/1/checkpoints/best.ckpt
             litmodel_config:
                 undo_boneage_rescale: True
@@ -118,6 +126,7 @@ evaluations:
             model: clavicle_variance_de
             name: "VAR-DE-10"
             color: "#B0BEC5"
+            marker: "<"
             checkpoint: null
             litmodel_config:
                 undo_boneage_rescale: True
@@ -137,6 +146,7 @@ evaluations:
             model: clavicle_variance_de
             name: "VAR-DE-20"
             color: "#546E7A"
+            marker: ">"
             checkpoint: null
             litmodel_config:
                 undo_boneage_rescale: True
@@ -168,6 +178,7 @@ evaluations:
             model: clavicle_mcd
             name: "MCDO-10"
             color: "#9C27B0"
+            marker: "v"
             checkpoint: /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/1/checkpoints/last.ckpt
             litmodel_config:
                 undo_boneage_rescale: True
@@ -177,6 +188,7 @@ evaluations:
             model: clavicle_mcd
             name: "MCDO-100"
             color: "#4A148C"
+            marker: "^"
             checkpoint: /ml_logs/clavicle_ct/clavicle_mcd/mcd_150/1/checkpoints/last.ckpt
             litmodel_config:
                 undo_boneage_rescale: True
@@ -186,6 +198,7 @@ evaluations:
             model: clavicle_de
             name: "DE-10"
             color: "#90CAF9"
+            marker: "D"
             checkpoint: null
             litmodel_config:
                 undo_boneage_rescale: True
@@ -205,6 +218,7 @@ evaluations:
             model: clavicle_de
             name: "DE-20"
             color: "#1976D2"
+            marker: "d"
             checkpoint: null
             litmodel_config:
                 undo_boneage_rescale: True
@@ -234,6 +248,7 @@ evaluations:
             model: clavicle_laplace
             name: "LA"
             color: "#FF8A65"
+            marker: "*"
             checkpoint: /ml_logs/clavicle_ct/clavicle_laplace/laplace_150/1/laplace_model.gz
             litmodel_config:
                 undo_boneage_rescale: True
@@ -244,6 +259,7 @@ evaluations:
             model: clavicle_swag
             name: "SWAG"
             color: "#6D4C41"
+            marker: "o"
             checkpoint: /ml_logs/clavicle_ct/clavicle_swag/swag_150/1/swag_model.gz
             litmodel_config:
                 undo_boneage_rescale: True
@@ -255,6 +271,7 @@ evaluations:
             model: clavicle_variance_mcd
             name: "VAR-MCDO-10"
             color: "#DCE775"
+            marker: "h"
             checkpoint: /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/1/checkpoints/last.ckpt
             litmodel_config:
                 undo_boneage_rescale: True
@@ -264,6 +281,7 @@ evaluations:
             model: clavicle_variance_mcd
             name: "VAR-MCDO-100"
             color: "#AFB42B"
+            marker: "H"
             checkpoint: /ml_logs/clavicle_ct/clavicle_variance_mcd/mcd_150/1/checkpoints/last.ckpt
             litmodel_config:
                 undo_boneage_rescale: True
@@ -273,6 +291,7 @@ evaluations:
             model: clavicle_variance_de
             name: "VAR-DE-10"
             color: "#B0BEC5"
+            marker: "<"
             checkpoint: null
             litmodel_config:
                 undo_boneage_rescale: True
@@ -292,6 +311,7 @@ evaluations:
             model: clavicle_variance_de
             name: "VAR-DE-20"
             color: "#546E7A"
+            marker: ">"
             checkpoint: null
             litmodel_config:
                 undo_boneage_rescale: True

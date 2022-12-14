@@ -18,6 +18,7 @@ evaluations:
             model: rsna_resnet50_500_gender_mcd
             name: "MCDO-10"
             color: "#9C27B0"
+            marker: "v"
             checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd_150/1/checkpoints/last.ckpt
             litmodel_config:
                 undo_boneage_rescale: True
@@ -27,6 +28,7 @@ evaluations:
             model: rsna_resnet50_500_gender_mcd
             name: "MCDO-100"
             color: "#4A148C"
+            marker: "^"
             checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd_150/1/checkpoints/last.ckpt
             litmodel_config:
                 undo_boneage_rescale: True
@@ -36,6 +38,7 @@ evaluations:
             model: rsna_resnet50_500_gender_de
             name: "DE-10"
             color: "#90CAF9"
+            marker: "D"
             checkpoint: null
             litmodel_config:
                 undo_boneage_rescale: True
@@ -55,6 +58,7 @@ evaluations:
             model: rsna_resnet50_500_gender_de
             name: "DE-20"
             color: "#1976D2"
+            marker: "d"
             checkpoint: null
             litmodel_config:
                 undo_boneage_rescale: True
@@ -84,6 +88,7 @@ evaluations:
             model: rsna_resnet50_500_gender_laplace
             name: "LA"
             color: "#FF8A65"
+            marker: "*"
             checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_laplace/laplace_150/1/laplace_model.gz
             litmodel_config:
                 undo_boneage_rescale: True
@@ -94,6 +99,7 @@ evaluations:
             model: rsna_resnet50_500_gender_swag_adam_low_wd
             name: "SWAG"
             color: "#6D4C41"
+            marker: "o"
             checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_swag_adam_low_wd/swag150/1/swag_model.gz
             litmodel_config:
                 undo_boneage_rescale: True
@@ -104,6 +110,7 @@ evaluations:
             model: rsna_resnet50_500_gender_swag_adam_no_wd
             name: "SWAG-NO-WD"
             color: "#B58372"
+            marker: "x"
             checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_swag_adam_no_wd/swag150/1/swag_model.gz
             litmodel_config:
                 undo_boneage_rescale: True
@@ -115,6 +122,7 @@ evaluations:
             model: rsna_resnet50_500_gender_variance_mcd
             name: "VAR-MCDO-10"
             color: "#DCE775"
+            marker: "h"
             checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd_150/1/checkpoints/last.ckpt
             litmodel_config:
                 undo_boneage_rescale: True
@@ -124,6 +132,7 @@ evaluations:
             model: rsna_resnet50_500_gender_variance_mcd
             name: "VAR-MCDO-100"
             color: "#AFB42B"
+            marker: "H"
             checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd_150/1/checkpoints/last.ckpt
             litmodel_config:
                 undo_boneage_rescale: True
@@ -133,6 +142,7 @@ evaluations:
             model: rsna_resnet50_500_gender_variance_de
             name: "VAR-DE-10"
             color: "#B0BEC5"
+            marker: "<"
             checkpoint: null
             litmodel_config:
                 undo_boneage_rescale: True
@@ -152,6 +162,7 @@ evaluations:
             model: rsna_resnet50_500_gender_variance_de
             name: "VAR-DE-20"
             color: "#546E7A"
+            marker: ">"
             checkpoint: null
             litmodel_config:
                 undo_boneage_rescale: True
@@ -183,6 +194,7 @@ evaluations:
             model: rsna_resnet50_500_gender_mcd
             name: "MCDO-10"
             color: "#9C27B0"
+            marker: "v"
             checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd_150/1/checkpoints/best.ckpt
             litmodel_config:
                 undo_boneage_rescale: True
@@ -192,6 +204,7 @@ evaluations:
             model: rsna_resnet50_500_gender_mcd
             name: "MCDO-100"
             color: "#4A148C"
+            marker: "^"
             checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd_150/1/checkpoints/best.ckpt
             litmodel_config:
                 undo_boneage_rescale: True
@@ -201,6 +214,7 @@ evaluations:
             model: rsna_resnet50_500_gender_de
             name: "DE-10"
             color: "#90CAF9"
+            marker: "D"
             checkpoint: null
             litmodel_config:
                 undo_boneage_rescale: True
@@ -220,6 +234,7 @@ evaluations:
             model: rsna_resnet50_500_gender_de
             name: "DE-20"
             color: "#1976D2"
+            marker: "d"
             checkpoint: null
             litmodel_config:
                 undo_boneage_rescale: True
@@ -249,6 +264,7 @@ evaluations:
             model: rsna_resnet50_500_gender_laplace
             name: "LA"
             color: "#FF8A65"
+            marker: "*"
             checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_laplace/laplace_150/1/laplace_model.gz
             litmodel_config:
                 undo_boneage_rescale: True
@@ -259,6 +275,7 @@ evaluations:
             model: rsna_resnet50_500_gender_swag_adam_low_wd
             name: "SWAG"
             color: "#6D4C41"
+            marker: "o"
             checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_swag_adam_low_wd/swag150/1/swag_model.gz
             litmodel_config:
                 undo_boneage_rescale: True
@@ -269,6 +286,7 @@ evaluations:
             model: rsna_resnet50_500_gender_swag_adam_no_wd
             name: "SWAG-NO-WD"
             color: "#B58372"
+            marker: "x"
             checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_swag_adam_no_wd/swag150/1/swag_model.gz
             litmodel_config:
                 undo_boneage_rescale: True
@@ -280,6 +298,7 @@ evaluations:
             model: rsna_resnet50_500_gender_variance_mcd
             name: "VAR-MCDO-10"
             color: "#DCE775"
+            marker: "h"
             checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd_150/1/checkpoints/best.ckpt
             litmodel_config:
                 undo_boneage_rescale: True
@@ -289,6 +308,7 @@ evaluations:
             model: rsna_resnet50_500_gender_variance_mcd
             name: "VAR-MCDO-100"
             color: "#AFB42B"
+            marker: "H"
             checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd_150/1/checkpoints/best.ckpt
             litmodel_config:
                 undo_boneage_rescale: True
@@ -298,6 +318,7 @@ evaluations:
             model: rsna_resnet50_500_gender_variance_de
             name: "VAR-DE-10"
             color: "#B0BEC5"
+            marker: "<"
             checkpoint: null
             litmodel_config:
                 undo_boneage_rescale: True
@@ -317,6 +338,7 @@ evaluations:
             model: rsna_resnet50_500_gender_variance_de
             name: "VAR-DE-20"
             color: "#546E7A"
+            marker: ">"
             checkpoint: null
             litmodel_config:
                 undo_boneage_rescale: True
