@@ -239,39 +239,6 @@ class EvalPlotGenerator():
         ax.set_ylabel("Predicted Age")
         self._save_figure(fig, "prediction_vs_truth")
 
-    def plot_tolerated_uncertainty_abs_error(self, eval_cfg_name: str) -> None:
-        df = self.eval_runs_data[eval_cfg_name]['prediction_log']
-        df = df.copy(True).sort_values('uncertainty')
-        df_rolling = df.set_index('uncertainty').rolling(len(df), min_periods=1)
-        df['abs_error_running_avg'] = df_rolling['error'].mean().values
-        df['abs_error_running_max'] = df_rolling['error'].max().values
-        df['abs_error_running_95_percentile'] = df_rolling['error'].quantile(0.95).values
-        df['pos'] = np.arange(len(df))
-        df['prediction_abstention_rate'] = 1 - (df['pos'] + 1) / len(df)
-
-        uncertainties = df['uncertainty'].tolist()
-        abs_error_avg = df['abs_error_running_avg'].tolist()
-        abs_error_max = df['abs_error_running_max'].tolist()
-        abs_error_95_percentile = df['abs_error_running_95_percentile'].tolist()
-        abstention_rate = df['prediction_abstention_rate'].tolist()
-
-        self._init_figure()
-        fig, ax = plt.subplots()
-        fig.suptitle(self._get_suptitle(eval_cfg_name))
-        ax.set_title('Tolerated Uncertainty')
-        p1 = ax.plot(uncertainties, abs_error_avg, label='Avg Abs Error')
-        p2 = ax.plot(uncertainties, abs_error_max, label='Max Abs Error')
-        p3 = ax.plot(uncertainties, abs_error_95_percentile, label='95 Percentile Abs Error')
-        ax2 = ax.twinx()
-        p4 = ax2.plot(uncertainties, abstention_rate, label='Abstention Rate', color='red')
-        lns = p1 + p2 + p3 + p4
-        labels = [l.get_label() for l in lns]
-        plt.legend(lns, labels, loc='center right')
-        ax.set_xlabel('Tolerated Uncertainty (Threshold)')
-        ax.set_ylabel('Absolute Error')
-        ax2.set_ylabel('Percentage')
-        self._save_and_show_plt('tolerated_uncertainty')
-
     def plot_error_by_abstention_rate(
         self,
         eval_cfg_names: Optional[list[str]] = None,

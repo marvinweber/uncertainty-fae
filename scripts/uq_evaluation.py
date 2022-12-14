@@ -200,7 +200,6 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
         plot_generator.plot_uncertainty_by_error(eval_cfg_name)
         plot_generator.plot_error_by_age(eval_cfg_name)
         plot_generator.plot_prediction_vs_truth(eval_cfg_name)
-        plot_generator.plot_tolerated_uncertainty_abs_error(eval_cfg_name)
         plot_generator.plot_error_by_abstention_rate([eval_cfg_name])
         plot_generator.plot_reliability_de_calibration_diagram(eval_cfg_name)
         plot_generator.plot_calibration_curve([eval_cfg_name])
