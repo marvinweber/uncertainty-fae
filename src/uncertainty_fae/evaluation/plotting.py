@@ -534,8 +534,9 @@ class EvalPlotGenerator():
             plt.plot(
                 ci_intervals,
                 [0, *ci_share_means, 1],
-                '^-',
-                label=f'Observed Fraction - {data["display_name"]}',
+                linestyle='-',
+                marker=data['marker'],
+                label=data["display_name"],
                 color=color_obs,
             )
 
