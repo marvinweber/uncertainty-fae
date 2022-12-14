@@ -826,6 +826,37 @@ class EvalPlotGenerator():
         )
         self._save_figure(fig, "error_by_age_comparison")
 
+    def save_error_uncertainty_stats(self, eval_cfg_names: Optional[list[str]] = None):
+        if not eval_cfg_names:
+            eval_cfg_names = list(self.eval_runs_data.keys())
+
+        stats = pd.DataFrame(
+            columns=[
+                "eval_cfg_name",
+                "error_mean",
+                "error_median",
+                "error_std",
+                "uncertainty_mean",
+                "uncertainty_median",
+                "uncertainty_std",
+            ],
+        ).set_index("eval_cfg_name")
+
+        stats.loc["baseline", "error_mean"] = self.baseline_model_error_df["error"].mean()
+        stats.loc["baseline", "error_median"] = self.baseline_model_error_df["error"].median()
+        stats.loc["baseline", "error_std"] = self.baseline_model_error_df["error"].std()
+
+        for eval_cfg_name in eval_cfg_names:
+            df = self.eval_runs_data[eval_cfg_name]["prediction_log"]
+            stats.loc[eval_cfg_name, "error_mean"] = df["error"].mean()
+            stats.loc[eval_cfg_name, "error_median"] = df["error"].median()
+            stats.loc[eval_cfg_name, "error_std"] = df["error"].std()
+            stats.loc[eval_cfg_name, "uncertainty_mean"] = df["uncertainty"].mean()
+            stats.loc[eval_cfg_name, "uncertainty_median"] = df["uncertainty"].median()
+            stats.loc[eval_cfg_name, "uncertainty_std"] = df["uncertainty"].std()
+
+        self._save_dataframe(stats, "error_uncertainty_stats")
+
     def _get_figure(
         self,
         nrows: int = 1,
