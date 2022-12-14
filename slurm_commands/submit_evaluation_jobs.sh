@@ -2,10 +2,11 @@
 
 # Helper Script to submit a single job per evaluation model.
 
-if [ $# -lt 3 ]
+if [ $# -lt 4 ]
 then
-  echo "Invalid Argument Amount!"
   cat <<EOF
+    INVALID ARGUMENT AMOUNT!
+
     Usage: ./submit_evaluation_jobs.sh EVAL_VERSION DATASET_TYPE EVAL_CONFIGURATION
                                        EVAL_CFG_NAME_1 ... EVAL_CFG_NAME_2
 
@@ -16,7 +17,7 @@ then
           container).
       EVAL_CFG_NAME_1 ... EVAL_CFG_NAME_2:
           One to many eval configuration names for each of which a separate job
-          will be scheduled.
+          will be scheduled (at least one required).
 
     The evaluation is started with --prediction-only flag, so that no plots are
     created. This must be done with a separate job/execution afterwards (due to
