@@ -83,5 +83,6 @@ class RSNABoneAgeOutOfDomainEvaluator(OutOfDomainEvaluator):
                 )
 
     def generate_plots(self, eval_runs_data: dict[str, EvalRunData]) -> None:
-        self._generate_uq_comparison_plot(eval_runs_data, orig_data_label="RSNA Bone Age")
-        self._generate_prediction_comparison_plot(eval_runs_data)
+        orig_data_label="RSNA Bone Age"
+        self._generate_uq_comparison_plot(eval_runs_data, orig_data_label)
+        self._generate_prediction_comparison_plot(eval_runs_data, orig_data_label)

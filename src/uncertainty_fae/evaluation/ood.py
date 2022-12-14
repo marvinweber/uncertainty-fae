@@ -175,14 +175,20 @@ class OutOfDomainEvaluator(ABC):
             v_pos += 1
 
         fig, ax = self._get_fig()
-        vplots = ax.violinplot(violin_datas, violin_positions, showmeans=False, widths=1)
+        vplots = ax.violinplot(
+            violin_datas,
+            violin_positions,
+            showmeans=False,
+            showmedians=True,
+            widths=1,
+        )
         v_patch: PolyCollection
         for v_patch, color, hatch in zip(vplots["bodies"], violin_colors, violin_hatches):
             v_patch.set_facecolor(color)
             if hatch:
                 v_patch.set_hatch(hatch)
                 v_patch.set_edgecolor(color)
-        for partname in ("cbars", "cmins", "cmaxes"):
+        for partname in ("cbars", "cmins", "cmaxes", "cmedians"):
             vplots[partname].set_edgecolor("black")
             vplots[partname].set_linewidth(1)
 
@@ -201,6 +207,7 @@ class OutOfDomainEvaluator(ABC):
     def _generate_prediction_comparison_plot(
         self,
         eval_runs_data: dict[str, EvalRunData],
+        orig_data_label: str,
     ) -> None:
         """Violin-Plot Comparison of the Predictions for the OOD Datasets by the UQ-Models."""
         violin_positions = []
@@ -254,4 +261,5 @@ class OutOfDomainEvaluator(ABC):
         ax.set_xticklabels(violin_labels, rotation=15)
         ax.set_ylabel("Prediction (Age in Years)")
         ax.legend(handles=legend_elements, handleheight=3, handlelength=4, loc="upper right")
+        fig.suptitle(f"Out-of-Domain Data Prediction Comparison - {orig_data_label}")
         self._save_fig(fig, "prediction_comparison")
