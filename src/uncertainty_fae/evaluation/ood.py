@@ -2,13 +2,14 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from typing import Callable
+from matplotlib.lines import Line2D
 
 import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib.collections import PolyCollection
 from matplotlib.figure import Figure
-from matplotlib.patches import Patch
-from uncertainty_fae.evaluation.plotting import MEAN_POINT_PROPS
+from matplotlib.patches import Patch, Rectangle
+from uncertainty_fae.evaluation.plotting import MEAN_LEGEND_ENTRY_PROPS, MEAN_POINT_PROPS
 
 from uncertainty_fae.evaluation.util import EvalRunData
 from uncertainty_fae.model import UncertaintyAwareModel
@@ -98,8 +99,8 @@ class OutOfDomainEvaluator(ABC):
             ood_preds[col] = self.age_to_year_transform(ood_preds[col])
         return ood_preds
 
-    def _get_fig(self):
-        return plt.subplots(figsize=(11, 6), dpi=250)
+    def _get_fig(self, figsize: tuple[int, int] = (11, 6)):
+        return plt.subplots(figsize=figsize, dpi=250)
 
     def _save_fig(self, fig: Figure, name: str) -> None:
         os.makedirs(self.plot_dir, exist_ok=True)
@@ -131,6 +132,7 @@ class OutOfDomainEvaluator(ABC):
         violin_hatches = []
         violin_edge_color = []
         legend_elements = [
+            Line2D([0], [0], **MEAN_LEGEND_ENTRY_PROPS),
             Patch(facecolor="white", edgecolor="black", label=orig_data_label),
         ]
 
@@ -164,7 +166,7 @@ class OutOfDomainEvaluator(ABC):
                 violin_hatches.append(ood_cfg["hatch"])
                 violin_edge_color.append("white")
 
-                if len(legend_elements) < len(self.ood_datasets.items()) + 1:
+                if len(legend_elements) < len(self.ood_datasets.items()) + 2:
                     patch = Patch(
                         facecolor="white",
                         edgecolor="grey",
@@ -174,13 +176,14 @@ class OutOfDomainEvaluator(ABC):
                     legend_elements.append(patch)
             v_pos += 1
 
-        fig, ax = self._get_fig()
+        fig, ax = self._get_fig(figsize=(8, 8))
         vplots = ax.violinplot(
             violin_datas,
             violin_positions,
             showmeans=False,
             showmedians=True,
             widths=1,
+            vert=False,
         )
         v_patch: PolyCollection
         for v_patch, color, hatch in zip(vplots["bodies"], violin_colors, violin_hatches):
@@ -194,13 +197,18 @@ class OutOfDomainEvaluator(ABC):
 
         # Mean Markers
         for pos, mean in zip(violin_positions, violin_means):
-            ax.plot(pos, mean, **MEAN_POINT_PROPS)
+            ax.plot(mean, pos, **MEAN_POINT_PROPS)
 
-        ax.set_xticks(violin_label_positions)
-        ax.set_xticklabels(violin_labels)
-        ax.grid(False, axis="x")
-        ax.set_ylabel("Uncertainty")
-        ax.legend(handles=legend_elements, handleheight=3, handlelength=4, loc="upper left")
+        ax.set_yticks(violin_label_positions)
+        ax.set_yticklabels(violin_labels)
+        ax.grid(False, axis="y")
+        ax.set_xlabel("Uncertainty")
+        ax.legend(
+            handles=list(reversed(legend_elements)),
+            handleheight=3,
+            handlelength=4,
+            loc="upper right"
+        )
         fig.suptitle(f"Out-of-Domain Data Uncertainty Comparison - {orig_data_label}")
         self._save_fig(fig, "uq_comparison")
 

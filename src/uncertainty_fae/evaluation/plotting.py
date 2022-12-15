@@ -30,6 +30,8 @@ MEAN_POINT_PROPS = dict(
     markerfacecolor="firebrick",
 )
 
+MEAN_LEGEND_ENTRY_PROPS = dict(**MEAN_POINT_PROPS, color=(0, 0, 0, 0), label="Mean")
+
 BOXPLOT_FLIER_PROPS = dict(
     marker="x",
     markersize=5,
