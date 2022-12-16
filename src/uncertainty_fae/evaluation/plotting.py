@@ -478,38 +478,40 @@ class EvalPlotGenerator():
 
         if not eval_cfg_names:
             if not comparison_plot:
-                raise ValueError('Only comparison plot allows empty `eval_cfg_names`!')
+                raise ValueError("Only comparison plot allows empty `eval_cfg_names`!")
             eval_cfg_names = list(self.eval_runs_data.keys())
 
-        self._init_figure(
-            title=f'Calibration Curve {"Comparison " if comparison_plot else ""}(WIP)',
+        fig, ax = self._get_figure(
+            title=f"Calibration Curve {'Comparison ' if comparison_plot else ''}(WIP)",
             derive_suptitle_from_cfg=eval_cfg_names[0] if not comparison_plot else None,
-            suptitle=(self.eval_runs_data[eval_cfg_names[0]]['data_display_name']
-                      if comparison_plot else None),
+            suptitle=(
+                self.eval_runs_data[eval_cfg_names[0]]["data_display_name"]
+                if comparison_plot else None
+            ),
         )
 
         # Ideal Line
         ci_intervals = [i/100 for i in range(0, 110, 10)]
-        plt.plot(
+        ax.plot(
             ci_intervals,
             ci_intervals,
             linestyle="--",
             color=TARGET_COLOR,
-            label='Ideal Fraction',
+            label="Ideal Fraction",
         )
 
         for eval_cfg_name in eval_cfg_names:
             data = self.eval_runs_data[eval_cfg_name]
-            df = data['prediction_log'].copy(deep=True)
+            df = data["prediction_log"].copy(deep=True)
             # Undo Age Transforms to operate on original metric (year, month, etc.)
             df = apply_df_age_transform(df, self.undo_age_to_year_transform)
             # Observations from the (test) set
-            observations = df['target'].tolist()
+            observations = df["target"].tolist()
 
             ci_shares = {k: [] for k in QUANTILE_SIGMA_ENV_SCALES.keys()}
             for i in range(len(df)):
-                mean = df.iloc[i]['prediction']
-                var = df.iloc[i]['uncertainty']**2
+                mean = df.iloc[i]["prediction"]
+                var = df.iloc[i]["uncertainty"]**2
 
                 sample_ci_shares = observation_share_per_prediction_interval(
                     mean, var, observations)
@@ -526,32 +528,32 @@ class EvalPlotGenerator():
                 ci_share_lower_stds.append(max(mean - 3 * std, 0))
                 ci_share_upper_stds.append(min(mean + 3 * std, 1))
 
-            color_obs = data['color']
+            color_obs = data["color"]
             # 3*Std of Observed Fraction; only if not a comparison plot
             if not comparison_plot:
-                plt.fill_between(
+                ax.fill_between(
                     ci_intervals,
                     [0, *ci_share_lower_stds, 1],
                     [0, *ci_share_upper_stds, 1],
                     color=color_obs,
                     alpha=0.2,
-                    label='Three Standard Deviations of Observed Fraction',
+                    label="Three Standard Deviations of Observed Fraction",
                 )
             # Observed Fractions per Quantile
-            plt.plot(
+            ax.plot(
                 ci_intervals,
                 [0, *ci_share_means, 1],
-                linestyle='-',
-                marker=data['marker'],
+                linestyle="-",
+                marker=data["marker"],
                 label=data["display_name"],
                 color=color_obs,
             )
 
-        plt.xlabel('Expected Fraction')
-        plt.ylabel('Observed Fraction')
-        plt.legend()
-        name = 'calibration_curve_comparison' if comparison_plot else 'calibration_curve'
-        self._save_and_show_plt(name)
+        ax.set_xlabel("Expected Fraction")
+        ax.set_ylabel("Observed Fraction")
+        ax.legend()
+        name = "calibration_curve_comparison" if comparison_plot else "calibration_curve"
+        self._save_figure(fig, name)
 
     def plot_correlation_comparison(
         self,
@@ -992,46 +994,12 @@ class EvalPlotGenerator():
         fig.savefig(filepath, bbox_inches="tight")
         plt.close()
 
-    def _init_figure(
-        self,
-        figsize: tuple[int, int] = (10, 7),
-        dpi: int = 250,
-        title: Optional[str] = None,
-        suptitle: Optional[str] = None,
-        derive_suptitle_from_cfg: Optional[str] = None,
-    ) -> Figure:
-        if suptitle and derive_suptitle_from_cfg:
-            raise ValueError('Either suptitle given, or derive_suptitle - not both!')
-
-        fig = plt.figure(figsize=figsize, dpi=dpi)
-        plt.tight_layout()
-
-        if title:
-            plt.title(title)
-        if derive_suptitle_from_cfg:
-            suptitle = self._get_suptitle(derive_suptitle_from_cfg)
-        if suptitle:
-            plt.suptitle(suptitle)
-
-        return fig
-
     def _get_suptitle(self, eval_cfg_name: str) -> str:
         suptitle = self.eval_runs_data[eval_cfg_name]['display_name']
         data_name = self.eval_runs_data[eval_cfg_name]['data_display_name']
         if data_name:
             suptitle = f'{data_name} - {suptitle}'
         return suptitle
-
-    def _save_and_show_plt(self, name: str) -> None:
-        """Save and optionally show Plot."""
-        os.makedirs(self.img_save_dir, exist_ok=True)
-
-        filepath = self._get_save_filepath(name)
-        plt.savefig(filepath)
-        if self.show_interactive_plots:
-            plt.show(block=False)
-        else:
-            plt.close()
 
     def _save_dataframe(self, df: pd.DataFrame, name: str) -> None:
         filepath = self._get_save_filepath(name, 'csv')
