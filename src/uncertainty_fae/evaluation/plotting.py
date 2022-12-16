@@ -42,7 +42,6 @@ class EvalPlotGenerator:
         img_save_dir: str,
         img_ext: str = "png",
         plt_style: Optional[str] = None,
-        show_interactive_plots=False,
         img_prepend_str: str = "",
         img_with_timestamp: bool = False,
         undo_age_to_year_transform: Optional[Callable[[pd.Series], pd.Series]] = None,
@@ -54,7 +53,6 @@ class EvalPlotGenerator:
         self.eval_runs_data = eval_runs_data
         self.img_save_dir = img_save_dir
         self.img_ext = img_ext
-        self.show_interactive_plots = show_interactive_plots
         self.img_prepend_str = img_prepend_str
         self.img_with_timestamp = img_with_timestamp
         self.ts = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
