@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import Callable, Optional
+from typing import Callable, Literal, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -138,18 +138,14 @@ class EvalPlotGenerator():
         self,
         eval_cfg_name: str,
         bin_width: float = 0.5,
+        with_aucs: bool = False,
     ) -> None:
+        color = self.eval_runs_data[eval_cfg_name]["color"]
         df = self.eval_runs_data[eval_cfg_name]["prediction_log"]
-        error_min = int(np.floor(df["error"].min()))
-        error_max = int(np.ceil(df["error"].max()))
-        error_bins = np.linspace(
-            start=error_min,
-            stop=error_max + bin_width,
-            endpoint=False,
-            num=int(((error_max-error_min) / bin_width) + 1)
-        )
+
+        error_bins = self._get_error_bins([eval_cfg_name], bin_width=bin_width)
         error_bins_series = pd.cut(df["error"], bins=error_bins)
-        df_binned_by_age = df.groupby(error_bins_series).agg(
+        df_grouped_by_error_bins = df.groupby(error_bins_series).agg(
             {"uncertainty": [list, "mean"]}
         ).dropna()
 
@@ -157,7 +153,7 @@ class EvalPlotGenerator():
         positions = []
         widths = []
         means = []
-        for bin, val in df_binned_by_age.iterrows():
+        for bin, val in df_grouped_by_error_bins.iterrows():
             bin_values.append(val["uncertainty"]["list"])
             means.append(val["uncertainty"]["mean"])
             width = bin.right - bin.left
@@ -168,23 +164,121 @@ class EvalPlotGenerator():
             title="Uncertainty by Error",
             derive_suptitle_from_cfg=eval_cfg_name,
         )
+        legend_handles = [Line2D([0], [0], **MEAN_LEGEND_ENTRY_PROPS)]
 
         vplot = ax.violinplot(bin_values, positions=positions, widths=widths, showmedians=False)
         for patch in vplot["bodies"]:
-            patch.set_facecolor(self.eval_runs_data[eval_cfg_name]["color"])
+            patch.set_facecolor(color)
         for partname in ("cbars", "cmins", "cmaxes"):
             vplot[partname].set_edgecolor("black")
             vplot[partname].set_linewidth(1)
 
+        if with_aucs:
+            uncertainty_error_lines_and_aucs = self._get_uncertainty_by_error_lines_and_aucs(
+                df, df_grouped_by_error_bins
+            )
+            mean_line_handle = ax.plot(
+                uncertainty_error_lines_and_aucs["mean_line_positions"],
+                uncertainty_error_lines_and_aucs["mean_line_values"],
+                linestyle="solid",
+                color=color,
+                label="Mean Uncertainty by Error; AUC={:.2f}".format(
+                    uncertainty_error_lines_and_aucs["mean_line_auc"]
+                ),
+            )
+            min_line_handle = ax.plot(
+                uncertainty_error_lines_and_aucs["min_line_positions"],
+                uncertainty_error_lines_and_aucs["min_line_values"],
+                linestyle="dashed",
+                color=color,
+                label="Min Uncertainty by Error; AUC={:.2f}".format(
+                    uncertainty_error_lines_and_aucs["min_line_auc"]
+                ),
+            )
+            legend_handles.extend([*mean_line_handle, *min_line_handle])
+
+        # Mean Diamonds
         for pos, mean in zip(positions, means):
             ax.plot(pos, mean, **MEAN_POINT_PROPS)
 
-        ax.legend(handles=[Line2D([0], [0], **MEAN_LEGEND_ENTRY_PROPS)])
+        ax.legend(handles=legend_handles)
         ax.set_ylim(bottom=0)
         ax.set_xlabel("Error (Binned by Year)")
         ax.set_ylabel("Uncertainty")
         ax.set_xticks(error_bins)
-        self._save_figure(fig, "uncertainty_by_error")
+        self._save_figure(
+            fig,
+            "uncertainty_by_error_with_aucs" if with_aucs else "uncertainty_by_error",
+        )
+
+    def _get_uncertainty_by_error_lines_and_aucs(
+        self,
+        df: pd.DataFrame,
+        df_grouped_by_error_bins: pd.DataFrame,
+    ) -> dict:
+        mean_line_positions = []
+        mean_line_values = []
+        for bin, row in df_grouped_by_error_bins.sort_index(ascending=False).iterrows():
+            uncertainty = row["uncertainty"]["mean"]
+            if len(mean_line_positions) == 0:
+                mean_line_positions.append(bin.right)
+                mean_line_values.append(uncertainty)
+            elif uncertainty < mean_line_values[-1]:
+                mean_line_positions.extend([bin.right, bin.right])
+                mean_line_values.extend([mean_line_values[-1], uncertainty])
+        if mean_line_positions[0] != 0:
+            mean_line_positions.append(0)
+            mean_line_values.append(mean_line_values[-1])
+
+        min_line_positions = []
+        min_line_values = []
+        for idx, row in df.sort_values("error", ascending=False).iterrows():
+            uncertainty = row["uncertainty"]
+            error = row["error"]
+            if len(min_line_positions) == 0:
+                min_line_positions.append(error)
+                min_line_values.append(uncertainty)
+            elif uncertainty < min_line_values[-1]:
+                min_line_positions.extend([error, error])
+                min_line_values.extend([min_line_values[-1], uncertainty])
+        if min_line_positions[0] != 0:
+            min_line_positions.append(0)
+            min_line_values.append(min_line_values[-1])
+
+        # Mean AUC
+        mean_line_values_auc = np.subtract(mean_line_values, mean_line_values[-1])
+        if mean_line_values_auc[0] > 0:
+            mean_line_values_auc = np.divide(mean_line_values_auc, mean_line_values_auc[0])
+        mean_line_values_auc = list(mean_line_values_auc)
+        mean_line_positions_auc = list(np.divide(mean_line_positions, mean_line_positions[0]))
+        mean_line_auc = 0
+        while len(mean_line_positions_auc) > 0:
+            width = abs(mean_line_positions_auc.pop() - mean_line_positions_auc.pop())
+            height = mean_line_values_auc.pop()
+            mean_line_auc += width * height
+            mean_line_values_auc.pop()  # remove second entry for same height
+
+        # Min AUC
+        min_line_values_auc = np.subtract(min_line_values, min_line_values[-1])
+        if min_line_values_auc[0] > 0:
+            min_line_values_auc = np.divide(min_line_values_auc, min_line_values_auc[0])
+        min_line_values_auc = list(min_line_values_auc)
+        min_line_positions_auc = list(np.divide(min_line_positions, min_line_positions[0]))
+        min_line_auc = 0
+        while len(min_line_positions_auc) > 0:
+            width = abs(min_line_positions_auc.pop() - min_line_positions_auc.pop())
+            height = min_line_values_auc.pop()
+            min_line_auc += width * height
+            min_line_values_auc.pop()  # remove second entry for same height
+
+        return dict(
+            mean_line_positions=mean_line_positions,
+            mean_line_values=mean_line_values,
+            mean_line_auc=mean_line_auc,
+            min_line_positions=min_line_positions,
+            min_line_values=min_line_values,
+            min_line_auc=min_line_auc,
+        )
 
     def plot_error_by_age(self, eval_cfg_name: str) -> None:
         df = self.eval_runs_data[eval_cfg_name]["prediction_log"]
@@ -367,71 +461,6 @@ class EvalPlotGenerator():
             "error_by_abstention_aucs",
         )
 
-    def plot_reliability_de_calibration_diagram(self, eval_cfg_name: str) -> None:
-        """Calibration/ Reliability Diagram - DEPRECATED"""
-
-        df = self.eval_runs_data[eval_cfg_name]['prediction_log']
-        df_distinct = self.eval_runs_data[eval_cfg_name]['distinct_prediction_log']
-        # Some UQ Methods do not provide this
-        if df_distinct is None:
-            return
-
-        df_distinct = df_distinct.groupby('index').agg({'prediction': list})
-        ci_shares = {k: [] for k in QUANTILE_SIGMA_ENV_SCALES.keys()}
-        for i in range(len(df_distinct)):
-            mean = df.iloc[i]['prediction']
-            var = df.iloc[i]['uncertainty']**2
-            observations = df_distinct.iloc[i]['prediction']
-            sample_ci_shares = observation_share_per_prediction_interval(mean, var, observations)
-            for sample_ci_share, val in sample_ci_shares.items():
-                ci_shares[sample_ci_share].append(val)
-
-        ci_intervals = [i/100 for i in range(0, 110, 10)]
-        ci_share_means = []
-        ci_share_lower_stds = []
-        ci_share_upper_stds = []
-        for ci_share, ci_share_vals in ci_shares.items():
-            mean = np.mean(ci_share_vals)
-            std = np.std(ci_share_vals)
-            ci_share_means.append(mean)
-            ci_share_lower_stds.append(max(mean - 3 * std, 0))
-            ci_share_upper_stds.append(min(mean + 3 * std, 1))
-
-        self._init_figure(
-            title='Calibration (WIP) - FROM DE PAPER',
-            derive_suptitle_from_cfg=eval_cfg_name,
-        )
-        color_obs = self.eval_runs_data[eval_cfg_name]['color']
-        # Actual Observations Std
-        plt.fill_between(
-            ci_intervals,
-            [0, *ci_share_lower_stds, 1],
-            [0, *ci_share_upper_stds, 1],
-            color=color_obs,
-            alpha=0.2,
-            label='Three Standard Deviations of Observed Fraction',
-        )
-        # Ideal Line
-        plt.plot(
-            ci_intervals,
-            ci_intervals,
-            linestyle="--",
-            color=TARGET_COLOR,
-            label='Ideal Fraction',
-        )
-        # Actual Observations
-        plt.plot(
-            ci_intervals,
-            [0, *ci_share_means, 1],
-            '^-',
-            label='Observed Fraction',
-            color=color_obs,
-        )
-        plt.xlabel('Expected Fraction')
-        plt.ylabel('Observed Fraction')
-        plt.legend()
-        self._save_and_show_plt('reliability_de_calibration_diagram')
-
     def plot_calibration_curve(
         self,
         eval_cfg_names: Optional[list[str]] = None,
@@ -523,74 +552,6 @@ class EvalPlotGenerator():
         plt.legend()
         name = 'calibration_curve_comparison' if comparison_plot else 'calibration_curve'
         self._save_and_show_plt(name)
-
-    def plot_reliability_de_calibration_diagram_comparison(
-        self,
-        eval_cfg_names: Optional[list[str]] = None
-    ) -> None:
-        """Comparison of Calibration/ Reliability Diagrams - DEPRECATED"""
-
-        if not eval_cfg_names:
-            eval_cfg_names = self.eval_runs_data.keys()
-
-        self._init_figure(
-            title='Calibration Comparison (WIP) - FROM DE PAPER',
-            suptitle=self.eval_runs_data[list(eval_cfg_names)[0]]['data_display_name'],
-        )
-        ci_intervals = [i/100 for i in range(0, 110, 10)]
-        # Ideal Line
-        plt.plot(
-            ci_intervals,
-            ci_intervals,
-            linestyle="--",
-            color=TARGET_COLOR,
-            label='Ideal Fraction',
-        )
-
-        for eval_cfg_name in eval_cfg_names:
-            df = self.eval_runs_data[eval_cfg_name]['prediction_log']
-            df_distinct = self.eval_runs_data[eval_cfg_name]['distinct_prediction_log']
-            # Some UQ Methods do not provide this
-            if df_distinct is None:
-                continue
-
-            df_distinct = df_distinct.groupby('index').agg({'prediction': list})
-            ci_shares = {k: [] for k in QUANTILE_SIGMA_ENV_SCALES.keys()}
-            for i in range(len(df_distinct)):
-                mean = df.iloc[i]['prediction']
-                var = df.iloc[i]['uncertainty']**2
-                observations = df_distinct.iloc[i]['prediction']
-                sample_ci_shares = observation_share_per_prediction_interval(
-                    mean,
-                    var,
-                    observations,
-                )
-                for sample_ci_share, val in sample_ci_shares.items():
-                    ci_shares[sample_ci_share].append(val)
-
-            ci_share_means = []
-            ci_share_lower_stds = []
-            ci_share_upper_stds = []
-            for ci_share, ci_share_vals in ci_shares.items():
-                mean = np.mean(ci_share_vals)
-                std = np.std(ci_share_vals)
-                ci_share_means.append(mean)
-                ci_share_lower_stds.append(max(mean - 3 * std, 0))
-                ci_share_upper_stds.append(min(mean + 3 * std, 1))
-
-            color_obs = self.eval_runs_data[eval_cfg_name]['color']
-            # Actual Observations
-            plt.plot(
-                ci_intervals,
-                [0, *ci_share_means, 1],
-                '^-',
-                label=self.eval_runs_data[eval_cfg_name]['display_name'],
-                color=color_obs,
-            )
-        plt.xlabel('Expected Fraction')
-        plt.ylabel('Observed Fraction')
-        plt.legend()
-        self._save_and_show_plt('reliability_de_calibration_diagram_comparison')
 
     def plot_correlation_comparison(
         self,
@@ -726,18 +687,7 @@ class EvalPlotGenerator():
             suptitle=meta_cfg["data_display_name"],
         )
 
-        errors = []
-        for eval_cfg_name in eval_cfg_names:
-            errors.extend(self.eval_runs_data[eval_cfg_name]["prediction_log"]["error"].tolist())
-
-        error_min = int(np.floor(np.min(errors)))
-        error_max = int(np.ceil(np.max(errors)))
-        error_bins = np.linspace(
-            start=error_min,
-            stop=error_max + bin_width,
-            endpoint=False,
-            num=int(((error_max-error_min) / bin_width) + 1)
-        )
+        error_bins = self._get_error_bins(eval_cfg_names, bin_width=bin_width)
         legend_elements = []
 
         uq_method_distance = (bin_width - (2 * bin_padding)) / (len(eval_cfg_names) - 1)
@@ -780,6 +730,138 @@ class EvalPlotGenerator():
             title="UQ Methods",
         )
         self._save_figure(fig, "uncertainty_by_error_comparison")
+
+    def save_uncertainty_by_error_aucs_csv(
+        self,
+        eval_cfg_names: Optional[list[str]] = None,
+        bin_width: float = 0.5,
+    ) -> None:
+        if not eval_cfg_names:
+            eval_cfg_names = list(self.eval_runs_data.keys())
+
+        error_bins = self._get_error_bins(eval_cfg_names, bin_width=bin_width)
+        aucs_df = pd.DataFrame(
+            columns=[
+                "eval_cfg_name",
+                "name",
+                "mean_line_auc",
+                "min_line_auc",
+            ],
+        ).set_index("eval_cfg_name")
+
+        for eval_cfg_name in eval_cfg_names:
+            eval_cfg = self.eval_runs_data[eval_cfg_name]
+            df = eval_cfg["prediction_log"]
+            df_error_bins = pd.cut(df["error"], bins=error_bins)
+            df_grouped_by_error_bins = df.groupby(df_error_bins).agg(
+                {"uncertainty": ["mean"]}
+            ).dropna()
+            uncertainty_by_error_lines_and_aucs = self._get_uncertainty_by_error_lines_and_aucs(
+                df, df_grouped_by_error_bins
+            )
+            aucs_df.loc[eval_cfg_name, "name"] = eval_cfg["display_name"]
+            aucs_df.loc[eval_cfg_name, "mean_line_auc"] = (
+                uncertainty_by_error_lines_and_aucs["mean_line_auc"]
+            )
+            aucs_df.loc[eval_cfg_name, "min_line_auc"] = (
+                uncertainty_by_error_lines_and_aucs["min_line_auc"]
+            )
+
+        aucs_df["mean_to_half"] = abs(aucs_df["mean_line_auc"] - 0.5)
+        aucs_df["min_to_half"] = abs(aucs_df["min_line_auc"] - 0.5)
+        self._save_dataframe(aucs_df, "uncertainty_by_error_aucs")
+
+    def plot_uncertainty_by_error_aucs_comparison(
+        self,
+        eval_cfg_names: Optional[list[str]] = None,
+        plot_type: Literal["mean", "min", "mean_min"] = "mean_min",
+        bin_width: float = 0.5,
+    ) -> None:
+        if not eval_cfg_names:
+            eval_cfg_names = list(self.eval_runs_data.keys())
+
+        meta_cfg = self.eval_runs_data[eval_cfg_names[0]]
+        fig, ax = self._get_figure(
+            figsize=(11, 7),
+            title="Uncertainty by Error AUC - Comparison",
+            suptitle=meta_cfg["data_display_name"],
+        )
+
+        error_bins = self._get_error_bins(eval_cfg_names, bin_width=bin_width)
+        legend_handles = []
+        mean_min_handles = []
+
+        for i, eval_cfg_name in enumerate(eval_cfg_names):
+            eval_cfg = self.eval_runs_data[eval_cfg_name]
+            df = eval_cfg["prediction_log"]
+            df_error_bins = pd.cut(df["error"], bins=error_bins)
+            df_grouped_by_error_bins = df.groupby(df_error_bins).agg(
+                {"uncertainty": ["mean"]}
+            ).dropna()
+
+            uncertainty_by_error_lines_and_aucs = self._get_uncertainty_by_error_lines_and_aucs(
+                df, df_grouped_by_error_bins
+            )
+            if plot_type in ["mean", "mean_min"]:
+                ax.plot(
+                    uncertainty_by_error_lines_and_aucs["mean_line_positions"],
+                    uncertainty_by_error_lines_and_aucs["mean_line_values"],
+                    linestyle="solid",
+                    color=eval_cfg["color"],
+                )
+            if plot_type in ["min", "mean_min"]:
+                ax.plot(
+                    uncertainty_by_error_lines_and_aucs["min_line_positions"],
+                    uncertainty_by_error_lines_and_aucs["min_line_values"],
+                    linestyle="dashed",
+                    color=eval_cfg["color"],
+                )
+
+            # Legend Entry
+            legend_handles.append(
+                Patch(
+                    facecolor=eval_cfg["color"],
+                    edgecolor="black",
+                    label=eval_cfg["display_name"],
+                ),
+            )
+
+        ax.set_ylim(bottom=0)
+        ax.set_xticks(error_bins)
+        ax.set_xlabel(f"Absolute Error")
+        ax.set_ylabel("Uncertainty")
+        if plot_type in ["mean", "mean_min"]:
+            mean_min_handles.append(
+                Line2D([0], [0], color="black", linestyle="solid", label="Mean Uncertainty (Binned)")
+            )
+        if plot_type in ["min", "mean_min"]:
+            mean_min_handles.append(
+                Line2D([0], [0], color="black", linestyle="dotted", label="Min Uncertainty")
+            )
+
+        ax.add_artist(ax.legend(handles=mean_min_handles, title="Evaluation Method"))
+        ax.legend(
+            handles=legend_handles,
+            bbox_to_anchor=(1.0, 0.5),
+            loc="center left",
+            title="UQ Methods",
+        )
+        self._save_figure(fig, f"uncertainty_by_error_auc_comparison_{plot_type}")
+
+    def _get_error_bins(self, eval_cfg_names: list[str], bin_width: float = 0.5) -> np.ndarray:
+        errors = []
+        for eval_cfg_name in eval_cfg_names:
+            errors.extend(self.eval_runs_data[eval_cfg_name]["prediction_log"]["error"].tolist())
+
+        error_min = int(np.floor(np.min(errors)))
+        error_max = int(np.ceil(np.max(errors)))
+        error_bins = np.linspace(
+            start=error_min,
+            stop=error_max + bin_width,
+            endpoint=False,
+            num=int(((error_max-error_min) / bin_width) + 1)
+        )
+        return error_bins
 
     def plot_error_by_age_comparison(
         self,
@@ -842,13 +924,14 @@ class EvalPlotGenerator():
         )
         self._save_figure(fig, "error_by_age_comparison")
 
-    def save_error_uncertainty_stats(self, eval_cfg_names: Optional[list[str]] = None):
+    def save_error_uncertainty_stats(self, eval_cfg_names: Optional[list[str]] = None) -> None:
         if not eval_cfg_names:
             eval_cfg_names = list(self.eval_runs_data.keys())
 
         stats = pd.DataFrame(
             columns=[
                 "eval_cfg_name",
+                "name",
                 "error_mean",
                 "error_median",
                 "error_std",
@@ -858,12 +941,14 @@ class EvalPlotGenerator():
             ],
         ).set_index("eval_cfg_name")
 
+        stats.loc["baseline", "name"] = "Baseline"
         stats.loc["baseline", "error_mean"] = self.baseline_model_error_df["error"].mean()
         stats.loc["baseline", "error_median"] = self.baseline_model_error_df["error"].median()
         stats.loc["baseline", "error_std"] = self.baseline_model_error_df["error"].std()
 
         for eval_cfg_name in eval_cfg_names:
             df = self.eval_runs_data[eval_cfg_name]["prediction_log"]
+            stats.loc[eval_cfg_name, "name"] = self.eval_runs_data[eval_cfg_name]["display_name"]
             stats.loc[eval_cfg_name, "error_mean"] = df["error"].mean()
             stats.loc[eval_cfg_name, "error_median"] = df["error"].median()
             stats.loc[eval_cfg_name, "error_std"] = df["error"].std()
