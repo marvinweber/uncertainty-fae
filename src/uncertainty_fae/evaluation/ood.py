@@ -270,6 +270,7 @@ class OutOfDomainEvaluator(ABC):
             vplots[partname].set_edgecolor("black")
             vplots[partname].set_linewidth(1)
 
+        ax.set_ylim(bottom=0)
         ax.set_xticks(violin_label_positions)
         ax.set_xticklabels(violin_labels, rotation=30, ha="right", rotation_mode="anchor")
         ax.grid(False, axis="x")

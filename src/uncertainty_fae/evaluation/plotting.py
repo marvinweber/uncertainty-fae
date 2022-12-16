@@ -127,6 +127,8 @@ class EvalPlotGenerator():
         for pos, mean in zip(positions, means):
             ax.plot(pos, mean, **MEAN_POINT_PROPS)
 
+        ax.legend(handles=[Line2D([0], [0], **MEAN_LEGEND_ENTRY_PROPS)])
+        ax.set_ylim(bottom=0)
         ax.set_xlabel("Age (Binned by Year)")
         ax.set_ylabel("Uncertainty")
         ax.set_xticks(age_bins)
@@ -177,6 +179,8 @@ class EvalPlotGenerator():
         for pos, mean in zip(positions, means):
             ax.plot(pos, mean, **MEAN_POINT_PROPS)
 
+        ax.legend(handles=[Line2D([0], [0], **MEAN_LEGEND_ENTRY_PROPS)])
+        ax.set_ylim(bottom=0)
         ax.set_xlabel("Error (Binned by Year)")
         ax.set_ylabel("Uncertainty")
         ax.set_xticks(error_bins)
@@ -218,6 +222,7 @@ class EvalPlotGenerator():
         for pos, mean in zip(positions, means):
             ax.plot(pos, mean, **MEAN_POINT_PROPS)
 
+        ax.legend(handles=[Line2D([0], [0], **MEAN_LEGEND_ENTRY_PROPS)])
         ax.set_xlabel("Age (Binned by Year)")
         ax.set_ylabel("Absolute Error")
         ax.set_xticks(age_bins)
@@ -696,6 +701,12 @@ class EvalPlotGenerator():
         else:
             raise ValueError(f"Invalid Plot-Type {plot_type}!")
 
+        ax.legend(
+            handles=[Line2D([0], [0], **MEAN_LEGEND_ENTRY_PROPS)],
+            bbox_to_anchor=(0, 1.02, 1, 0.2),
+            loc="lower left",
+            borderaxespad=0,
+        )
         ax.set_xlabel(f"Absolute Error")
         self._save_figure(fig, f"error_comparison_{plot_type}")
 
@@ -758,6 +769,7 @@ class EvalPlotGenerator():
                 Line2D([0], [0], color=(0, 0, 0, 0), label=eval_cfg["display_name"], **markerprops)
             )
 
+        ax.set_ylim(bottom=0)
         ax.set_xticks(error_bins)
         ax.set_xlabel(f"Absolute Error (Binned by Years)")
         ax.set_ylabel("Uncertainty (Average / Error-Bin)")
@@ -818,6 +830,7 @@ class EvalPlotGenerator():
                 Line2D([0], [0], color=(0, 0, 0, 0), label=eval_cfg["display_name"], **markerprops)
             )
 
+        ax.set_ylim(bottom=0)
         ax.set_xticks(age_bins)
         ax.set_xlabel("Age (Binned by Year)")
         ax.set_ylabel("Absolute Error (Average / Year-Bin)")
