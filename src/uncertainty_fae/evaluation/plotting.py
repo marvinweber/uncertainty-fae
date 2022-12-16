@@ -18,10 +18,10 @@ from uncertainty_fae.evaluation.calibration import (
 )
 from uncertainty_fae.evaluation.util import EvalRunData, apply_df_age_transform
 
-TARGET_COLOR = 'green'
+TARGET_COLOR = "green"
 """Color to use in plots for the target (ground truth)."""
 
-BASELINE_MODEL_COLOR = 'black'
+BASELINE_MODEL_COLOR = "black"
 """Color to use in plots for the baseline model, i.e., model without UQ."""
 
 MEAN_POINT_PROPS = dict(
@@ -32,23 +32,18 @@ MEAN_POINT_PROPS = dict(
 
 MEAN_LEGEND_ENTRY_PROPS = dict(**MEAN_POINT_PROPS, color=(0, 0, 0, 0), label="Mean")
 
-BOXPLOT_FLIER_PROPS = dict(
-    marker="x",
-    markersize=5,
-    markeredgecolor="black"
-)
+BOXPLOT_FLIER_PROPS = dict(marker="x", markersize=5, markeredgecolor="black")
 
 
-class EvalPlotGenerator():
-
+class EvalPlotGenerator:
     def __init__(
         self,
         eval_runs_data: dict[str, EvalRunData],
         img_save_dir: str,
-        img_ext: str = 'png',
+        img_ext: str = "png",
         plt_style: Optional[str] = None,
-        show_interactive_plots = False,
-        img_prepend_str: str = '',
+        show_interactive_plots=False,
+        img_prepend_str: str = "",
         img_with_timestamp: bool = False,
         undo_age_to_year_transform: Optional[Callable[[pd.Series], pd.Series]] = None,
         baseline_model_error_df: Optional[pd.DataFrame] = None,
@@ -70,7 +65,7 @@ class EvalPlotGenerator():
             self.undo_age_to_year_transform = lambda x: x
 
         if not plt_style:
-            seaborn.set_theme(context='paper')
+            seaborn.set_theme(context="paper")
         else:
             plt.style.use(plt_style)
 
@@ -95,11 +90,9 @@ class EvalPlotGenerator():
         df = self.eval_runs_data[eval_cfg_name]["prediction_log"]
         target_min = int(np.floor(df["target"].min()))
         target_max = int(np.ceil(df["target"].max()))
-        age_bins = np.linspace(start=target_min, stop=target_max, num=target_max-target_min+1)
+        age_bins = np.linspace(start=target_min, stop=target_max, num=target_max - target_min + 1)
         age_bins_series = pd.cut(df["target"], bins=age_bins)
-        df_binned_by_age = df.groupby(age_bins_series).agg(
-            {"uncertainty": [list, "mean"]}
-        ).dropna()
+        df_binned_by_age = df.groupby(age_bins_series).agg({"uncertainty": [list, "mean"]}).dropna()
 
         bin_values = []
         positions = []
@@ -145,9 +138,9 @@ class EvalPlotGenerator():
 
         error_bins = self._get_error_bins([eval_cfg_name], bin_width=bin_width)
         error_bins_series = pd.cut(df["error"], bins=error_bins)
-        df_grouped_by_error_bins = df.groupby(error_bins_series).agg(
-            {"uncertainty": [list, "mean"]}
-        ).dropna()
+        df_grouped_by_error_bins = (
+            df.groupby(error_bins_series).agg({"uncertainty": [list, "mean"]}).dropna()
+        )
 
         bin_values = []
         positions = []
@@ -284,11 +277,9 @@ class EvalPlotGenerator():
         df = self.eval_runs_data[eval_cfg_name]["prediction_log"]
         target_min = int(np.floor(df["target"].min()))
         target_max = int(np.ceil(df["target"].max()))
-        age_bins = np.linspace(start=target_min, stop=target_max, num=target_max-target_min+1)
+        age_bins = np.linspace(start=target_min, stop=target_max, num=target_max - target_min + 1)
         age_bins_series = pd.cut(df["target"], bins=age_bins)
-        df_binned_by_age = df.groupby(age_bins_series).agg(
-            {"error": [list, "mean"]}
-        ).dropna()
+        df_binned_by_age = df.groupby(age_bins_series).agg({"error": [list, "mean"]}).dropna()
 
         bin_values = []
         positions = []
@@ -400,12 +391,7 @@ class EvalPlotGenerator():
             error_by_abstention_aucs.loc[eval_cfg_name, "error_95p_auc_norm"] = error_95p_auc_norm
 
             if not only_95_percentile:
-                ax.plot(
-                    abstention_rate,
-                    error_max,
-                    color=color,
-                    linestyle="dotted"
-                )
+                ax.plot(abstention_rate, error_max, color=color, linestyle="dotted")
             ax.plot(
                 abstention_rate,
                 error_95p_max,
@@ -486,12 +472,13 @@ class EvalPlotGenerator():
             derive_suptitle_from_cfg=eval_cfg_names[0] if not comparison_plot else None,
             suptitle=(
                 self.eval_runs_data[eval_cfg_names[0]]["data_display_name"]
-                if comparison_plot else None
+                if comparison_plot
+                else None
             ),
         )
 
         # Ideal Line
-        ci_intervals = [i/100 for i in range(0, 110, 10)]
+        ci_intervals = [i / 100 for i in range(0, 110, 10)]
         ax.plot(
             ci_intervals,
             ci_intervals,
@@ -511,10 +498,11 @@ class EvalPlotGenerator():
             ci_shares = {k: [] for k in QUANTILE_SIGMA_ENV_SCALES.keys()}
             for i in range(len(df)):
                 mean = df.iloc[i]["prediction"]
-                var = df.iloc[i]["uncertainty"]**2
+                var = df.iloc[i]["uncertainty"] ** 2
 
                 sample_ci_shares = observation_share_per_prediction_interval(
-                    mean, var, observations)
+                    mean, var, observations
+                )
                 for sample_ci_share, val in sample_ci_shares.items():
                     ci_shares[sample_ci_share].append(val)
 
@@ -577,7 +565,7 @@ class EvalPlotGenerator():
 
         fig, ax = self._get_figure(
             title=f"Uncertainty-Error {method.title()} Correlation Comparison",
-            suptitle=eval_run_data["data_display_name"]  # Use data display name of last entry
+            suptitle=eval_run_data["data_display_name"],  # Use data display name of last entry
         )
         ax.set_ylabel(f"({method.title()}) Correlation of Uncertainty and Error")
         ax.bar(labels, corrs, color=colors)
@@ -614,7 +602,6 @@ class EvalPlotGenerator():
             labels.append(eval_run_data["display_name"])
             colors.append(eval_run_data["color"])
 
-
         fig, ax = self._get_figure(
             title=f"Comparison of Error by (UQ) Method",
             suptitle=self.eval_runs_data[eval_cfg_names[0]]["data_display_name"],
@@ -634,7 +621,7 @@ class EvalPlotGenerator():
 
             box_patches: Patch
             for box_patches, color in zip(bplot["boxes"], colors):
-                color = to_rgba(color, alpha=.5)
+                color = to_rgba(color, alpha=0.5)
                 box_patches.set_facecolor(color)
             median_lines: Line2D
             for median_lines in bplot["medians"]:
@@ -755,19 +742,19 @@ class EvalPlotGenerator():
             eval_cfg = self.eval_runs_data[eval_cfg_name]
             df = eval_cfg["prediction_log"]
             df_error_bins = pd.cut(df["error"], bins=error_bins)
-            df_grouped_by_error_bins = df.groupby(df_error_bins).agg(
-                {"uncertainty": ["mean"]}
-            ).dropna()
+            df_grouped_by_error_bins = (
+                df.groupby(df_error_bins).agg({"uncertainty": ["mean"]}).dropna()
+            )
             uncertainty_by_error_lines_and_aucs = self._get_uncertainty_by_error_lines_and_aucs(
                 df, df_grouped_by_error_bins
             )
             aucs_df.loc[eval_cfg_name, "name"] = eval_cfg["display_name"]
-            aucs_df.loc[eval_cfg_name, "mean_line_auc"] = (
-                uncertainty_by_error_lines_and_aucs["mean_line_auc"]
-            )
-            aucs_df.loc[eval_cfg_name, "min_line_auc"] = (
-                uncertainty_by_error_lines_and_aucs["min_line_auc"]
-            )
+            aucs_df.loc[eval_cfg_name, "mean_line_auc"] = uncertainty_by_error_lines_and_aucs[
+                "mean_line_auc"
+            ]
+            aucs_df.loc[eval_cfg_name, "min_line_auc"] = uncertainty_by_error_lines_and_aucs[
+                "min_line_auc"
+            ]
 
         aucs_df["mean_to_half"] = abs(aucs_df["mean_line_auc"] - 0.5)
         aucs_df["min_to_half"] = abs(aucs_df["min_line_auc"] - 0.5)
@@ -797,9 +784,9 @@ class EvalPlotGenerator():
             eval_cfg = self.eval_runs_data[eval_cfg_name]
             df = eval_cfg["prediction_log"]
             df_error_bins = pd.cut(df["error"], bins=error_bins)
-            df_grouped_by_error_bins = df.groupby(df_error_bins).agg(
-                {"uncertainty": ["mean"]}
-            ).dropna()
+            df_grouped_by_error_bins = (
+                df.groupby(df_error_bins).agg({"uncertainty": ["mean"]}).dropna()
+            )
 
             uncertainty_by_error_lines_and_aucs = self._get_uncertainty_by_error_lines_and_aucs(
                 df, df_grouped_by_error_bins
@@ -834,7 +821,9 @@ class EvalPlotGenerator():
         ax.set_ylabel("Uncertainty")
         if plot_type in ["mean", "mean_min"]:
             mean_min_handles.append(
-                Line2D([0], [0], color="black", linestyle="solid", label="Mean Uncertainty (Binned)")
+                Line2D(
+                    [0], [0], color="black", linestyle="solid", label="Mean Uncertainty (Binned)"
+                )
             )
         if plot_type in ["min", "mean_min"]:
             mean_min_handles.append(
@@ -861,7 +850,7 @@ class EvalPlotGenerator():
             start=error_min,
             stop=error_max + bin_width,
             endpoint=False,
-            num=int(((error_max-error_min) / bin_width) + 1)
+            num=int(((error_max - error_min) / bin_width) + 1),
         )
         return error_bins
 
@@ -881,7 +870,7 @@ class EvalPlotGenerator():
 
         target_min = int(np.floor(meta_cfg["prediction_log"]["target"].min()))
         target_max = int(np.ceil(meta_cfg["prediction_log"]["target"].max()))
-        age_bins = np.linspace(start=target_min, stop=target_max, num=target_max-target_min+1)
+        age_bins = np.linspace(start=target_min, stop=target_max, num=target_max - target_min + 1)
         legend_elements = []
 
         bin_padding = 0.05  # space between bin border and first/ last marker
@@ -995,14 +984,14 @@ class EvalPlotGenerator():
         plt.close()
 
     def _get_suptitle(self, eval_cfg_name: str) -> str:
-        suptitle = self.eval_runs_data[eval_cfg_name]['display_name']
-        data_name = self.eval_runs_data[eval_cfg_name]['data_display_name']
+        suptitle = self.eval_runs_data[eval_cfg_name]["display_name"]
+        data_name = self.eval_runs_data[eval_cfg_name]["data_display_name"]
         if data_name:
-            suptitle = f'{data_name} - {suptitle}'
+            suptitle = f"{data_name} - {suptitle}"
         return suptitle
 
     def _save_dataframe(self, df: pd.DataFrame, name: str) -> None:
-        filepath = self._get_save_filepath(name, 'csv')
+        filepath = self._get_save_filepath(name, "csv")
         df.to_csv(filepath)
 
     def _get_save_filepath(self, name: str, extension: Optional[str] = None) -> str:
@@ -1010,9 +999,9 @@ class EvalPlotGenerator():
         if extension is None:
             extension = self.img_ext
 
-        filename = f'{name}.{extension}'
+        filename = f"{name}.{extension}"
         if self.img_with_timestamp:
-            filename = f'{self.ts}_{filename}'
+            filename = f"{self.ts}_{filename}"
         if self.img_prepend_str:
-            filename = f'{self.img_prepend_str}_{filename}'
+            filename = f"{self.img_prepend_str}_{filename}"
         return os.path.join(self.img_save_dir, filename)
