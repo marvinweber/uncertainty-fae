@@ -173,8 +173,11 @@ class EvalPlotGenerator:
                 uncertainty_error_lines_and_aucs["mean_line_values"],
                 linestyle="solid",
                 color=color,
-                label="Mean Uncertainty by Error; AUC={:.2f}".format(
-                    uncertainty_error_lines_and_aucs["mean_line_auc"]
+                label=(
+                    "Mean Uncertainty Threshold by Binned ({:.2f} Years) Error; AUC={:.2f}".format(
+                        bin_width,
+                        uncertainty_error_lines_and_aucs["mean_line_auc"],
+                    )
                 ),
             )
             min_line_handle = ax.plot(
@@ -182,8 +185,8 @@ class EvalPlotGenerator:
                 uncertainty_error_lines_and_aucs["min_line_values"],
                 linestyle="dashed",
                 color=color,
-                label="Min Uncertainty by Error; AUC={:.2f}".format(
-                    uncertainty_error_lines_and_aucs["min_line_auc"]
+                label="Min Uncertainty Threshold by Error; AUC={:.2f}".format(
+                    uncertainty_error_lines_and_aucs["min_line_auc"],
                 ),
             )
             legend_handles.extend([*mean_line_handle, *min_line_handle])
@@ -820,12 +823,24 @@ class EvalPlotGenerator:
         if plot_type in ["mean", "mean_min"]:
             mean_min_handles.append(
                 Line2D(
-                    [0], [0], color="black", linestyle="solid", label="Mean Uncertainty (Binned)"
+                    [0],
+                    [0],
+                    color="black",
+                    linestyle="solid",
+                    label="Mean Uncertainty Threshold by Binned ({:.1f} Years) Error".format(
+                        bin_width,
+                    ),
                 )
             )
         if plot_type in ["min", "mean_min"]:
             mean_min_handles.append(
-                Line2D([0], [0], color="black", linestyle="dotted", label="Min Uncertainty")
+                Line2D(
+                    [0],
+                    [0],
+                    color="black",
+                    linestyle="dotted",
+                    label="Min Uncertainty Threshold",
+                )
             )
 
         ax.add_artist(ax.legend(handles=mean_min_handles, title="Evaluation Method"))
