@@ -468,6 +468,16 @@ class EvalRunConfig(BaseConfig):
         df = pd.read_csv(filepath)
         return df
 
+    def get_mean_predictor_error_dataframe(self, data_type: str) -> pd.DataFrame | None:
+        filepath = os.path.join(
+            self.eval_dir,
+            f"mean_predictor_model_errors_{data_type}_{self.dataset_type}.csv",
+        )
+        if not os.path.isfile(filepath):
+            return None
+        df = pd.read_csv(filepath)
+        return df
+
 
 class BaselinePredictionConfig(BaseConfig):
     def __init__(self, config_dict: dict) -> None:

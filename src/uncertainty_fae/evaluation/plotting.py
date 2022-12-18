@@ -46,6 +46,7 @@ class EvalPlotGenerator:
         img_with_timestamp: bool = False,
         undo_age_to_year_transform: Optional[Callable[[pd.Series], pd.Series]] = None,
         baseline_model_error_df: Optional[pd.DataFrame] = None,
+        mean_predictor_model_error_df: Optional[pd.DataFrame] = None,
     ) -> None:
         """
         TODO: Docs
@@ -57,6 +58,7 @@ class EvalPlotGenerator:
         self.img_with_timestamp = img_with_timestamp
         self.ts = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         self.baseline_model_error_df = baseline_model_error_df
+        self.mean_predictor_model_error_df = mean_predictor_model_error_df
 
         self.undo_age_to_year_transform = undo_age_to_year_transform
         if self.undo_age_to_year_transform is None:
@@ -590,6 +592,7 @@ class EvalPlotGenerator:
         errors = []
         labels = []
         colors = []
+        legend_handles = [Line2D([0], [0], **MEAN_LEGEND_ENTRY_PROPS)]
 
         if self.baseline_model_error_df is not None:
             labels.append("Baseline")
@@ -607,6 +610,15 @@ class EvalPlotGenerator:
             title=f"Comparison of Error by (UQ) Method",
             suptitle=self.eval_runs_data[eval_cfg_names[0]]["data_display_name"],
         )
+
+        if self.mean_predictor_model_error_df is not None:
+            mp_line = ax.axvline(
+                x=self.mean_predictor_model_error_df["error"].mean(),
+                color="red",
+                linestyle="dotted",
+                label="Mean of Mean-Predictor",
+            )
+            legend_handles.append(mp_line)
 
         if plot_type == "boxplot":
             bplot = ax.boxplot(
@@ -653,7 +665,7 @@ class EvalPlotGenerator:
             raise ValueError(f"Invalid Plot-Type {plot_type}!")
 
         ax.legend(
-            handles=[Line2D([0], [0], **MEAN_LEGEND_ENTRY_PROPS)],
+            handles=legend_handles,
             bbox_to_anchor=(0, 1.02, 1, 0.2),
             loc="lower left",
             borderaxespad=0,
@@ -945,10 +957,22 @@ class EvalPlotGenerator:
             ],
         ).set_index("eval_cfg_name")
 
-        stats.loc["baseline", "name"] = "Baseline"
-        stats.loc["baseline", "error_mean"] = self.baseline_model_error_df["error"].mean()
-        stats.loc["baseline", "error_median"] = self.baseline_model_error_df["error"].median()
-        stats.loc["baseline", "error_std"] = self.baseline_model_error_df["error"].std()
+        if self.mean_predictor_model_error_df is not None:
+            stats.loc["mean_predictor", "name"] = "Mean-Predictor"
+            stats.loc["mean_predictor", "error_mean"] = self.mean_predictor_model_error_df[
+                "error"
+            ].mean()
+            stats.loc["mean_predictor", "error_median"] = self.mean_predictor_model_error_df[
+                "error"
+            ].median()
+            stats.loc["mean_predictor", "error_std"] = self.mean_predictor_model_error_df[
+                "error"
+            ].std()
+        if self.baseline_model_error_df is not None:
+            stats.loc["baseline", "name"] = "Baseline"
+            stats.loc["baseline", "error_mean"] = self.baseline_model_error_df["error"].mean()
+            stats.loc["baseline", "error_median"] = self.baseline_model_error_df["error"].median()
+            stats.loc["baseline", "error_std"] = self.baseline_model_error_df["error"].std()
 
         for eval_cfg_name in eval_cfg_names:
             df = self.eval_runs_data[eval_cfg_name]["prediction_log"]
