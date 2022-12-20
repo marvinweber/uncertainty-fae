@@ -772,6 +772,9 @@ class EvalPlotGenerator:
         reorder_ranks["sort_avg_idx_distance_norm"] = reorder_ranks["sort_avg_idx_distance"] / (
             len(df) / 2
         )
+        reorder_ranks["sort_avg_idx_right_move_norm"] = reorder_ranks["sort_avg_idx_right_move"] / (
+            len(df) / 2
+        )
         self._save_dataframe(reorder_ranks, "uncertainty_by_error_reorder_ranks")
 
     def save_uncertainty_by_error_aucs_csv(
