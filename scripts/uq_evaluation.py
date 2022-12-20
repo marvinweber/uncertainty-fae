@@ -250,6 +250,7 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
     combined_plot_generator.plot_uncertainty_by_error_aucs_comparison(plot_type="min")
     combined_plot_generator.plot_uncertainty_by_error_aucs_comparison(plot_type="mean_min")
     combined_plot_generator.save_uncertainty_by_error_aucs_csv()
+    combined_plot_generator.save_uncertainty_reorder_ranks_csv()
     combined_plot_generator.plot_error_by_age_comparison()
     combined_plot_generator.plot_calibration_curve(comparison_plot=True)
     combined_plot_generator.save_error_uncertainty_stats()

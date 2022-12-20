@@ -2,7 +2,7 @@ import csv
 import logging
 import os
 import re
-from typing import Callable, Optional, TypedDict
+from typing import Callable, Optional, Sequence, TypedDict
 
 import torch
 import yaml
@@ -186,6 +186,45 @@ def apply_df_age_transform(
             continue
         df[col] = transform_fn(df[col])
     return df
+
+
+def _cycle_decomposition(permutation: Sequence):
+    """Generate cycles in the cyclic decomposition of a permutation.
+
+        >>> list(cycle_decomposition([7, 2, 9, 5, 0, 3, 6, 8, 1, 4]))
+        [[0, 7, 8, 1, 2, 9, 4], [3, 5], [6]]
+
+    Source/ Adapted From:
+        https://codereview.stackexchange.com/a/186390
+    """
+    unvisited = set(permutation)
+    while unvisited:
+        j = i = unvisited.pop()
+        cycle = [i]
+        while True:
+            j = permutation[j]
+            if j == i:
+                break
+            cycle.append(j)
+            unvisited.remove(j)
+        yield cycle
+
+
+def sort_min_swaps(seq: Sequence) -> int:
+    """Return minimum swaps needed to sort the sequence.
+
+        >>> minimum_swaps([])
+        0
+        >>> minimum_swaps([2, 1])
+        1
+        >>> minimum_swaps([4, 8, 1, 5, 9, 3, 6, 0, 7, 2])
+        7
+
+    Source/ Adapted From:
+        https://codereview.stackexchange.com/a/186390
+    """
+    permutation = sorted(range(len(seq)), key=seq.__getitem__)
+    return sum(len(cycle) - 1 for cycle in _cycle_decomposition(permutation))
 
 
 class EvalRunData(TypedDict):

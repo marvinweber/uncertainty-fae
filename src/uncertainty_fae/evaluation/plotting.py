@@ -16,7 +16,7 @@ from uncertainty_fae.evaluation.calibration import (
     QUANTILE_SIGMA_ENV_SCALES,
     observation_share_per_prediction_interval,
 )
-from uncertainty_fae.evaluation.util import EvalRunData, apply_df_age_transform
+from uncertainty_fae.evaluation.util import EvalRunData, apply_df_age_transform, sort_min_swaps
 
 TARGET_COLOR = "green"
 """Color to use in plots for the target (ground truth)."""
@@ -732,6 +732,41 @@ class EvalPlotGenerator:
             title="UQ Methods",
         )
         self._save_figure(fig, "uncertainty_by_error_comparison")
+
+    def save_uncertainty_reorder_ranks_csv(
+        self,
+        eval_cfg_names: Optional[list[str]] = None,
+        bin_width: float = 0.5,
+    ) -> None:
+        if not eval_cfg_names:
+            eval_cfg_names = list(self.eval_runs_data.keys())
+
+        reorder_ranks = pd.DataFrame(
+            columns=[
+                "eval_cfg_name",
+                "name",
+                "sort_min_swaps_rank",
+                "sort_avg_idx_distance",
+            ],
+        ).set_index("eval_cfg_name")
+
+        for eval_cfg_name in eval_cfg_names:
+            eval_cfg = self.eval_runs_data[eval_cfg_name]
+            df = eval_cfg["prediction_log"].sort_values("uncertainty")
+            df["pos"] = np.arange(len(df))  # positions of samples by sorted uncertainty
+
+            reorder_ranks.loc[eval_cfg_name, "name"] = eval_cfg["display_name"]
+            reorder_ranks.loc[eval_cfg_name, "sort_min_swaps_rank"] = sort_min_swaps(
+                df["error"].tolist()
+            )
+            reorder_ranks.loc[eval_cfg_name, "sort_avg_idx_distance"] = np.mean(
+                [abs(i - pos) for i, pos in enumerate(df.sort_values("error")["pos"])]
+            )
+
+        reorder_ranks["sort_avg_idx_distance_norm"] = (
+            reorder_ranks["sort_avg_idx_distance"] / (len(df) / 2)
+        )
+        self._save_dataframe(reorder_ranks, "uncertainty_by_error_reorder_ranks")
 
     def save_uncertainty_by_error_aucs_csv(
         self,
