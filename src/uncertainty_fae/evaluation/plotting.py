@@ -734,9 +734,7 @@ class EvalPlotGenerator:
         self._save_figure(fig, "uncertainty_by_error_comparison")
 
     def save_uncertainty_reorder_ranks_csv(
-        self,
-        eval_cfg_names: Optional[list[str]] = None,
-        bin_width: float = 0.5,
+        self, eval_cfg_names: Optional[list[str]] = None
     ) -> None:
         if not eval_cfg_names:
             eval_cfg_names = list(self.eval_runs_data.keys())
@@ -747,6 +745,8 @@ class EvalPlotGenerator:
                 "name",
                 "sort_min_swaps_rank",
                 "sort_avg_idx_distance",
+                "sort_avg_idx_right_move",
+                "sort_idx_right_move_count",
             ],
         ).set_index("eval_cfg_name")
 
@@ -762,9 +762,15 @@ class EvalPlotGenerator:
             reorder_ranks.loc[eval_cfg_name, "sort_avg_idx_distance"] = np.mean(
                 [abs(i - pos) for i, pos in enumerate(df.sort_values("error")["pos"])]
             )
+            reorder_ranks.loc[eval_cfg_name, "sort_avg_idx_right_move"] = np.mean(
+                [max(0, (i - pos)) for i, pos in enumerate(df.sort_values("error")["pos"])]
+            )
+            reorder_ranks.loc[eval_cfg_name, "sort_idx_right_move_count"] = np.sum(
+                [1 if (i - pos) > 0 else 0 for i, pos in enumerate(df.sort_values("error")["pos"])]
+            )
 
-        reorder_ranks["sort_avg_idx_distance_norm"] = (
-            reorder_ranks["sort_avg_idx_distance"] / (len(df) / 2)
+        reorder_ranks["sort_avg_idx_distance_norm"] = reorder_ranks["sort_avg_idx_distance"] / (
+            len(df) / 2
         )
         self._save_dataframe(reorder_ranks, "uncertainty_by_error_reorder_ranks")
 
