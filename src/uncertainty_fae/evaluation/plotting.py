@@ -438,7 +438,7 @@ class EvalPlotGenerator:
             )
 
         ax.set_xlabel("Abstention Rate (%)")
-        ax.set_ylabel("Absolute Error (95% Percentile)" if only_95_percentile else "Absolute Error")
+        ax.set_ylabel(f"Max (95% Percentile) Absolute Error")
         filename = "error_by_abstention_rate"
         if only_95_percentile:
             filename = f"{filename}_95p"
