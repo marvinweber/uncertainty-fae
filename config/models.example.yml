@@ -1,0 +1,90 @@
+# Settings for differnt Data Types can be separated into different config
+# files as well. This file is only for demonstration purposes to show possible
+# configuration setups.
+
+# default settings for datasets per data (rsna_boneage, clavicle_ct, ...)
+defaults:
+    rsna_boneage:
+        datasets:
+            annotations:
+                train: /mnt/datassd/data_fae_uncertainty/train_annotations.csv
+                val: /mnt/datassd/data_fae_uncertainty/val_annotations.csv
+                test: /mnt/datassd/data_fae_uncertainty/test_annotations.csv
+            img_base_dirs:
+                train:
+                val:
+                test:
+    clavicle_ct:
+        # ...
+
+# model configuration
+models:
+    rsna_inception_500_gender_mcd:
+        # data type must be defined so that the right model provider is
+        # selected plus, if no dataset information is provided on model layer,
+        # the correct default dataset config can be loaded
+        data: rsna_boneage
+        # Provider Configuration is used to create the data type specific
+        # model provider
+        provider_config:
+            base_net: inceptionv3
+            uncertainty_method: mc_dropout
+            img_input_dimensions: [500, 500]
+            variance_net: False
+            with_gender_input: True
+            rescale_boneage: True
+            rebalance_classes: True
+        # Litmodel Configuration is directly passed to constructor of LitModel
+        # (Available) default values can be omitted, or overwritten (see below)
+        litmodel_config:
+            n_samples: 100
+        # Datasets can be overwritten model layer
+        datasets:
+            annotations:
+                train: /path/to/bla
+                val:
+                test:
+            img_base_dirs:
+                train:
+                val:
+                test:
+
+    rsna_inception_500_gender_laplace:
+        data: rsna_boneage
+        provider_config:
+            base_net: inceptionv3
+            uncertainty_method: laplace_approx
+            img_input_dimensions: [500, 500]
+            variance_net: False
+            with_gender_input: True
+            rescale_boneage: True
+            rebalance_classes: True
+        litmodel_config:
+            n_samples: 100
+        # if datasets are not provided, default ones are used (see top of file)
+
+    rsna_inception_500_gender_swag:
+        data: rsna_boneage
+        provider_config:
+            base_net: inceptionv3
+            uncertainty_method: swag
+            img_input_dimensions: [500, 500]
+            variance_net: False
+            with_gender_input: True
+            rescale_boneage: True
+            rebalance_classes: True
+        litmodel_config:
+            n_samples: 100
+            weight_decay: 0.001
+            # momentum: 0.9
+            swa_start_epoch: 150
+            lr: 0.0007
+            swa_lrs: 0.0004
+        datasets:
+            annotations:
+                train: /path/to/bla
+                val:
+                test:
+            # base dir is optional, but if not provided, annotation files must
+            # contain full (absolute) image paths
+            base_dir: null
