@@ -363,6 +363,17 @@ class EvalPlotGenerator:
                 "error_95p_auc_norm_glob",
             ],
         ).set_index("eval_cfg_name")
+        abstentions = pd.DataFrame(
+            columns=[
+                "eval_cfg_name",
+                "max_abstention",
+                "exact_abstention",
+                "max_error",
+                "max_error_95p",
+                "uncertainty_threshold",
+            ],
+        ).set_index(keys=["eval_cfg_name", "max_abstention"])
+
         for eval_cfg_name in eval_cfg_names:
             df = self.eval_runs_data[eval_cfg_name]["prediction_log"]
             df = df.copy(deep=True).sort_values("uncertainty")
@@ -381,6 +392,15 @@ class EvalPlotGenerator:
 
             global_error_max = max(global_error_max, np.max(error_max))
             global_error_95p_max = max(global_error_95p_max, np.max(error_95p_max))
+
+            # Abstentention UQ Thresholds
+            for max_abstention in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
+                row = df[df["prediction_abstention_rate"] <= max_abstention].iloc[0]
+                idx = (eval_cfg_name, max_abstention)
+                abstentions.loc[idx, "exact_abstention"] = row["prediction_abstention_rate"]
+                abstentions.loc[idx, "max_error"] = row["error_running_max"]
+                abstentions.loc[idx, "max_error_95p"] = row["error_95p_running_max"]
+                abstentions.loc[idx, "uncertainty_threshold"] = row["uncertainty"]
 
             # AUC Calculation
             width = 1 / len(df)
@@ -449,6 +469,7 @@ class EvalPlotGenerator:
             error_by_abstention_aucs.sort_values("error_95p_auc"),
             "error_by_abstention_aucs",
         )
+        self._save_dataframe(abstentions, "abstentions")
 
     def plot_calibration_curve(
         self,
