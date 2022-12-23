@@ -71,6 +71,12 @@ sbatch \
 
 ### Submission - Bash Helper Scripts
 
+The `env_export.sh` Script can be adjusted (according to (Slurm) setup) and
+afterwards be used to easily set all required envs with one command:
+```bash
+. env_export.sh
+```
+
 #### Training - Multiple Sub-Version Submission
 The `submit_multiple_subversions.sh` bash script can be used to submit a bunch
 of model trainings at once.
@@ -86,7 +92,18 @@ Usage:
 This will submit 10 Array Jobs for Subversions 1 ... 10 and Version=deepensemble
 for the given model.
 
-#### Evaluation - Mutliple Evaluation Prediction Generation Submission
+#### Evaluation - Baseline Predictions
+The `submit_baseline_prediction_generation.sh` job submits an sbatch job that
+generates baseline predictions (i.e., a "normal" model without any UQ) for given
+model, dataset type, and checkpoint.
+
+The following command could be used for validation data for RSNA Bone Age,
+for example:
+```bash
+./submit_baseline_prediction_generation.sh val rsna_resnet50_500_gender_mcd /ml_logs/rsna_boneage/rsna_resnet50_500_gender_mcd/mcd_150/1/checkpoints/xyz-best-checkpoint.ckpt
+```
+
+#### Evaluation - Submission of Generation of Multiple Evaluation Predictions
 To submit prediction generation runs for all evaluation models/configs given
 in the example file (`eval-config.example.yml`), for eval version
 `rsna_final_eval_1` and `val` dataset, run the follwoing command:
@@ -99,7 +116,7 @@ This command only runs predictions, no plots are created yet (as the different
 jobs create predictions for different evaluation models which should be combined
 in comparison plots afterwards).
 
-To create plots, you can use the following srun command, for example:
+To **create plots**, you can use the following srun command, for example:
 ```
-./srun_eval_plot_generation.sh rsna_final_eval_1 val
+./srun_evaluation_plot_generation.sh rsna_evaluation_best_ckpt val /app/config/evaluation.ma.rsna-boneage.yml
 ```
