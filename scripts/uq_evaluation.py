@@ -237,6 +237,7 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
         undo_age_to_year_transform=DATASET_AGE_TO_YEAR_TRANSFORMS_UNDO[data_type],
         baseline_model_error_df=baseline_model_error_df,
         mean_predictor_model_error_df=mean_predictor_error_df,
+        img_prepend_str=data_type,
     )
     combined_plot_generator.plot_correlation_comparison(method='pearson')
     combined_plot_generator.plot_correlation_comparison(method='kendall')
