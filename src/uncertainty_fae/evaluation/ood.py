@@ -136,6 +136,17 @@ class OutOfDomainEvaluator(ABC):
             Patch(facecolor="white", edgecolor="black", label=orig_data_label),
         ]
 
+        ood_uq_df = pd.DataFrame(
+            columns=[
+                "eval_cfg_name",
+                "ood_cfg_name",
+                "uq_name",
+                "ood_name",
+                "uncertainty_mean",
+                "uncertainty_std",
+            ],
+        ).set_index(keys=["eval_cfg_name", "ood_cfg_name"])
+
         v_pos = 0
         for eval_cfg_name, eval_run_data in eval_runs_data.items():
             v_pos += 1
@@ -152,6 +163,13 @@ class OutOfDomainEvaluator(ABC):
             violin_colors.append(color)
             violin_hatches.append(None)  # no hatch for baseline dataset
             violin_edge_color.append("black")
+
+            # CSV Stats
+            idx = (eval_cfg_name, "orig_data")
+            ood_uq_df.loc[idx, "uq_name"] = uq_name
+            ood_uq_df.loc[idx, "ood_name"] = orig_data_label
+            ood_uq_df.loc[idx, "uncertainty_mean"] = uq_preds["uncertainty"].mean()
+            ood_uq_df.loc[idx, "uncertainty_std"] = uq_preds["uncertainty"].std()
 
             for ood_name, ood_cfg in self.ood_datasets.items():
                 ood_preds = self._load_pred_file(eval_cfg_name, ood_name)
@@ -174,6 +192,14 @@ class OutOfDomainEvaluator(ABC):
                         label=ood_cfg["name"],
                     )
                     legend_elements.append(patch)
+
+                # CSV Stats
+                idx = (eval_cfg_name, ood_name)
+                ood_uq_df.loc[idx, "uq_name"] = uq_name
+                ood_uq_df.loc[idx, "ood_name"] = ood_cfg["name"]
+                ood_uq_df.loc[idx, "uncertainty_mean"] = ood_preds["uncertainty"].mean()
+                ood_uq_df.loc[idx, "uncertainty_std"] = ood_preds["uncertainty"].std()
+
             v_pos += 1
 
         fig, ax = self._get_fig(figsize=(8, 8))
@@ -207,10 +233,11 @@ class OutOfDomainEvaluator(ABC):
             handles=list(reversed(legend_elements)),
             handleheight=3,
             handlelength=4,
-            loc="upper right"
+            loc="upper right",
         )
         fig.suptitle(f"Out-of-Domain Data Uncertainty Comparison - {orig_data_label}")
         self._save_fig(fig, "uq_comparison")
+        ood_uq_df.to_csv(os.path.join(self.plot_dir, "uq_comparison.csv"))
 
     def _generate_prediction_comparison_plot(
         self,
