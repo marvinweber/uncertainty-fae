@@ -243,7 +243,7 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
     combined_plot_generator.plot_correlation_comparison(method='kendall')
     combined_plot_generator.plot_correlation_comparison(method='spearman')
     combined_plot_generator.plot_error_by_abstention_rate()
-    combined_plot_generator.plot_error_by_abstention_rate(only_95_percentile=True)
+    combined_plot_generator.plot_error_by_abstention_rate(only_p95=True)
     combined_plot_generator.plot_error_comparison(plot_type='boxplot')
     combined_plot_generator.plot_error_comparison(plot_type='violin')
     combined_plot_generator.plot_uncertainty_by_error_comparison()

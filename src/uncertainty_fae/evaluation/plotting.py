@@ -76,10 +76,10 @@ class EvalPlotGenerator:
             title="Distribution of Predicted and Ground Truth Age",
             derive_suptitle_from_cfg=eval_cfg_name,
         )
-        ax.set_xlabel("(Predicted) Age")
+        ax.set_xlabel("(Predicted) Age / (Years)")
         ax.hist(
             [df["prediction"].tolist(), df["target"].tolist()],
-            label=["Predicted Age", "Ground Truth Age"],
+            label=["Predicted", "Ground Truth"],
             color=[p_color, TARGET_COLOR],
             bins=bins,
         )
@@ -122,7 +122,7 @@ class EvalPlotGenerator:
 
         ax.legend(handles=[Line2D([0], [0], **MEAN_LEGEND_ENTRY_PROPS)])
         ax.set_ylim(bottom=0)
-        ax.set_xlabel("Age (Binned by Year)")
+        ax.set_xlabel("Age / (Years) [Bin Width = 1 Year]")
         ax.set_ylabel("Uncertainty")
         ax.set_xticks(age_bins)
         self._save_figure(fig, "uncertainty_by_age")
@@ -176,7 +176,7 @@ class EvalPlotGenerator:
                 linestyle="solid",
                 color=color,
                 label=(
-                    "Mean Uncertainty Threshold by Binned ({:.2f} Years) Error; AUC={:.2f}".format(
+                    "Mean Uncertainty Threshold by Binned ({} Years) Error; AUC={:.2f}".format(
                         bin_width,
                         uncertainty_error_lines_and_aucs["mean_line_auc"],
                     )
@@ -199,7 +199,7 @@ class EvalPlotGenerator:
 
         ax.legend(handles=legend_handles)
         ax.set_ylim(bottom=0)
-        ax.set_xlabel("Error (Binned by Year)")
+        ax.set_xlabel(f"Error / (Years) [Bin Width = {bin_width} Years]")
         ax.set_ylabel("Uncertainty")
         ax.set_xticks(error_bins)
         self._save_figure(
@@ -311,8 +311,8 @@ class EvalPlotGenerator:
             ax.plot(pos, mean, **MEAN_POINT_PROPS)
 
         ax.legend(handles=[Line2D([0], [0], **MEAN_LEGEND_ENTRY_PROPS)])
-        ax.set_xlabel("Age (Binned by Year)")
-        ax.set_ylabel("Absolute Error")
+        ax.set_xlabel("Age / (Years) [Bin Width = 1 Year]")
+        ax.set_ylabel("Error / (Years)")
         ax.set_xticks(age_bins)
         self._save_figure(fig, "error_by_age")
 
@@ -330,15 +330,23 @@ class EvalPlotGenerator:
         ax.plot(target, prediction, ".", label="Predictions", color=color)
         ax.plot(target, target, "-", label="Ground Truth", color=TARGET_COLOR)
         ax.legend()
-        ax.set_xlabel("Age (Ground Truth)")
-        ax.set_ylabel("Predicted Age")
+        ax.set_xlabel("Ground Truth Age / (Years)")
+        ax.set_ylabel("Predicted Age / (Years)")
         self._save_figure(fig, "prediction_vs_truth")
 
     def plot_error_by_abstention_rate(
         self,
         eval_cfg_names: Optional[list[str]] = None,
-        only_95_percentile: bool = False,
+        only_p95: bool = False,
     ) -> None:
+        """
+        Plot the absolute error and/or maximum p95 error against the abstention by uncertainty.
+        Saves AUC and Abstention info/overview csvs, too.
+
+        Args:
+            eval_cfg_names: List of eval configs to include in the plot.
+            only_p95: If `true`, no maximum absolute error will be plotted.
+        """
         if not eval_cfg_names:
             eval_cfg_names = list(self.eval_runs_data.keys())
 
@@ -413,7 +421,7 @@ class EvalPlotGenerator:
             error_by_abstention_aucs.loc[eval_cfg_name, "error_95p_auc"] = error_95p_auc
             error_by_abstention_aucs.loc[eval_cfg_name, "error_95p_auc_norm"] = error_95p_auc_norm
 
-            if not only_95_percentile:
+            if not only_p95:
                 ax.plot(abstention_rate, error_max, color=color, linestyle="dotted")
             ax.plot(
                 abstention_rate,
@@ -437,7 +445,7 @@ class EvalPlotGenerator:
             error_by_abstention_aucs["error_95p_auc"] / global_error_95p_max
         )
 
-        if not only_95_percentile:
+        if not only_p95:
             percentile_handles = [
                 Line2D([0], [0], color="black", linestyle="dotted", label="Max Error"),
                 Line2D([0], [0], color="black", linestyle="solid", label="95% Percentile Error"),
@@ -457,10 +465,10 @@ class EvalPlotGenerator:
                 title="UQ Method",
             )
 
-        ax.set_xlabel("Abstention Rate (%)")
-        ax.set_ylabel(f"Max (95% Percentile) Absolute Error")
+        ax.set_xlabel("Abstention Rate / (%)")
+        ax.set_ylabel(f"Max (95th Percentile) Error / (Years)")
         filename = "error_by_abstention_rate"
-        if only_95_percentile:
+        if only_p95:
             filename = f"{filename}_95p"
         if is_comparison > 1:
             filename = f"{filename}_comparison"
@@ -685,13 +693,8 @@ class EvalPlotGenerator:
         else:
             raise ValueError(f"Invalid Plot-Type {plot_type}!")
 
-        ax.legend(
-            handles=legend_handles,
-            bbox_to_anchor=(0, 1.02, 1, 0.2),
-            loc="lower left",
-            borderaxespad=0,
-        )
-        ax.set_xlabel(f"Absolute Error")
+        ax.legend(handles=legend_handles)
+        ax.set_xlabel(f"Absolute Error / (Years)")
         self._save_figure(fig, f"error_comparison_{plot_type}")
 
     def plot_uncertainty_by_error_comparison(
@@ -744,8 +747,8 @@ class EvalPlotGenerator:
 
         ax.set_ylim(bottom=0)
         ax.set_xticks(error_bins)
-        ax.set_xlabel(f"Absolute Error (Binned by Years)")
-        ax.set_ylabel("Uncertainty (Average / Error-Bin)")
+        ax.set_xlabel(f"Error / (Years) [Bin Width = {bin_width} Years]")
+        ax.set_ylabel("Mean Uncertainty")
         ax.legend(
             handles=legend_elements,
             bbox_to_anchor=(1.0, 0.5),
@@ -895,7 +898,7 @@ class EvalPlotGenerator:
 
         ax.set_ylim(bottom=0)
         ax.set_xticks(error_bins)
-        ax.set_xlabel(f"Absolute Error")
+        ax.set_xlabel(f"Error / (Years)")
         ax.set_ylabel("Uncertainty")
         if plot_type in ["mean", "mean_min"]:
             mean_min_handles.append(
@@ -995,8 +998,8 @@ class EvalPlotGenerator:
 
         ax.set_ylim(bottom=0)
         ax.set_xticks(age_bins)
-        ax.set_xlabel("Age (Binned by Year)")
-        ax.set_ylabel("Absolute Error (Average / Year-Bin)")
+        ax.set_xlabel("Age / (Years) [Bin Width = 1 Year]")
+        ax.set_ylabel("Mean Absolute Error")
         ax.legend(
             handles=legend_elements,
             bbox_to_anchor=(1.0, 0.5),
