@@ -120,7 +120,7 @@ evaluations:
         # RSNA Bone Age Variance Net
         rsna_resnet50_500_gender_variance_mcd_10:
             model: rsna_resnet50_500_gender_variance_mcd
-            name: "VAR-MCDO-10"
+            name: "VarNet-MCDO-10"
             color: "#36C27C"
             marker: "h"
             checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd_150/1/checkpoints/last.ckpt
@@ -130,7 +130,7 @@ evaluations:
 
         rsna_resnet50_500_gender_variance_mcd_100:
             model: rsna_resnet50_500_gender_variance_mcd
-            name: "VAR-MCDO-100"
+            name: "VarNet-MCDO-100"
             color: "#238051"
             marker: "H"
             checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd_150/1/checkpoints/last.ckpt
@@ -140,7 +140,7 @@ evaluations:
 
         rsna_resnet50_500_gender_variance_de_10:
             model: rsna_resnet50_500_gender_variance_de
-            name: "VAR-DE-10"
+            name: "VarNet-DE-10"
             color: "#B0BEC5"
             marker: "<"
             checkpoint: null
@@ -160,7 +160,7 @@ evaluations:
 
         rsna_resnet50_500_gender_variance_de_20:
             model: rsna_resnet50_500_gender_variance_de
-            name: "VAR-DE-20"
+            name: "VarNet-DE-20"
             color: "#546E7A"
             marker: ">"
             checkpoint: null
@@ -296,7 +296,7 @@ evaluations:
         # RSNA Bone Age Variance Net
         rsna_resnet50_500_gender_variance_mcd_10:
             model: rsna_resnet50_500_gender_variance_mcd
-            name: "VAR-MCDO-10"
+            name: "VarNet-MCDO-10"
             color: "#36C27C"
             marker: "h"
             checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd_150/1/checkpoints/best.ckpt
@@ -306,7 +306,7 @@ evaluations:
 
         rsna_resnet50_500_gender_variance_mcd_100:
             model: rsna_resnet50_500_gender_variance_mcd
-            name: "VAR-MCDO-100"
+            name: "VarNet-MCDO-100"
             color: "#238051"
             marker: "H"
             checkpoint: /ml_logs/rsna_boneage/rsna_resnet50_500_gender_variance_mcd/mcd_150/1/checkpoints/best.ckpt
@@ -316,7 +316,7 @@ evaluations:
 
         rsna_resnet50_500_gender_variance_de_10:
             model: rsna_resnet50_500_gender_variance_de
-            name: "VAR-DE-10"
+            name: "VarNet-DE-10"
             color: "#B0BEC5"
             marker: "<"
             checkpoint: null
@@ -336,7 +336,7 @@ evaluations:
 
         rsna_resnet50_500_gender_variance_de_20:
             model: rsna_resnet50_500_gender_variance_de
-            name: "VAR-DE-20"
+            name: "VarNet-DE-20"
             color: "#546E7A"
             marker: ">"
             checkpoint: null
