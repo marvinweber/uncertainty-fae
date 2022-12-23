@@ -8,7 +8,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib.collections import PolyCollection
 from matplotlib.figure import Figure
-from matplotlib.patches import Patch, Rectangle
+from matplotlib.patches import Patch
 from uncertainty_fae.evaluation.plotting import MEAN_LEGEND_ENTRY_PROPS, MEAN_POINT_PROPS
 
 from uncertainty_fae.evaluation.util import EvalRunData
