@@ -358,7 +358,7 @@ class EvalPlotGenerator:
         legend_handles = []
 
         global_error_max = 0
-        global_error_95p_max = 0
+        global_error_p95_max = 0
 
         error_by_abstention_aucs = pd.DataFrame(
             columns=[
@@ -366,9 +366,9 @@ class EvalPlotGenerator:
                 "error_auc",
                 "error_auc_norm",
                 "error_auc_norm_glob",
-                "error_95p_auc",
-                "error_95p_auc_norm",
-                "error_95p_auc_norm_glob",
+                "error_p95_auc",
+                "error_p95_auc_norm",
+                "error_p95_auc_norm_glob",
             ],
         ).set_index("eval_cfg_name")
         abstentions = pd.DataFrame(
@@ -377,7 +377,7 @@ class EvalPlotGenerator:
                 "max_abstention",
                 "exact_abstention",
                 "max_error",
-                "max_error_95p",
+                "max_error_p95",
                 "uncertainty_threshold",
             ],
         ).set_index(keys=["eval_cfg_name", "max_abstention"])
@@ -387,19 +387,19 @@ class EvalPlotGenerator:
             df = df.copy(deep=True).sort_values("uncertainty")
             df_rolling = df.set_index("uncertainty").rolling(len(df), min_periods=1)
             df["error_running_max"] = df_rolling["error"].max().values
-            df["error_95p_running"] = df_rolling["error"].quantile(0.95).values
+            df["error_p95_running"] = df_rolling["error"].quantile(0.95).values
             df_rolling = df.set_index("uncertainty").rolling(len(df), min_periods=1)
-            df["error_95p_running_max"] = df_rolling["error_95p_running"].max().values
+            df["error_p95_running_max"] = df_rolling["error_p95_running"].max().values
             df["pos"] = np.arange(len(df))
             df["prediction_abstention_rate"] = 1 - (df["pos"] + 1) / len(df)
 
             color = self.eval_runs_data[eval_cfg_name]["color"]
             error_max = df["error_running_max"].tolist()
-            error_95p_max = df["error_95p_running_max"].tolist()
+            error_p95_max = df["error_p95_running_max"].tolist()
             abstention_rate = df["prediction_abstention_rate"].tolist()
 
             global_error_max = max(global_error_max, np.max(error_max))
-            global_error_95p_max = max(global_error_95p_max, np.max(error_95p_max))
+            global_error_p95_max = max(global_error_p95_max, np.max(error_p95_max))
 
             # Abstentention UQ Thresholds
             for max_abstention in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
@@ -407,25 +407,25 @@ class EvalPlotGenerator:
                 idx = (eval_cfg_name, max_abstention)
                 abstentions.loc[idx, "exact_abstention"] = row["prediction_abstention_rate"]
                 abstentions.loc[idx, "max_error"] = row["error_running_max"]
-                abstentions.loc[idx, "max_error_95p"] = row["error_95p_running_max"]
+                abstentions.loc[idx, "max_error_p95"] = row["error_p95_running_max"]
                 abstentions.loc[idx, "uncertainty_threshold"] = row["uncertainty"]
 
             # AUC Calculation
             width = 1 / len(df)
             error_auc = sum([error * width for error in df["error_running_max"].tolist()])
             error_auc_norm = error_auc / df["error_running_max"].max()
-            error_95p_auc = sum([error * width for error in df["error_95p_running_max"].tolist()])
-            error_95p_auc_norm = error_95p_auc / df["error_95p_running_max"].max()
+            error_p95_auc = sum([error * width for error in df["error_p95_running_max"].tolist()])
+            error_p95_auc_norm = error_p95_auc / df["error_p95_running_max"].max()
             error_by_abstention_aucs.loc[eval_cfg_name, "error_auc"] = error_auc
             error_by_abstention_aucs.loc[eval_cfg_name, "error_auc_norm"] = error_auc_norm
-            error_by_abstention_aucs.loc[eval_cfg_name, "error_95p_auc"] = error_95p_auc
-            error_by_abstention_aucs.loc[eval_cfg_name, "error_95p_auc_norm"] = error_95p_auc_norm
+            error_by_abstention_aucs.loc[eval_cfg_name, "error_p95_auc"] = error_p95_auc
+            error_by_abstention_aucs.loc[eval_cfg_name, "error_p95_auc_norm"] = error_p95_auc_norm
 
             if not only_p95:
                 ax.plot(abstention_rate, error_max, color=color, linestyle="dotted")
             ax.plot(
                 abstention_rate,
-                error_95p_max,
+                error_p95_max,
                 color=color,
             )
 
@@ -441,14 +441,16 @@ class EvalPlotGenerator:
         error_by_abstention_aucs["error_auc_norm_glob"] = (
             error_by_abstention_aucs["error_auc"] / global_error_max
         )
-        error_by_abstention_aucs["error_95p_auc_norm_glob"] = (
-            error_by_abstention_aucs["error_95p_auc"] / global_error_95p_max
+        error_by_abstention_aucs["error_p95_auc_norm_glob"] = (
+            error_by_abstention_aucs["error_p95_auc"] / global_error_p95_max
         )
 
         if not only_p95:
             percentile_handles = [
                 Line2D([0], [0], color="black", linestyle="dotted", label="Max Error"),
-                Line2D([0], [0], color="black", linestyle="solid", label="95% Percentile Error"),
+                Line2D(
+                    [0], [0], color="black", linestyle="solid", label="Max 95th Percentile Error"
+                ),
             ]
             ax.add_artist(
                 ax.legend(
@@ -469,12 +471,12 @@ class EvalPlotGenerator:
         ax.set_ylabel(f"Max (95th Percentile) Error / (Years)")
         filename = "error_by_abstention_rate"
         if only_p95:
-            filename = f"{filename}_95p"
+            filename = f"{filename}_p95"
         if is_comparison:
             filename = f"{filename}_comparison"
         self._save_figure(fig, filename)
         self._save_dataframe(
-            error_by_abstention_aucs.sort_values("error_95p_auc"),
+            error_by_abstention_aucs.sort_values("error_p95_auc"),
             "error_by_abstention_aucs",
         )
         self._save_dataframe(abstentions, "abstentions")
