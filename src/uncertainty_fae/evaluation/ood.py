@@ -111,6 +111,7 @@ class OutOfDomainEvaluator(ABC):
         self,
         eval_runs_data: dict[str, EvalRunData],
         orig_data_label: str,
+        legend_loc: str = "upper right",
     ) -> None:
         """
         Generate a plot comparing the Uncertainties of regular data with OoD datasets.
@@ -122,6 +123,7 @@ class OutOfDomainEvaluator(ABC):
                 with. If no OoD data is available for any of the included eval runs (e.g., the
                 predictions have not been created for that UQ method, it is skipped)
             orig_data_label: The name of the "regular" data (in the legend and title).
+            legend_loc: The position/ location of the legend.
         """
         violin_positions = []
         violin_means = []
@@ -233,6 +235,7 @@ class OutOfDomainEvaluator(ABC):
             handles=list(reversed(legend_elements)),
             handleheight=3,
             handlelength=4,
+            loc=legend_loc,
         )
         fig.suptitle(f"Out-of-Domain Data Uncertainty Comparison - {orig_data_label}")
         self._save_fig(fig, "uq_comparison")

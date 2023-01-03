@@ -73,5 +73,5 @@ class ClavicleCtOutOfDomainEvaluator(OutOfDomainEvaluator):
 
     def generate_plots(self, eval_runs_data: dict[str, EvalRunData]) -> None:
         orig_data_label = "Clavicle CT"
-        self._generate_uq_comparison_plot(eval_runs_data, orig_data_label)
+        self._generate_uq_comparison_plot(eval_runs_data, orig_data_label, "lower right")
         self._generate_prediction_comparison_plot(eval_runs_data, orig_data_label)
