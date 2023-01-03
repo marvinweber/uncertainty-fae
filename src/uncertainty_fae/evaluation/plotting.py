@@ -470,7 +470,7 @@ class EvalPlotGenerator:
         filename = "error_by_abstention_rate"
         if only_p95:
             filename = f"{filename}_95p"
-        if is_comparison > 1:
+        if is_comparison:
             filename = f"{filename}_comparison"
         self._save_figure(fig, filename)
         self._save_dataframe(
