@@ -402,7 +402,7 @@ class EvalPlotGenerator:
             global_error_95p_max = max(global_error_95p_max, np.max(error_95p_max))
 
             # Abstentention UQ Thresholds
-            for max_abstention in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
+            for max_abstention in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
                 row = df[df["prediction_abstention_rate"] <= max_abstention].iloc[0]
                 idx = (eval_cfg_name, max_abstention)
                 abstentions.loc[idx, "exact_abstention"] = row["prediction_abstention_rate"]
