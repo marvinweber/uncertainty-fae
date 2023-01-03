@@ -154,7 +154,7 @@ class EvalPlotGenerator:
             widths.append(width)
 
         fig, ax = self._get_figure(
-            title="Uncertainty by Error",
+            title="Uncertainty by Absolute Error",
             derive_suptitle_from_cfg=eval_cfg_name,
         )
         legend_handles = [Line2D([0], [0], **MEAN_LEGEND_ENTRY_PROPS)]
@@ -176,7 +176,7 @@ class EvalPlotGenerator:
                 linestyle="solid",
                 color=color,
                 label=(
-                    "Mean Uncertainty Threshold by Binned ({} Years) Error; AUC={:.2f}".format(
+                    "Mean Uncertainty Threshold by Binned ({} Years) abs. Error; AUC={:.2f}".format(
                         bin_width,
                         uncertainty_error_lines_and_aucs["mean_line_auc"],
                     )
@@ -187,7 +187,7 @@ class EvalPlotGenerator:
                 uncertainty_error_lines_and_aucs["min_line_values"],
                 linestyle="dashed",
                 color=color,
-                label="Min Uncertainty Threshold by Error; AUC={:.2f}".format(
+                label="Min Uncertainty Threshold by abs. Error; AUC={:.2f}".format(
                     uncertainty_error_lines_and_aucs["min_line_auc"],
                 ),
             )
@@ -199,7 +199,7 @@ class EvalPlotGenerator:
 
         ax.legend(handles=legend_handles)
         ax.set_ylim(bottom=0)
-        ax.set_xlabel(f"Error / (Years) [Bin Width = {bin_width} Years]")
+        ax.set_xlabel(f"Absolute Error / (Years) [Bin Width = {bin_width} Years]")
         ax.set_ylabel("Uncertainty")
         ax.set_xticks(error_bins)
         self._save_figure(
@@ -296,7 +296,7 @@ class EvalPlotGenerator:
             widths.append(width)
 
         fig, ax = self._get_figure(
-            title="Error by Age",
+            title="Absolute Error by Age",
             derive_suptitle_from_cfg=eval_cfg_name,
         )
 
@@ -312,7 +312,7 @@ class EvalPlotGenerator:
 
         ax.legend(handles=[Line2D([0], [0], **MEAN_LEGEND_ENTRY_PROPS)])
         ax.set_xlabel("Age / (Years) [Bin Width = 1 Year]")
-        ax.set_ylabel("Error / (Years)")
+        ax.set_ylabel("Absolute Error / (Years)")
         ax.set_xticks(age_bins)
         self._save_figure(fig, "error_by_age")
 
@@ -352,7 +352,7 @@ class EvalPlotGenerator:
 
         is_comparison = len(eval_cfg_names) > 1
         fig, ax = self._get_figure(
-            title="Error by Abstention Rate",
+            title="Absolute Error by Abstention Rate",
             suptitle=self.eval_runs_data[eval_cfg_names[0]]["data_display_name"],
         )
         legend_handles = []
@@ -447,9 +447,13 @@ class EvalPlotGenerator:
 
         if not only_p95:
             percentile_handles = [
-                Line2D([0], [0], color="black", linestyle="dotted", label="Max Error"),
+                Line2D([0], [0], color="black", linestyle="dotted", label="Max abs. Error"),
                 Line2D(
-                    [0], [0], color="black", linestyle="solid", label="Max 95th Percentile Error"
+                    [0],
+                    [0],
+                    color="black",
+                    linestyle="solid",
+                    label="Max 95th Percentile abs. Error",
                 ),
             ]
             ax.add_artist(
@@ -468,7 +472,7 @@ class EvalPlotGenerator:
             )
 
         ax.set_xlabel("Abstention Rate / (%)")
-        ax.set_ylabel(f"Max (95th Percentile) Error / (Years)")
+        ax.set_ylabel(f"Max (95th Percentile) abs. Error / (Years)")
         filename = "error_by_abstention_rate"
         if only_p95:
             filename = f"{filename}_p95"
@@ -601,7 +605,7 @@ class EvalPlotGenerator:
             title=f"Uncertainty-Error {method.title()} Correlation Comparison",
             suptitle=eval_run_data["data_display_name"],  # Use data display name of last entry
         )
-        ax.set_ylabel(f"({method.title()}) Correlation of Uncertainty and Error")
+        ax.set_ylabel(f"({method.title()}) Correlation of Uncertainty and Absolute Error")
         ax.bar(labels, corrs, color=colors)
         ax.set_xticks(labels)
         ax.set_xticklabels(labels, rotation=30, ha="right", rotation_mode="anchor")
@@ -638,7 +642,7 @@ class EvalPlotGenerator:
             colors.append(eval_run_data["color"])
 
         fig, ax = self._get_figure(
-            title=f"Comparison of Error by (UQ) Method",
+            title=f"Comparison of Absolute Error by (UQ) Method",
             suptitle=self.eval_runs_data[eval_cfg_names[0]]["data_display_name"],
         )
 
@@ -711,7 +715,7 @@ class EvalPlotGenerator:
         meta_cfg = self.eval_runs_data[eval_cfg_names[0]]
         fig, ax = self._get_figure(
             figsize=(11, 7),
-            title="Uncertainty by Error - Comparison",
+            title="Uncertainty by Absolute Error - Comparison",
             suptitle=meta_cfg["data_display_name"],
         )
 
@@ -749,7 +753,7 @@ class EvalPlotGenerator:
 
         ax.set_ylim(bottom=0)
         ax.set_xticks(error_bins)
-        ax.set_xlabel(f"Error / (Years) [Bin Width = {bin_width} Years]")
+        ax.set_xlabel(f"Absolute Error / (Years) [Bin Width = {bin_width} Years]")
         ax.set_ylabel("Mean Uncertainty")
         ax.legend(
             handles=legend_elements,
@@ -855,7 +859,7 @@ class EvalPlotGenerator:
         meta_cfg = self.eval_runs_data[eval_cfg_names[0]]
         fig, ax = self._get_figure(
             figsize=(11, 7),
-            title="Uncertainty by Error AUC - Comparison",
+            title="Uncertainty by abs. Error AUC - Comparison",
             suptitle=meta_cfg["data_display_name"],
         )
 
@@ -900,7 +904,7 @@ class EvalPlotGenerator:
 
         ax.set_ylim(bottom=0)
         ax.set_xticks(error_bins)
-        ax.set_xlabel(f"Error / (Years)")
+        ax.set_xlabel(f"Absolute Error / (Years)")
         ax.set_ylabel("Uncertainty")
         if plot_type in ["mean", "mean_min"]:
             mean_min_handles.append(
@@ -909,7 +913,7 @@ class EvalPlotGenerator:
                     [0],
                     color="black",
                     linestyle="solid",
-                    label="Mean Uncertainty Threshold by Binned ({:.1f} Years) Error".format(
+                    label="Mean Uncertainty Threshold by Binned ({:.1f} Years) abs. Error".format(
                         bin_width,
                     ),
                 )
@@ -958,7 +962,7 @@ class EvalPlotGenerator:
 
         meta_cfg = self.eval_runs_data[eval_cfg_names[0]]
         fig, ax = self._get_figure(
-            title="Error by Age - Comparison",
+            title="Absolute Error by Age - Comparison",
             suptitle=meta_cfg["data_display_name"],
             figsize=(11, 7),
         )
