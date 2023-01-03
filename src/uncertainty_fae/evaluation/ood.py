@@ -233,7 +233,6 @@ class OutOfDomainEvaluator(ABC):
             handles=list(reversed(legend_elements)),
             handleheight=3,
             handlelength=4,
-            loc="upper right",
         )
         fig.suptitle(f"Out-of-Domain Data Uncertainty Comparison - {orig_data_label}")
         self._save_fig(fig, "uq_comparison")
