@@ -1,0 +1,23 @@
+eval_cfg_name,ood_cfg_name,uq_name,ood_name,uncertainty_mean,uncertainty_std
+clavicle_mcd_10,orig_data,MCDO-10,Clavicle CT,0.6350103431473632,0.3284814171224651
+clavicle_mcd_10,random_upper_body_patches,MCDO-10,Random Upper Body Patches,0.8303723531270486,0.2298854108747588
+clavicle_mcd_100,orig_data,MCDO-100,Clavicle CT,0.6540431997032435,0.2773865462814149
+clavicle_mcd_100,random_upper_body_patches,MCDO-100,Random Upper Body Patches,0.8525674032961733,0.1327902002963139
+clavicle_de_10,orig_data,DE-10,Clavicle CT,1.5037124376864894,0.6008277024797335
+clavicle_de_10,random_upper_body_patches,DE-10,Random Upper Body Patches,5.369757370394841,1.0205548057088416
+clavicle_de_20,orig_data,DE-20,Clavicle CT,1.510854075120895,0.5308796945530473
+clavicle_de_20,random_upper_body_patches,DE-20,Random Upper Body Patches,4.678320831152613,0.760388592072293
+clavicle_laplace,orig_data,LA,Clavicle CT,1.241224145491102,0.3455163951968444
+clavicle_laplace,random_upper_body_patches,LA,Random Upper Body Patches,1.712283916149385,0.38737032591372744
+clavicle_swag,orig_data,SWAG,Clavicle CT,2.359136640934701,0.6009215731457977
+clavicle_swag,random_upper_body_patches,SWAG,Random Upper Body Patches,2.813510556178579,0.5516417049340779
+clavicle_swag_no_wd,orig_data,SWAG-NO-WD,Clavicle CT,1.8256874419031093,0.36769617648811437
+clavicle_swag_no_wd,random_upper_body_patches,SWAG-NO-WD,Random Upper Body Patches,2.7582913279217394,0.6743332181960134
+clavicle_variance_mcd_10,orig_data,VarNet-MCDO-10,Clavicle CT,3.9579878980221874,0.6301853576096927
+clavicle_variance_mcd_10,random_upper_body_patches,VarNet-MCDO-10,Random Upper Body Patches,3.766786790147195,0.6681632639718519
+clavicle_variance_mcd_100,orig_data,VarNet-MCDO-100,Clavicle CT,3.9492224680896006,0.6281933474429475
+clavicle_variance_mcd_100,random_upper_body_patches,VarNet-MCDO-100,Random Upper Body Patches,3.767192309533094,0.6510887148779644
+clavicle_variance_de_10,orig_data,VarNet-DE-10,Clavicle CT,4.270755725245266,0.7061176586747034
+clavicle_variance_de_10,random_upper_body_patches,VarNet-DE-10,Random Upper Body Patches,4.342089620474732,0.6560212288379031
+clavicle_variance_de_20,orig_data,VarNet-DE-20,Clavicle CT,4.170650270754905,0.6840554947529129
+clavicle_variance_de_20,random_upper_body_patches,VarNet-DE-20,Random Upper Body Patches,4.253247039720864,0.6272696375271735

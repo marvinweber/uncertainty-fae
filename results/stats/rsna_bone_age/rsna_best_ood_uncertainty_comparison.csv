@@ -1,0 +1,34 @@
+eval_cfg_name,ood_cfg_name,uq_name,ood_name,uncertainty_mean,uncertainty_std
+rsna_resnet50_500_gender_mcd_10,orig_data,MCDO-10,RSNA Bone Age,0.3571943248698094,0.15902769039439693
+rsna_resnet50_500_gender_mcd_10,chest_xray,MCDO-10,Chest X-Ray,0.4168283947436427,0.15559320071053512
+rsna_resnet50_500_gender_mcd_10,oct,MCDO-10,OCT,0.4382732390214999,0.14450631754123436
+rsna_resnet50_500_gender_mcd_100,orig_data,MCDO-100,RSNA Bone Age,0.36942520907912496,0.13714144435074346
+rsna_resnet50_500_gender_mcd_100,chest_xray,MCDO-100,Chest X-Ray,0.42767710555412675,0.1240812936047582
+rsna_resnet50_500_gender_mcd_100,oct,MCDO-100,OCT,0.45019982601006825,0.10461184327229238
+rsna_resnet50_500_gender_de_10,orig_data,DE-10,RSNA Bone Age,0.23413013008351202,0.0920467792585871
+rsna_resnet50_500_gender_de_10,chest_xray,DE-10,Chest X-Ray,3.827992446422034,1.5446198348549578
+rsna_resnet50_500_gender_de_10,oct,DE-10,OCT,1.2272706231693429,1.1029009480975305
+rsna_resnet50_500_gender_de_20,orig_data,DE-20,RSNA Bone Age,0.23367329953748558,0.08421893375825268
+rsna_resnet50_500_gender_de_20,chest_xray,DE-20,Chest X-Ray,3.976613292365398,1.3930944126938674
+rsna_resnet50_500_gender_de_20,oct,DE-20,OCT,1.2839632902741431,1.0081827559146452
+rsna_resnet50_500_gender_laplace,orig_data,LA,RSNA Bone Age,0.44636560964429783,0.06619729814140456
+rsna_resnet50_500_gender_laplace,chest_xray,LA,Chest X-Ray,1.1590422395250348,0.44601648424004947
+rsna_resnet50_500_gender_laplace,oct,LA,OCT,1.1965226029992104,0.27429962381427486
+rsna_resnet50_500_gender_swag,orig_data,SWAG,RSNA Bone Age,0.8535861039019995,0.2624573811366077
+rsna_resnet50_500_gender_swag,chest_xray,SWAG,Chest X-Ray,4.610039735657378,1.0234898821299763
+rsna_resnet50_500_gender_swag,oct,SWAG,OCT,3.071803493022919,0.5640389253574257
+rsna_resnet50_500_gender_swag_no_wd,orig_data,SWAG-NO-WD,RSNA Bone Age,1.804792037530566,1.0306737883298576
+rsna_resnet50_500_gender_swag_no_wd,chest_xray,SWAG-NO-WD,Chest X-Ray,4.565980952877708,1.0691014623667594
+rsna_resnet50_500_gender_swag_no_wd,oct,SWAG-NO-WD,OCT,2.2944187483708065,0.9670292970096525
+rsna_resnet50_500_gender_variance_mcd_10,orig_data,VarNet-MCDO-10,RSNA Bone Age,0.9740416189421197,0.19804745245790392
+rsna_resnet50_500_gender_variance_mcd_10,chest_xray,VarNet-MCDO-10,Chest X-Ray,1.1589614789396905,0.22602947305442275
+rsna_resnet50_500_gender_variance_mcd_10,oct,VarNet-MCDO-10,OCT,0.8744546512444815,0.14983967326508751
+rsna_resnet50_500_gender_variance_mcd_100,orig_data,VarNet-MCDO-100,RSNA Bone Age,0.9802072467609461,0.1826706550889569
+rsna_resnet50_500_gender_variance_mcd_100,chest_xray,VarNet-MCDO-100,Chest X-Ray,1.1614434538588931,0.2091475824675951
+rsna_resnet50_500_gender_variance_mcd_100,oct,VarNet-MCDO-100,OCT,0.8797908187429111,0.125169447962705
+rsna_resnet50_500_gender_variance_de_10,orig_data,VarNet-DE-10,RSNA Bone Age,0.832343482378687,0.13874037635127937
+rsna_resnet50_500_gender_variance_de_10,chest_xray,VarNet-DE-10,Chest X-Ray,1.2883646139545955,0.1531141938180161
+rsna_resnet50_500_gender_variance_de_10,oct,VarNet-DE-10,OCT,0.9943339998404185,0.16396119795488528
+rsna_resnet50_500_gender_variance_de_20,orig_data,VarNet-DE-20,RSNA Bone Age,0.8306399123015628,0.14887456693307824
+rsna_resnet50_500_gender_variance_de_20,chest_xray,VarNet-DE-20,Chest X-Ray,1.2870918032331544,0.1520689026188564
+rsna_resnet50_500_gender_variance_de_20,oct,VarNet-DE-20,OCT,0.9835180835286775,0.16575646227799432

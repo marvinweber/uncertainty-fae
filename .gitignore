@@ -7,4 +7,3 @@ __pycache__
 **/*train_logs*
 **/*eval_logs*
 lightning_logs
-results
