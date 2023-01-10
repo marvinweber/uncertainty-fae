@@ -71,7 +71,8 @@ If you want to write and/or use the notebooks, you should install the
 
 ```bash
 # Inside the Container
-python -m pip install ipykernel ipywidgets
+# Note, that version >= 8 caused trouble with interactive widgets (Jan 2023).
+python -m pip install ipykernel "ipywidgets<8" ipympl
 ```
 
 ## Uncertainty Framework
