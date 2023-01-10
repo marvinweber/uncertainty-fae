@@ -3,8 +3,8 @@
 ## Directory Structure
 - `config`: (Example) config files.
 - `notebooks`: Notebooks with examples and or smaller evaluations, etc.
-- `results`: Contains a few results (CSV statistics). See `results/README.md`
-  for details.
+- `results`: Contains a few results (CSV statistics). See
+  `results/stats/README.md` for details.
 - `scripts`: Python scripts for training, evaluation, etc.
 - `slurm_commands`: Scripts and Description for Slurm Job Usage (for training and
   evaluation) for the FAE framework.
