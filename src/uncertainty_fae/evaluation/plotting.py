@@ -376,6 +376,7 @@ class EvalPlotGenerator:
                 "eval_cfg_name",
                 "max_abstention",
                 "exact_abstention",
+                "error_mean",
                 "max_error",
                 "max_error_p95",
                 "uncertainty_threshold",
@@ -386,6 +387,7 @@ class EvalPlotGenerator:
             df = self.eval_runs_data[eval_cfg_name]["prediction_log"]
             df = df.copy(deep=True).sort_values("uncertainty")
             df_rolling = df.set_index("uncertainty").rolling(len(df), min_periods=1)
+            df["error_running_mean"] = df_rolling["error"].mean().values
             df["error_running_max"] = df_rolling["error"].max().values
             df["error_p95_running"] = df_rolling["error"].quantile(0.95).values
             df_rolling = df.set_index("uncertainty").rolling(len(df), min_periods=1)
@@ -406,6 +408,7 @@ class EvalPlotGenerator:
                 row = df[df["prediction_abstention_rate"] <= max_abstention].iloc[0]
                 idx = (eval_cfg_name, max_abstention)
                 abstentions.loc[idx, "exact_abstention"] = row["prediction_abstention_rate"]
+                abstentions.loc[idx, "error_mean"] = row["error_running_mean"]
                 abstentions.loc[idx, "max_error"] = row["error_running_max"]
                 abstentions.loc[idx, "max_error_p95"] = row["error_p95_running_max"]
                 abstentions.loc[idx, "uncertainty_threshold"] = row["uncertainty"]
