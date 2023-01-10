@@ -1,10 +1,10 @@
 # Uncertainty Quantification in Forensic Age Estimation
 
-(!) WIP
-
 ## Directory Structure
 - `config`: (Example) config files.
 - `notebooks`: Notebooks with examples and or smaller evaluations, etc.
+- `results`: Contains a few results (CSV statistics). See `results/README.md`
+  for details.
 - `scripts`: Python scripts for training, evaluation, etc.
 - `slurm_commands`: Scripts and Description for Slurm Job Usage (for training and
   evaluation) for the FAE framework.
@@ -77,7 +77,7 @@ python -m pip install ipykernel ipywidgets
 ## Uncertainty Framework
 The `uncertainty_fae` together with the provided `scripts` can be seen as a
 lightweight "framework" to conduct uncertainty experiments in the context of
-age estimation (probably also for similar, regression based tasks).
+age estimation (probably also for similar, regression-based tasks).
 
 The package defines a few interfaces and utility classes/methods, that help to
 implement and test UQ integrations.
@@ -87,9 +87,11 @@ implement and test UQ integrations.
 ### RSNA Bone Age
 Source:
 [RSNA Pediatric Bone Age Challenge](https://pubs.rsna.org/doi/10.1148/radiol.2018180736)  
-Download: [Dataset and Annotations](https://www.rsna.org/education/ai-resources-and-training/ai-image-challenge/RSNA-Pediatric-Bone-Age-Challenge-2017)
+Download: [Dataset and Annotations](https://www.rsna.org/education/ai-resources-and-training/ai-image-challenge/RSNA-Pediatric-Bone-Age-Challenge-2017)  
+Content: X-ray scans of hands labeled with sex and expert-assessed bone age.
 
-TBD
+Models and Data Handling regarding this dateset are located in the
+`src/rsna_boneage` package.
 
 ### Clavicle CT
 Unfortunately, the **Clavicle CT** dataset is an internal data set of the
@@ -99,9 +101,40 @@ The architecture (network, LitModels and UQ integration) can still be inspected
 from the `src/clavicle_ct` package.
 
 ## Scripts
+The `scripts` directory contains a few scripts to run trainings, evaluations, 
+and so on. Training and Evaluation are described below, apart from that:
+
+- `create_baseline_model_predictions.py`: Can be used to create predictions with
+  a model not using Uncertainty Quantification (as baseline/ for comparison).
+- `clavicle_ct/generate_ood_images.py`: Script to generate/ extract OoD patches
+  (see thesis for more information) from the full-body CT scans.
+- `clavicle_ct/train_autoencoder.py`: Script to train an autoencoder for the
+  Clavicle CT Base model (the weights of the autoencoder were used as
+  initialization of the AgeNet; see thesis).
 
 ### Training
-TBD
+The training script allows to train a specific model for a specific dataset
+(RSNA Bone Age or Clavicle CT).  
+The help `python scripts/training.py --help` should explain most parameters,
+for more information refer to uses in the `slurm_commands` directory.
+
+A config (example ones are provided in the `config` directory) must be provided.
+It defines available models and their parameters.
+
+This example call trains the SWAG UQ Model for the Clavicle CT datset for
+a maximum of 100 epochs:
+```bash
+python scripts/training.py --max-epochs 100 --config config/models.ma.yml clavicle_swag
+```
 
 ### Evaluation
-TBD
+The `scripts/uq_evaluation.py` can be used to forwared any dataset (train,
+val, test) through one of the (in the config) defined models.  
+It can be used to create predictions (they are stored in CSV files) and to
+create evaluation plots and metrics.
+
+A evaluation config is required and it should define models, where to find
+their checkpoints (from training), and the model parameters.  
+Example evaluation configs are provided in the `config` directory and the help
+of the command (`python scripts/uq_evaluation.py --help`) explains available
+flags and parameters.
