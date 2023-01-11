@@ -42,11 +42,6 @@ DATASET_AGE_TO_YEAR_TRANSFORMS = {
     'clavicle_ct': lambda df_ser: df_ser / 365.25,  # days -> year
 }
 
-DATASET_AGE_TO_YEAR_TRANSFORMS_UNDO = {
-    'rsna_boneage': lambda df_ser: df_ser * 12,  # year -> month
-    'clavicle_ct': lambda df_ser: df_ser * 365.25,  # year -> days
-}
-
 def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
     if len(eval_run_cfg.eval_only) == 0:
         logger.error('No Evaluation Configs could be found!')
@@ -193,7 +188,6 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
             eval_runs_data,
             eval_plot_dir,
             img_prepend_str=eval_cfg_name,
-            undo_age_to_year_transform=DATASET_AGE_TO_YEAR_TRANSFORMS_UNDO[data_type]
         )
         plot_generator.plot_age_distribution(eval_cfg_name)
         plot_generator.plot_uncertainty_by_age(eval_cfg_name)
@@ -234,7 +228,6 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
     combined_plot_generator = EvalPlotGenerator(
         eval_runs_data,
         combined_plots_path,
-        undo_age_to_year_transform=DATASET_AGE_TO_YEAR_TRANSFORMS_UNDO[data_type],
         baseline_model_error_df=baseline_model_error_df,
         mean_predictor_model_error_df=mean_predictor_error_df,
         img_prepend_str=data_type,
@@ -253,7 +246,7 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
     combined_plot_generator.save_uncertainty_by_error_aucs_csv()
     combined_plot_generator.save_uncertainty_reorder_ranks_csv()
     combined_plot_generator.plot_error_by_age_comparison()
-    combined_plot_generator.plot_calibration_curve(comparison_plot=True)
+    combined_plot_generator.plot_calibration_curve()
     combined_plot_generator.save_error_uncertainty_stats()
 
     logger.info('Creating OOD Plots...')

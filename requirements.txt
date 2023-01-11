@@ -37,3 +37,4 @@ matplotlib
 numpy
 torchinfo
 dill
+uncertainty-toolbox
