@@ -248,6 +248,7 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
     combined_plot_generator.plot_error_by_age_comparison()
     combined_plot_generator.plot_calibration_curve()
     combined_plot_generator.save_error_uncertainty_stats()
+    combined_plot_generator.save_uncertainty_toolbox_metrics()
 
     logger.info('Creating OOD Plots...')
     ood_evaluator.generate_plots(eval_runs_data)

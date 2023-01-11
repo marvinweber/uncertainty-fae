@@ -12,6 +12,7 @@ from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 import uncertainty_toolbox as uct
+import yaml
 
 from uncertainty_fae.evaluation.util import EvalRunData, apply_df_age_transform, sort_min_swaps
 
@@ -1032,6 +1033,43 @@ class EvalPlotGenerator:
             stats.loc[eval_cfg_name, "uncertainty_std"] = df["uncertainty"].std()
 
         self._save_dataframe(stats, "error_uncertainty_stats")
+
+    def save_uncertainty_toolbox_metrics(self, eval_cfg_names: Optional[list[str]] = None) -> None:
+        """
+        Save metrics from the Uncertainty-Toolbox.
+
+        Args:
+            eval_cfg_names: The list of configs to include in the summary file or `None`, if all
+                available should be included.
+
+        The following metrics are saved to a yaml file: `accuracy`, `avg_calibration`, `sharpness`,
+        `scoring_rule`.
+        """
+
+        if not eval_cfg_names:
+            eval_cfg_names = list(self.eval_runs_data.keys())
+
+        all_metrics = dict()
+
+        for eval_cfg_name in eval_cfg_names:
+            data = self.eval_runs_data[eval_cfg_name]
+            predictions = data["prediction_log"]["prediction"].to_numpy()
+            uncertainties = data["prediction_log"]["uncertainty"].to_numpy()
+            targets = data["prediction_log"]["target"].to_numpy()
+
+            metrics = uct.metrics.get_all_metrics(
+                predictions, uncertainties, targets, verbose=False
+            )
+            metrics_cleaned = dict()
+            for metric_key in ["accuracy", "avg_calibration", "sharpness", "scoring_rule"]:
+                metrics_cleaned[metric_key] = {
+                    key: float(value) for key, value in metrics[metric_key].items()
+                }
+            all_metrics[eval_cfg_name] = metrics_cleaned
+
+        filepath = self._get_save_filepath("uncertainty_toolbox_metrics", "yaml")
+        with open(filepath, "w") as f:
+            yaml.dump(all_metrics, f)
 
     def _get_figure(
         self,
