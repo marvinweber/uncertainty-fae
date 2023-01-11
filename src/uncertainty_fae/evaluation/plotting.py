@@ -46,7 +46,23 @@ class EvalPlotGenerator:
         mean_predictor_model_error_df: Optional[pd.DataFrame] = None,
     ) -> None:
         """
-        TODO: Docs
+        Generate an `EvalPlotGenerator` that can be used to create evaluation plots and metrics.
+
+        Args:
+            eval_runs_data: The results of the evaluation runs (predictions, names, etc.) as dict
+                mapping eval config name to `EvalRunData`.
+            img_save_dir: Directory where to store plots and metrics files (CSVs).
+            img_ext: Extension to use for the saved images.
+            plt_style: Optionally, standard Matplotlib Style to use. If not set, the Seaborn style
+                is used.
+            img_prepend_str: A string file names are prepended with.
+            img_with_timestamp: Whether to include the timestamp into images and metric files.
+            baseline_model_error_df: A DataFrame containing the predictions, errors, and targets
+                of the Baseline model, i.e. the model without UQ. Columns must be named
+                "prediction", "error", and "target".
+            mean_predictor_model_error_df: A DataFrame containing the predictions, errors, and
+                targets of the Mean-Predictor (i.e., always predicting the training data mean). The
+                columns must be named "prediction", "error", and "target".
         """
         self.eval_runs_data = eval_runs_data
         self.img_save_dir = img_save_dir

@@ -288,7 +288,21 @@ class BaseConfig:
         eval_cfg_name: Optional[str] = None,
     ) -> tuple[Any, LightningDataModule, ModelProvider]:
         """
-        TODO Docs
+        Get Model and Datamodule base on Config and provided Args.
+
+        Args:
+            model_provider_cls_mapping: A dict mapping the name of the data type to the respective
+                model provider class name. This class will be used to instantiate the model
+                provider.
+            model_name: The name of the model (according to the config file).
+            model_checkpoint: A path to a checkpoint to use to load the model. If not defined, a
+                "fresh" model is created.
+            eval_cfg_name: Optionally, the name of the evaluation config. Is used to fetch any
+                additional model kwargs via `_get_additional_model_providing_kwargs`.
+
+        Returns:
+            A tuple (model, datamodule, model_provider) with the created or loaded model first, the
+            Lightning data module second, and the model provider third.
         """
         provider_kwargs_adt, litmodel_kwargs_adt = self._get_additional_model_providing_kwargs(
             model_name, eval_cfg_name

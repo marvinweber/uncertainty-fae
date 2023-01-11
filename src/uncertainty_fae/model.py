@@ -90,9 +90,14 @@ class UncertaintyAwareModel:
     def evaluate_dataset(
         self, dataloader: DataLoader
     ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, EvaluationMetrics]:
-        """Evaluate the given given dataset (dataloader).
+        """
+        Evaluate the given given dataset (dataloader).
 
-        TODO docs/ explanation
+        The provided `dataloader` should be evaluated, i.e., each contained input is forwarded
+        through the network. The below described metrics should be generated and returned.
+
+        Args:
+            dataloader: The dataloader to evaluate for this model.
 
         Returns:
             A tuple with the following entries
@@ -116,9 +121,16 @@ def uam_evaluate_dataset_default(
     device,
     dataloader: DataLoader,
 ) -> tuple[Any, Tensor, Tensor, Tensor, Tensor, EvaluationMetrics]:
-    """Default implementation for `UncertaintyAwareModel::evaluate_dataset().
+    """
+    Default implementation for `UncertaintyAwareModel::evaluate_dataset()`.
 
-    TODO Documentation
+    Args:
+        device: The device to move the inputs to (should be the same device the model is loaded to).
+        dataloader: The dataloader to evaluate.
+
+    Returns:
+        A tuple `(mae, preds_mean, targets, preds_abs_errors, preds_std, eval_metrics)`. See the
+        documentation of `UncertaintyAwareModel::evaluate_dataset()` for the meaning of each entry.
     """
     targets = []
     preds_mean = []

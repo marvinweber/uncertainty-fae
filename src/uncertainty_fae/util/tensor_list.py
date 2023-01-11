@@ -2,9 +2,12 @@ import torch
 
 
 class TensorList(list):
-    """A List of Tensors implementing basic Tensor operations (Wrapper to use as Model Input)
-    
-    TODO Docs
+    """
+    A List of Tensors implementing basic Tensor operations (Wrapper to use as Model Input).
+
+    This list contains (or should only contain) Tensors and implements a few basic operations, such
+    as moving to a device or getting the device of it. The operations are implemented such that
+    they are performed on every list member (Tensor).
     """
 
     def to(self, *args, **kwargs) -> 'TensorList':

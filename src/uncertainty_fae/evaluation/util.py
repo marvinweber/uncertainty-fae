@@ -25,7 +25,9 @@ def generate_evaluation_predictions(
     dataloader: DataLoader,
 ) -> tuple[str, str, str]:
     """
-    TODO: Documentation
+    Run evaluation of given uncertainty aware model and save predictions.
+
+    Three files will be created and filled with results of the evaluation.
 
     Returns:
         A tuple (eval_results_file, eval_predictions_file, eval_single_predictions_file) where
