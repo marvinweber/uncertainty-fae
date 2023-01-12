@@ -135,7 +135,6 @@ def uam_evaluate_dataset_default(
     targets = []
     preds_mean = []
     preds_std = []
-    preds_var = []
     preds_distinct = []
 
     data_iterator = tqdm.tqdm(
