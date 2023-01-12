@@ -88,25 +88,19 @@ class RSNABoneageDataset(Dataset):
 
         # Get image filename and target
         img_path = self._get_img_path(idx)
-        img_preprocessed_path = None
         boneage = self.annotations.loc[idx, "boneage"]
         boneage = torch.tensor(np.float32(boneage))
 
         # Load image from disk
-        if not img_preprocessed_path or not isinstance(img_preprocessed_path, str):
-            try:
-                image = Image.open(img_path).convert("RGB")
-            except OSError as e:
-                logger.critical(
-                    "Error while loading img with id=%s and path=%s",
-                    self.annotations.loc[idx, "id"],
-                    img_path,
-                )
-                raise e
-        else:
-            image: torch.Tensor = torch.load(img_preprocessed_path)
-            image_pil: Image.Image = transforms.ToPILImage()(image)
-            image = image_pil.convert("RGB")
+        try:
+            image = Image.open(img_path).convert("RGB")
+        except OSError as e:
+            logger.critical(
+                "Error while loading img with id=%s and path=%s",
+                self.annotations.loc[idx, "id"],
+                img_path,
+            )
+            raise e
 
         # Apply additional transforms
         if self.transform:
