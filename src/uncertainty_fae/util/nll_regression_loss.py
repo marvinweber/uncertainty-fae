@@ -13,8 +13,8 @@ def nll_regression_loss(input: torch.Tensor, target: torch.Tensor):
         - Deep Ensembles Paper: https://arxiv.org/abs/1612.01474
         - Mean/Variance Network Paper: https://doi.org/10.1109/ICNN.1994.374138
     """
-    assert len(input.shape) == 2, 'Input Tensor in wrong Shape (probably batch dimension missing?)!'
-    assert input.shape[1] == 2, 'Network outputs of wrong dimension!'
+    assert len(input.shape) == 2, "Input Tensor in wrong Shape (probably batch dimension missing?)!"
+    assert input.shape[1] == 2, "Network outputs of wrong dimension!"
 
     mean = input[:, :1]
     variance = input[:, 1:]
@@ -30,9 +30,9 @@ def nll_regression_loss(input: torch.Tensor, target: torch.Tensor):
             torch.log(variance),
             torch.div(
                 torch.square(torch.sub(target, mean)),
-                variance
-            )
+                variance,
+            ),
         ),
-        2
+        2,
     )
     return torch.mean(batch_loss)

@@ -6,9 +6,9 @@ from torchvision.models.inception import Inception3, InceptionOutputs
 
 
 class RSNABoneageInceptionNetWithGender(nn.Module):
-
-    def __init__(self, inception: Inception3, combination_layer_dropout=0.5,
-                 output_neurons=1) -> None:
+    def __init__(
+        self, inception: Inception3, combination_layer_dropout=0.5, output_neurons=1
+    ) -> None:
         super().__init__()
 
         self.inception = inception

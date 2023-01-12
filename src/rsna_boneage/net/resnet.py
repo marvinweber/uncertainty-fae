@@ -2,20 +2,41 @@ from typing import Any, Callable, List, Optional, Tuple, Type, Union
 
 import torch
 from torch import Tensor, nn
-from torchvision.models.resnet import (BasicBlock, Bottleneck, ResNet, ResNet18_Weights,
-                                       ResNet34_Weights, ResNet50_Weights, WeightsEnum,
-                                       _ovewrite_named_param, handle_legacy_interface)
+from torchvision.models.resnet import (
+    BasicBlock,
+    Bottleneck,
+    ResNet,
+    ResNet18_Weights,
+    ResNet34_Weights,
+    ResNet50_Weights,
+    WeightsEnum,
+    _ovewrite_named_param,
+    handle_legacy_interface,
+)
 
 
 class RSNABoneageResNet(ResNet):
-
-    def __init__(self, block: Type[Union[BasicBlock, Bottleneck]], layers: List[int],
-                 num_classes: int = 1000, zero_init_residual: bool = False, groups: int = 1,
-                 width_per_group: int = 64,
-                 replace_stride_with_dilation: Optional[List[bool]] = None,
-                 norm_layer: Optional[Callable[..., nn.Module]] = None) -> None:
-        super().__init__(block, layers, num_classes, zero_init_residual,
-                         groups, width_per_group, replace_stride_with_dilation, norm_layer)
+    def __init__(
+        self,
+        block: Type[Union[BasicBlock, Bottleneck]],
+        layers: List[int],
+        num_classes: int = 1000,
+        zero_init_residual: bool = False,
+        groups: int = 1,
+        width_per_group: int = 64,
+        replace_stride_with_dilation: Optional[List[bool]] = None,
+        norm_layer: Optional[Callable[..., nn.Module]] = None,
+    ) -> None:
+        super().__init__(
+            block,
+            layers,
+            num_classes,
+            zero_init_residual,
+            groups,
+            width_per_group,
+            replace_stride_with_dilation,
+            norm_layer,
+        )
         self.dropout = nn.Dropout(0.5)
 
     def _forward_impl(self, x: Tensor) -> Tensor:
@@ -39,9 +60,9 @@ class RSNABoneageResNet(ResNet):
 
 
 class RSNABoneageResNetWithGender(nn.Module):
-
-    def __init__(self, resnet: RSNABoneageResNet, combination_layer_dropout=0.5,
-                 output_neurons=1) -> None:
+    def __init__(
+        self, resnet: RSNABoneageResNet, combination_layer_dropout=0.5, output_neurons=1
+    ) -> None:
         super().__init__()
 
         self.resnet = resnet
@@ -93,7 +114,9 @@ def _resnet(
 
 
 @handle_legacy_interface(weights=("pretrained", ResNet18_Weights.IMAGENET1K_V1))
-def resnet18(*, weights: Optional[ResNet18_Weights] = None, progress: bool = True, **kwargs: Any) -> ResNet:
+def resnet18(
+    *, weights: Optional[ResNet18_Weights] = None, progress: bool = True, **kwargs: Any
+) -> ResNet:
     """ResNet-18 from `Deep Residual Learning for Image Recognition <https://arxiv.org/pdf/1512.03385.pdf>`__.
 
     Args:
@@ -118,7 +141,9 @@ def resnet18(*, weights: Optional[ResNet18_Weights] = None, progress: bool = Tru
 
 
 @handle_legacy_interface(weights=("pretrained", ResNet34_Weights.IMAGENET1K_V1))
-def resnet34(*, weights: Optional[ResNet34_Weights] = None, progress: bool = True, **kwargs: Any) -> ResNet:
+def resnet34(
+    *, weights: Optional[ResNet34_Weights] = None, progress: bool = True, **kwargs: Any
+) -> ResNet:
     """ResNet-34 from `Deep Residual Learning for Image Recognition <https://arxiv.org/pdf/1512.03385.pdf>`__.
 
     Args:
@@ -143,7 +168,9 @@ def resnet34(*, weights: Optional[ResNet34_Weights] = None, progress: bool = Tru
 
 
 @handle_legacy_interface(weights=("pretrained", ResNet50_Weights.IMAGENET1K_V1))
-def resnet50(*, weights: Optional[ResNet50_Weights] = None, progress: bool = True, **kwargs: Any) -> ResNet:
+def resnet50(
+    *, weights: Optional[ResNet50_Weights] = None, progress: bool = True, **kwargs: Any
+) -> ResNet:
     """ResNet-50 from `Deep Residual Learning for Image Recognition <https://arxiv.org/pdf/1512.03385.pdf>`__.
 
     .. note::

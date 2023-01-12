@@ -5,15 +5,9 @@ from torch import nn
 
 
 class ModelProvider(ABC):
-
     @classmethod
     @abstractmethod
-    def get_provider(
-        cls,
-        train_config = None,
-        eval_mode: bool = False,
-        **kwargs
-    ) -> 'ModelProvider':
+    def get_provider(cls, train_config=None, eval_mode: bool = False, **kwargs) -> "ModelProvider":
         """Create/instantiate the 'ModelProvider' object."""
         ...
 
@@ -46,7 +40,7 @@ class ModelProvider(ABC):
             img_test_base_dir: Base directory of test samples (cf. `img_train_base_dir`).
             batch_size: Batch size to use by the DataLoaders.
             num_workers: Amount of workers to use by the DataLoader.
-        
+
         Returns:
             The `LightningDataModule` according to the given configuration.
         """

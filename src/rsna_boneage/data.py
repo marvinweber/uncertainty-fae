@@ -19,12 +19,11 @@ RSNA_BONEAGE_DATASET_MAX_AGE = 230
 
 
 class RSNABoneageDataset(Dataset):
-
     def __init__(
         self,
         annotation_file: str,
         img_base_dir: str = None,
-        transform: Optional[transforms.Compose] =  None,
+        transform: Optional[transforms.Compose] = None,
         target_dimensions: tuple[int, int] = (500, 500),
         rescale_boneage=False,
         rebalance_classes=False,
@@ -34,7 +33,7 @@ class RSNABoneageDataset(Dataset):
         RSNA Bone Age Dataset
 
         Args:
-            annotation_file: Path to a CSV file with the annotations (containing id, img_path, 
+            annotation_file: Path to a CSV file with the annotations (containing id, img_path,
                 boneage, male). The "img_path" column can be ommited, if `img_base_dir` is given.
             img_base_dir: The base directory in which to search for the images. If given, the path
                 for each image is dynamically derived from the given directory and the image id.
@@ -68,13 +67,17 @@ class RSNABoneageDataset(Dataset):
         if self.rebalance_classes:
             self.annotations = self.annotations_unbalanced.copy(deep=True)
             # Divide age into categories / bins (10 bins)
-            self.annotations['boneage_category'] = pd.cut(self.annotations['boneage'], 10)
+            self.annotations["boneage_category"] = pd.cut(self.annotations["boneage"], 10)
             # Convert male to int value
-            self.annotations['male_numeric'] = self.annotations.apply(
-                lambda row: 1 if row[['male']].bool() else 0, axis=1)
+            self.annotations["male_numeric"] = self.annotations.apply(
+                lambda row: 1 if row[["male"]].bool() else 0, axis=1
+            )
             # ensure bone category/bin and male groups contain each 1100 images
-            self.annotations = self.annotations.groupby(['boneage_category', 'male_numeric']).apply(
-                lambda x: x.sample(1100, replace = True)).reset_index(drop=True)
+            self.annotations = (
+                self.annotations.groupby(["boneage_category", "male_numeric"])
+                .apply(lambda x: x.sample(1100, replace=True))
+                .reset_index(drop=True)
+            )
 
     def __len__(self):
         return self.annotations.shape[0]
@@ -86,21 +89,24 @@ class RSNABoneageDataset(Dataset):
         # Get image filename and target
         img_path = self._get_img_path(idx)
         img_preprocessed_path = None
-        boneage = self.annotations.loc[idx, 'boneage']
+        boneage = self.annotations.loc[idx, "boneage"]
         boneage = torch.tensor(np.float32(boneage))
 
         # Load image from disk
         if not img_preprocessed_path or not isinstance(img_preprocessed_path, str):
             try:
-                image = Image.open(img_path).convert('RGB')
+                image = Image.open(img_path).convert("RGB")
             except OSError as e:
-                logger.critical('Error while loading img with id=%s and path=%s',
-                                self.annotations.loc[idx, 'id'], img_path)
+                logger.critical(
+                    "Error while loading img with id=%s and path=%s",
+                    self.annotations.loc[idx, "id"],
+                    img_path,
+                )
                 raise e
         else:
             image: torch.Tensor = torch.load(img_preprocessed_path)
             image_pil: Image.Image = transforms.ToPILImage()(image)
-            image = image_pil.convert('RGB')
+            image = image_pil.convert("RGB")
 
         # Apply additional transforms
         if self.transform:
@@ -114,7 +120,7 @@ class RSNABoneageDataset(Dataset):
             boneage = boneage_rescale(boneage)
 
         if self.with_gender_input:
-            male = int(self.annotations.loc[idx, 'male'])
+            male = int(self.annotations.loc[idx, "male"])
             return TensorList([image, np.float32(male)]), boneage
         else:
             return image, boneage
@@ -124,18 +130,18 @@ class RSNABoneageDataset(Dataset):
         use_dynamic_path = self.img_base_dir is not None and os.path.exists(self.img_base_dir)
 
         if use_dynamic_path:
-            img_filename = self.annotations.loc[idx, 'img_path']
+            img_filename = self.annotations.loc[idx, "img_path"]
             img_path = os.path.abspath(os.path.join(self.img_base_dir, img_filename))
 
             # Fallback to generate filename from id, if img_path is not available
             if not os.path.isfile(img_path):
-                img_id = self.annotations.loc[idx, 'id']
-                img_filename = f'{img_id}.png'
+                img_id = self.annotations.loc[idx, "id"]
+                img_filename = f"{img_id}.png"
                 img_path = os.path.abspath(os.path.join(self.img_base_dir, img_filename))
 
         else:
-            img_path = os.path.abspath(self.annotations.loc[idx, 'img_path'])
-        
+            img_path = os.path.abspath(self.annotations.loc[idx, "img_path"])
+
         if not os.path.exists(img_path):
             raise ValueError(f'Image path does not exist: "{img_path}"!')
         return img_path
@@ -143,7 +149,7 @@ class RSNABoneageDataset(Dataset):
 
 class RSNABoneageDataModule(LightningDataModule):
     def __init__(
-        self, 
+        self,
         annotation_file_train: str,
         annotation_file_val: str,
         annotation_file_test: str,
@@ -172,7 +178,7 @@ class RSNABoneageDataModule(LightningDataModule):
         self.img_val_base_dir = img_val_base_dir
         self.img_test_base_dir = img_test_base_dir
         self.batch_size = batch_size
-        self.train_transform  = train_transform
+        self.train_transform = train_transform
         self.val_transform = val_transform
         self.test_transform = test_transform
         self.target_dimensions = target_dimensions
@@ -186,7 +192,7 @@ class RSNABoneageDataModule(LightningDataModule):
 
     def setup(self, stage: str) -> None:
         # Training Dataset
-        if stage in ['fit', 'train', 'all', '']:
+        if stage in ["fit", "train", "all", ""]:
             self.dataset_train = RSNABoneageDataset(
                 annotation_file=self.annotation_file_train,
                 img_base_dir=self.img_train_base_dir,
@@ -198,7 +204,7 @@ class RSNABoneageDataModule(LightningDataModule):
             )
 
         # Validation Dataset
-        if stage in ['val', 'validate', 'fit', 'all', '']:
+        if stage in ["val", "validate", "fit", "all", ""]:
             self.dataset_val = RSNABoneageDataset(
                 annotation_file=self.annotation_file_val,
                 img_base_dir=self.img_val_base_dir,
@@ -209,7 +215,7 @@ class RSNABoneageDataModule(LightningDataModule):
             )
 
         # Test Dataset
-        if stage in ['test', 'all', '']:
+        if stage in ["test", "all", ""]:
             self.dataset_test = RSNABoneageDataset(
                 annotation_file=self.annotation_file_test,
                 img_base_dir=self.img_test_base_dir,
@@ -225,7 +231,7 @@ class RSNABoneageDataModule(LightningDataModule):
             self.dataset_train,
             batch_size=self.batch_size,
             shuffle=self.shuffle_train,
-            num_workers=self.num_workers
+            num_workers=self.num_workers,
         )
 
     def val_dataloader(self):
@@ -234,7 +240,7 @@ class RSNABoneageDataModule(LightningDataModule):
             self.dataset_val,
             batch_size=self.batch_size,
             shuffle=self.shuffle_val,
-            num_workers=self.num_workers
+            num_workers=self.num_workers,
         )
 
     def test_dataloader(self):
@@ -243,16 +249,18 @@ class RSNABoneageDataModule(LightningDataModule):
             self.dataset_test,
             batch_size=self.batch_size,
             shuffle=self.shuffle_test,
-            num_workers=self.num_workers
+            num_workers=self.num_workers,
         )
 
 
 def get_image_transforms(target_dimensions=(500, 500)):
     """Returns Transforms to resize Image to given dimensions and convert to Tensor."""
-    return transforms.Compose([
-        transforms.Resize(target_dimensions),
-        transforms.ToTensor(),
-    ])
+    return transforms.Compose(
+        [
+            transforms.Resize(target_dimensions),
+            transforms.ToTensor(),
+        ]
+    )
 
 
 def boneage_rescale(boneage):

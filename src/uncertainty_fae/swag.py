@@ -10,14 +10,13 @@ logger = logging.getLogger(__name__)
 
 
 class SwagEvalCallback(Callback):
-
     def __init__(
-            self,
-            swag_model: UncertaintyAwareModel,
-            swa_start_epoch: int,
-            metrics_to_log: list[str],
-            swa_eval_frequency: int = 1,
-            validation_dataloader: Optional[DataLoader] = None,
+        self,
+        swag_model: UncertaintyAwareModel,
+        swa_start_epoch: int,
+        metrics_to_log: list[str],
+        swa_eval_frequency: int = 1,
+        validation_dataloader: Optional[DataLoader] = None,
     ) -> None:
         super().__init__()
         self.swag_model = swag_model
@@ -32,12 +31,14 @@ class SwagEvalCallback(Callback):
 
         # Ensure we have a validation dataloader
         if not self.validation_dataloader and not self._checks_performed:
-            assert trainer.val_dataloaders, \
-                ('SwagEvalCallback either needs to be initialized with a `validation_loader`, or '
-                 'the trainer must have >= 1 validation loaders')
+            assert trainer.val_dataloaders, (
+                "SwagEvalCallback either needs to be initialized with a `validation_loader`, or "
+                "the trainer must have >= 1 validation loaders"
+            )
             if len(trainer.val_dataloaders) > 1:
                 logger.warning(
-                    'SwagEvalCallback currently only uses the first trainer validation dataloader!')
+                    "SwagEvalCallback currently only uses the first trainer validation dataloader!"
+                )
             self.validation_dataloader = trainer.val_dataloaders[0]
         self._checks_performed = True
 
@@ -48,11 +49,14 @@ class SwagEvalCallback(Callback):
         if not swa_started or not should_eval:
             return
 
-        logger.info('Running SWAG Evaluation...')
+        logger.info("Running SWAG Evaluation...")
         assert isinstance(self.validation_dataloader, DataLoader)
         score, _, _, _, _, metrics = self.swag_model.evaluate_dataset(self.validation_dataloader)
-        logs = {f'swag_val_{key}': getattr(metrics, key)
-                for key in self.metrics_to_log if hasattr(metrics, key)}
+        logs = {
+            f"swag_val_{key}": getattr(metrics, key)
+            for key in self.metrics_to_log
+            if hasattr(metrics, key)
+        }
         for l in trainer.loggers:
             l.log_metrics(logs, step=trainer.fit_loop.epoch_loop._batches_that_stepped)
-        logger.info(f'SWAG Evaluation done; Score={score}')
+        logger.info(f"SWAG Evaluation done; Score={score}")

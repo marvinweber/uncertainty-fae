@@ -6,13 +6,16 @@ from torch.utils.data import DataLoader
 
 from rsna_boneage.data import undo_boneage_rescale
 from rsna_boneage.litmodel.base import LitRSNABoneage, LitRSNABoneageVarianceNet
-from uncertainty_fae.model import (EvaluationMetrics, ForwardMetrics, UncertaintyAwareModel,
-                                   uam_evaluate_dataset_default)
+from uncertainty_fae.model import (
+    EvaluationMetrics,
+    ForwardMetrics,
+    UncertaintyAwareModel,
+    uam_evaluate_dataset_default,
+)
 from uncertainty_fae.util import dropout_train
 
 
 class LitRSNABoneageMCDropout(UncertaintyAwareModel, LitRSNABoneage):
-
     def __init__(self, *args, n_samples: int = 100, **kwargs) -> None:
         self.n_samples = n_samples
         super().__init__(*args, **kwargs)
@@ -34,7 +37,7 @@ class LitRSNABoneageMCDropout(UncertaintyAwareModel, LitRSNABoneage):
             preds_std = undo_boneage_rescale(preds_std)
 
         forward_metrics = ForwardMetrics(
-            preds_distinct=[preds[:, i:i+1].flatten() for i in range(len(preds_mean))],
+            preds_distinct=[preds[:, i : i + 1].flatten() for i in range(len(preds_mean))],
         )
         return preds_mean, preds_std, forward_metrics
 
@@ -47,7 +50,6 @@ class LitRSNABoneageMCDropout(UncertaintyAwareModel, LitRSNABoneage):
 
 
 class LitRSNABoneageVarianceNetMCDropout(LitRSNABoneageVarianceNet):
-
     def __init__(self, *args, n_samples: int = 100, **kwargs) -> None:
         self.n_samples = n_samples
         super().__init__(*args, **kwargs)

@@ -14,14 +14,13 @@ from uncertainty_fae.util import TrainConfig
 
 
 class LitRSNABoneage(TrainLoadMixin, LightningModule):
-
     def __init__(
         self,
         net: nn.Module,
         lr: float = 3e-4,
         weight_decay: float = 0,
         momentum: float = 0,
-        optim_type: str = 'adam',
+        optim_type: str = "adam",
         train_config: Optional[TrainConfig] = None,
         undo_boneage_rescale=False,
     ) -> None:
@@ -40,7 +39,7 @@ class LitRSNABoneage(TrainLoadMixin, LightningModule):
 
         self.undo_boneage_rescale = undo_boneage_rescale
 
-        self.save_hyperparameters(ignore=['net'])
+        self.save_hyperparameters(ignore=["net"])
 
     def forward(self, x: Any) -> Tensor:
         logits = self.net.forward(x)
@@ -59,10 +58,10 @@ class LitRSNABoneage(TrainLoadMixin, LightningModule):
         logits = squeeze(logits, dim=1)
 
         mae = self.mae(logits, y)
-        self.log('mae', mae)
+        self.log("mae", mae)
 
         loss = self.mse(logits, y)
-        self.log('loss', loss)
+        self.log("loss", loss)
 
         return loss
 
@@ -73,10 +72,10 @@ class LitRSNABoneage(TrainLoadMixin, LightningModule):
         logits = squeeze(logits, dim=1)
 
         mae = self.mae(logits, y)
-        self.log('val_mae', mae)
+        self.log("val_mae", mae)
 
         loss = self.mse(logits, y)
-        self.log('val_loss', loss)
+        self.log("val_loss", loss)
 
         return loss
 
@@ -88,51 +87,50 @@ class LitRSNABoneage(TrainLoadMixin, LightningModule):
         logits = squeeze(logits, dim=1)
 
         mae = self.mae(logits, y)
-        self.log('test_mae', mae)
+        self.log("test_mae", mae)
 
         loss = self.mse(logits, y)
-        self.log('test_loss', loss)
+        self.log("test_loss", loss)
 
     @classmethod
     def load_model_from_disk(cls, checkpoint_path: str, **kwargs):
         return cls.load_from_checkpoint(checkpoint_path, **kwargs)
 
     def configure_optimizers(self):
-        if self.optim_type == 'adam':
+        if self.optim_type == "adam":
             optim = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
-        elif self.optim_type == 'sgd':
-            optim = torch.optim.SGD(self.parameters(), lr=self.lr, weight_decay=self.weight_decay,
-                                    momentum=self.momentum)
+        elif self.optim_type == "sgd":
+            optim = torch.optim.SGD(
+                self.parameters(),
+                lr=self.lr,
+                weight_decay=self.weight_decay,
+                momentum=self.momentum,
+            )
         else:
-            raise ValueError(f'Unkown optimizer type: {self.optim_type}')
+            raise ValueError(f"Unkown optimizer type: {self.optim_type}")
 
-        config = {
-            'optimizer': optim
-        }
+        config = {"optimizer": optim}
 
         # Create/get LR Scheduler for created Optimizer
         if isinstance(self.train_config, TrainConfig):
             lr_scheduler, monitor_metric = self.train_config.get_lr_scheduler(optim)
 
             if lr_scheduler:
-                config['lr_scheduler'] = {'scheduler': lr_scheduler}
+                config["lr_scheduler"] = {"scheduler": lr_scheduler}
             if monitor_metric:
-                config['lr_scheduler']['monitor'] = monitor_metric
+                config["lr_scheduler"]["monitor"] = monitor_metric
 
         return config
 
 
 class LitRSNABoneageVarianceNet(UncertaintyAwareModel, LitRSNABoneage):
-
     def __init__(self, *args, lr: float = 0.00001, **kwargs):
         super().__init__(*args, lr=lr, **kwargs)
 
     def forward(self, x):
         logits = super().forward(x)
         # Apply softplus on variance units
-        return torch.concat([
-            logits[:, :1],
-            torch.nn.functional.softplus(logits[:, 1:])], dim=1)
+        return torch.concat([logits[:, :1], torch.nn.functional.softplus(logits[:, 1:])], dim=1)
 
     def training_step(self, batch, batch_idx):
         x, y = batch
@@ -142,10 +140,10 @@ class LitRSNABoneageVarianceNet(UncertaintyAwareModel, LitRSNABoneage):
 
         # Calculate MAE between mean neurons ("first column") and targets (ignore variance neurons)
         mae = self.mae(logits[:, :1], y.unsqueeze(1))
-        self.log('train_mae', mae)
+        self.log("train_mae", mae)
 
         loss = nll_regression_loss(logits, y)
-        self.log('loss', loss)
+        self.log("loss", loss)
 
         return loss
 
@@ -157,10 +155,10 @@ class LitRSNABoneageVarianceNet(UncertaintyAwareModel, LitRSNABoneage):
 
         # Calculate MAE between mean neurons ("first column") and targets (ignore variance neurons)
         mae = self.mae(logits[:, :1], y.unsqueeze(1))
-        self.log('val_mae', mae)
+        self.log("val_mae", mae)
 
         loss = nll_regression_loss(logits, y)
-        self.log('val_loss', loss)
+        self.log("val_loss", loss)
 
         return loss
 

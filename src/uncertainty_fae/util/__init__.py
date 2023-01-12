@@ -6,14 +6,13 @@ from uncertainty_fae.util.tensor_list import TensorList
 
 __all__ = [
     # Utility Methods
-    'dropout_train',
-    'nll_regression_loss',
-    'parse_cli_args',
-
+    "dropout_train",
+    "nll_regression_loss",
+    "parse_cli_args",
     # Utility Classes
-    'EvalRunConfig',
-    'ModelProvider',
-    'TensorList',
-    'TrainConfig',
-    'TrainResult',
+    "EvalRunConfig",
+    "ModelProvider",
+    "TensorList",
+    "TrainConfig",
+    "TrainResult",
 ]

@@ -10,7 +10,7 @@ class TensorList(list):
     they are performed on every list member (Tensor).
     """
 
-    def to(self, *args, **kwargs) -> 'TensorList':
+    def to(self, *args, **kwargs) -> "TensorList":
         moved_tensors = []
         for tensor in self:
             if isinstance(tensor, torch.Tensor):
@@ -19,7 +19,7 @@ class TensorList(list):
 
         return TensorList(moved_tensors)
 
-    def cuda(self, *args, **kwargs) -> 'TensorList':
+    def cuda(self, *args, **kwargs) -> "TensorList":
         moved_tensors = []
         for tensor in self:
             if isinstance(tensor, torch.Tensor):
@@ -28,7 +28,7 @@ class TensorList(list):
 
         return TensorList(moved_tensors)
 
-    def cpu(self, *args, **kwargs) -> 'TensorList':
+    def cpu(self, *args, **kwargs) -> "TensorList":
         moved_tensors = []
         for tensor in self:
             if isinstance(tensor, torch.Tensor):
@@ -40,8 +40,8 @@ class TensorList(list):
     @property
     def device(self):
         if len(self) == 0:
-            raise ValueError('Empty TensorList cannot be located on device!')
+            raise ValueError("Empty TensorList cannot be located on device!")
         dev = self[0].device
         if any(dev != t.device for t in self):
-            raise ValueError('Tensors of TensorList are on different devices!')
+            raise ValueError("Tensors of TensorList are on different devices!")
         return dev

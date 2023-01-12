@@ -6,8 +6,12 @@ import torch
 import tqdm
 from pytorch_lightning import Callback, LightningDataModule, Trainer
 from pytorch_lightning import loggers as pl_loggers
-from pytorch_lightning.callbacks import (EarlyStopping, LearningRateMonitor, ModelCheckpoint,
-                                         TQDMProgressBar)
+from pytorch_lightning.callbacks import (
+    EarlyStopping,
+    LearningRateMonitor,
+    ModelCheckpoint,
+    TQDMProgressBar,
+)
 from torch import Tensor
 from torch.utils.data import DataLoader
 
@@ -16,12 +20,12 @@ from uncertainty_fae.util import TrainConfig, TrainResult
 logger = logging.getLogger(__name__)
 
 
-class ForwardMetrics():
+class ForwardMetrics:
     def __init__(self, preds_distinct: Optional[Tensor] = None) -> None:
         self.preds_distinct = preds_distinct
 
 
-class EvaluationMetrics():
+class EvaluationMetrics:
     def __init__(
         self,
         preds_distinct: Optional[list[Tensor]] = None,
@@ -47,12 +51,12 @@ class UncertaintyAwareModel:
         self.val_dataloader: DataLoader = None
 
     def set_dataloaders(
-            self,
-            train_dataloader: DataLoader = None,
-            val_dataloader: DataLoader = None,
+        self,
+        train_dataloader: DataLoader = None,
+        val_dataloader: DataLoader = None,
     ) -> None:
         """Set train and val dataloader on this model.
-        
+
         Some UQ methods require the training dataset (SWAG) to update batch norm layers.
         """
         self.train_dataloader = train_dataloader
@@ -138,7 +142,8 @@ def uam_evaluate_dataset_default(
     preds_distinct = []
 
     data_iterator = tqdm.tqdm(
-        dataloader, desc=f'Evaluation Progress', total=len(dataloader), leave=False)
+        dataloader, desc=f"Evaluation Progress", total=len(dataloader), leave=False
+    )
     for input, target in data_iterator:
         targets.append(target)
         mean, std, batch_metrics = model.forward_with_uncertainty(input.to(device))
@@ -164,18 +169,23 @@ def uam_evaluate_dataset_default(
 
 
 class TrainLoadMixin:
-
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
     @classmethod
     def load_model_from_disk(cls, checkpoint_path, **kwargs):
-        raise NotImplementedError('Method not implemented!')
+        raise NotImplementedError("Method not implemented!")
 
     @classmethod
-    def train_model(cls, log_dir: str, datamodule: LightningDataModule, model: 'TrainLoadMixin',
-                    train_config: TrainConfig, is_resume: bool = False,
-                    callbacks: Optional[list[Callback]] = None) -> TrainResult:
+    def train_model(
+        cls,
+        log_dir: str,
+        datamodule: LightningDataModule,
+        model: "TrainLoadMixin",
+        train_config: TrainConfig,
+        is_resume: bool = False,
+        callbacks: Optional[list[Callback]] = None,
+    ) -> TrainResult:
         """Classmethod to train a model (of cls type, i.e. to train an instance of "itself").
 
         Args:
@@ -189,29 +199,41 @@ class TrainLoadMixin:
         Returns:
             The result of the training as `TrainResult`.
         """
-        checkpoint_dir = os.path.join(log_dir, 'checkpoints')
+        checkpoint_dir = os.path.join(log_dir, "checkpoints")
         os.makedirs(checkpoint_dir, exist_ok=True)
 
         # Organize loggers into directories and "start-time-folders" (to prevent overwriting if
         # a training is resumed).
         tb_logger = pl_loggers.TensorBoardLogger(
-            save_dir=log_dir, name='tensorboard', version=train_config.start_time)
+            save_dir=log_dir, name="tensorboard", version=train_config.start_time
+        )
         csv_logger = pl_loggers.CSVLogger(
-            save_dir=log_dir, name='metrics', version=train_config.start_time)
+            save_dir=log_dir, name="metrics", version=train_config.start_time
+        )
         loggers = [tb_logger, csv_logger]
 
         progress_bar = TQDMProgressBar(refresh_rate=25)
         checkpoint_callback = ModelCheckpoint(
-            dirpath=checkpoint_dir, monitor='val_loss', save_last=True,
-            save_top_k=train_config.save_top_k_checkpoints, filename='{epoch}-{val_loss:2f}')
+            dirpath=checkpoint_dir,
+            monitor="val_loss",
+            save_last=True,
+            save_top_k=train_config.save_top_k_checkpoints,
+            filename="{epoch}-{val_loss:2f}",
+        )
         early_stopping_callback = EarlyStopping(
-            monitor='val_loss', mode='min', patience=train_config.early_stopping_patience)
-        lr_monitor_callback = LearningRateMonitor(logging_interval='epoch')
-        train_callbacks = [checkpoint_callback, early_stopping_callback, lr_monitor_callback,
-                           progress_bar, *(callbacks if callbacks and len(callbacks) > 0 else [])]
+            monitor="val_loss", mode="min", patience=train_config.early_stopping_patience
+        )
+        lr_monitor_callback = LearningRateMonitor(logging_interval="epoch")
+        train_callbacks = [
+            checkpoint_callback,
+            early_stopping_callback,
+            lr_monitor_callback,
+            progress_bar,
+            *(callbacks if callbacks and len(callbacks) > 0 else []),
+        ]
 
         trainer = Trainer(
-            accelerator='gpu',
+            accelerator="gpu",
             max_epochs=train_config.max_epochs,
             log_every_n_steps=50,
             logger=loggers,
@@ -221,17 +243,21 @@ class TrainLoadMixin:
 
         if is_resume:
             # Try to find latest/last checkpoint file and resume the training
-            logger.info('RESUMING TRAINING....')
-            checkpoint_file = os.path.join(checkpoint_dir, 'last.ckpt')
+            logger.info("RESUMING TRAINING....")
+            checkpoint_file = os.path.join(checkpoint_dir, "last.ckpt")
             if not os.path.exists(checkpoint_file):
-                raise RuntimeError('Could not find checkpoint file to resume training '
-                                   f'(Path: "{checkpoint_file}"); Aborting!')
+                raise RuntimeError(
+                    "Could not find checkpoint file to resume training "
+                    f'(Path: "{checkpoint_file}"); Aborting!'
+                )
             trainer.fit(model, datamodule=datamodule, ckpt_path=checkpoint_file)
         else:
             # Start fresh training
-            logger.info('STARTING TRAINING....')
+            logger.info("STARTING TRAINING....")
             trainer.fit(model, datamodule=datamodule)
 
         return TrainResult(
-            interrupted=trainer.interrupted, best_model_path=checkpoint_callback.best_model_path,
-            trainer=trainer)
+            interrupted=trainer.interrupted,
+            best_model_path=checkpoint_callback.best_model_path,
+            trainer=trainer,
+        )
