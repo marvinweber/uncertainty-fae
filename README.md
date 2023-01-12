@@ -115,6 +115,13 @@ Content: X-ray scans of hands labeled with sex and expert-assessed bone age.
 Models and Data Handling regarding this dateset are located in the
 `src/rsna_boneage` package.
 
+(!) **Disclaimer**: The models and the architectures for the RSNA Bone Age
+Dataset use the inapropriate term `gender` instead of `sex`.  
+Since only the sex is considered, all occurences of the term `gender` in
+results/stats, models, etc. actually mean `sex`.  
+Because PyTorch model variable names are saved to checkpoints, this error has
+not been fixed and, thus, is still present.
+
 ### Clavicle CT
 Unfortunately, the **Clavicle CT** dataset is an internal data set of the
 University Hospital of LMU Munich, hence, it cannot be provided publicly.
