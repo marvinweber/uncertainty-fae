@@ -78,6 +78,44 @@ class EvalPlotGenerator:
         else:
             plt.style.use(plt_style)
 
+    def create_all_single_method(self, eval_cfg_name: str) -> None:
+        """
+        Create all plots and metrics (CSVs) for a single method/ evalutaion.
+
+        Args:
+            eval_cfg_name: Name of the evaluation config to create the plots for.
+        """
+        self.plot_age_distribution(eval_cfg_name)
+        self.plot_uncertainty_by_age(eval_cfg_name)
+        self.plot_uncertainty_by_error(eval_cfg_name)
+        self.plot_uncertainty_by_error(eval_cfg_name, with_aucs=True)
+        self.plot_error_by_age(eval_cfg_name)
+        self.plot_prediction_vs_truth(eval_cfg_name)
+        self.plot_error_by_abstention_rate([eval_cfg_name])
+        self.plot_calibration_curve([eval_cfg_name])
+
+    def create_all_comparisons(self) -> None:
+        """
+        Create all plots and metrics (CSVs) for all known methods/ eval configs in comparison.
+        """
+        self.plot_correlation_comparison(method="pearson")
+        self.plot_correlation_comparison(method="kendall")
+        self.plot_correlation_comparison(method="spearman")
+        self.plot_error_by_abstention_rate()
+        self.plot_error_by_abstention_rate(only_p95=True)
+        self.plot_error_comparison(plot_type="boxplot")
+        self.plot_error_comparison(plot_type="violin")
+        self.plot_uncertainty_by_error_comparison()
+        self.plot_uncertainty_by_error_aucs_comparison(plot_type="mean")
+        self.plot_uncertainty_by_error_aucs_comparison(plot_type="min")
+        self.plot_uncertainty_by_error_aucs_comparison(plot_type="mean_min")
+        self.save_uncertainty_by_error_aucs_csv()
+        self.save_uncertainty_reorder_ranks_csv()
+        self.plot_error_by_age_comparison()
+        self.plot_calibration_curve()
+        self.save_error_uncertainty_stats()
+        self.save_uncertainty_toolbox_metrics()
+
     def plot_age_distribution(self, eval_cfg_name: str, bins=25) -> None:
         """
         Plot the amount of age of predictions and targets by given amount of bins.

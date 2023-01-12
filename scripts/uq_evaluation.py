@@ -199,14 +199,7 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
             eval_plot_dir,
             img_prepend_str=eval_cfg_name,
         )
-        plot_generator.plot_age_distribution(eval_cfg_name)
-        plot_generator.plot_uncertainty_by_age(eval_cfg_name)
-        plot_generator.plot_uncertainty_by_error(eval_cfg_name)
-        plot_generator.plot_uncertainty_by_error(eval_cfg_name, with_aucs=True)
-        plot_generator.plot_error_by_age(eval_cfg_name)
-        plot_generator.plot_prediction_vs_truth(eval_cfg_name)
-        plot_generator.plot_error_by_abstention_rate([eval_cfg_name])
-        plot_generator.plot_calibration_curve([eval_cfg_name])
+        plot_generator.create_all_single_method(eval_cfg_name)
 
     logger.info("DISTINCT UQ METHODS/MODELS DONE!")
 
@@ -242,23 +235,7 @@ def evaluation_main(eval_run_cfg: EvalRunConfig) -> None:
         mean_predictor_model_error_df=mean_predictor_error_df,
         img_prepend_str=data_type,
     )
-    combined_plot_generator.plot_correlation_comparison(method="pearson")
-    combined_plot_generator.plot_correlation_comparison(method="kendall")
-    combined_plot_generator.plot_correlation_comparison(method="spearman")
-    combined_plot_generator.plot_error_by_abstention_rate()
-    combined_plot_generator.plot_error_by_abstention_rate(only_p95=True)
-    combined_plot_generator.plot_error_comparison(plot_type="boxplot")
-    combined_plot_generator.plot_error_comparison(plot_type="violin")
-    combined_plot_generator.plot_uncertainty_by_error_comparison()
-    combined_plot_generator.plot_uncertainty_by_error_aucs_comparison(plot_type="mean")
-    combined_plot_generator.plot_uncertainty_by_error_aucs_comparison(plot_type="min")
-    combined_plot_generator.plot_uncertainty_by_error_aucs_comparison(plot_type="mean_min")
-    combined_plot_generator.save_uncertainty_by_error_aucs_csv()
-    combined_plot_generator.save_uncertainty_reorder_ranks_csv()
-    combined_plot_generator.plot_error_by_age_comparison()
-    combined_plot_generator.plot_calibration_curve()
-    combined_plot_generator.save_error_uncertainty_stats()
-    combined_plot_generator.save_uncertainty_toolbox_metrics()
+    combined_plot_generator.create_all_comparisons()
 
     logger.info("Creating OOD Plots...")
     ood_evaluator.generate_plots(eval_runs_data)
