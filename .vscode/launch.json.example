@@ -1,0 +1,66 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: UQ Training - Clavicle - Variance Net MC-Dropout",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/training.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "clavicle_variance_mcd",
+        "--configuration=/app/config/models.ma.yml",
+        "--max-epochs=2"
+      ]
+    },
+    {
+      "name": "Python: UQ Evaluation - RSNA Bone Age",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/uq_evaluation.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "rsna_evaluation_best_ckpt",
+        "--configuration=/app/config/models.ma.yml",
+        "--eval-configuration=/app/config/evaluation.ma.rsna-boneage.yml",
+        // "--eval-only=rsna_resnet50_500_gender_mcd_10,rsna_resnet50_500_gender_mcd_100",
+        "--only-combined-plots",
+        "--model-logs-dir=/ml_logs",
+      ]
+    },
+    {
+      "name": "Python: UQ Evaluation - Clavicle",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/uq_evaluation.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "clavicle_evaluation_best_ckpt",
+        "--configuration=/app/config/models.ma.yml",
+        "--eval-configuration=/app/config/evaluation.ma.clavicle.yml",
+        "--model-logs-dir=/ml_logs",
+        "--eval-only=clavicle_mcd_10,clavicle_mcd_100"
+        // "--only-combined-plots",
+        // "--debug",
+      ]
+    },
+    {
+      "name": "Python: Clavicle - Train Autoencoder",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/clavicle_ct/train_autoencoder.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "1",
+        // "--debug",
+      ]
+    }
+  ]
+}

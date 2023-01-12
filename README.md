@@ -1,6 +1,9 @@
 # Uncertainty Quantification in Forensic Age Estimation
 
 ## Directory Structure
+- `.vscode/launch.json.example`: A launch configuration example for VSCode.
+  Includes examples for running trainings and evaluations with VSCode (if using
+  the dockerized setup and VSCode inside Docker).
 - `config`: (Example) config files.
 - `notebooks`: Notebooks with examples and or smaller evaluations, etc.
 - `results`: Contains a few results (CSV statistics). See
