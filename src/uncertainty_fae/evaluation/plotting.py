@@ -79,6 +79,12 @@ class EvalPlotGenerator:
             plt.style.use(plt_style)
 
     def plot_age_distribution(self, eval_cfg_name: str, bins=25) -> None:
+        """
+        Plot the amount of age of predictions and targets by given amount of bins.
+
+        Args:
+            eval_cfg_name: The configuration to create the plot for.
+        """
         df = self.eval_runs_data[eval_cfg_name]["prediction_log"]
         p_color = self.eval_runs_data[eval_cfg_name]["color"]
         fig, ax = self._get_figure(
@@ -96,6 +102,12 @@ class EvalPlotGenerator:
         self._save_figure(fig, "age_distribution")
 
     def plot_uncertainty_by_age(self, eval_cfg_name: str) -> None:
+        """
+        Plot the uncertainty distribution (using violin plots) by binned age (bin width = 1 year).
+
+        Args:
+            eval_cfg_name: The configuration to create the plot for.
+        """
         df = self.eval_runs_data[eval_cfg_name]["prediction_log"]
         target_min = int(np.floor(df["target"].min()))
         target_max = int(np.ceil(df["target"].max()))
@@ -142,6 +154,18 @@ class EvalPlotGenerator:
         bin_width: float = 0.5,
         with_aucs: bool = False,
     ) -> None:
+        """
+        Plot the uncertainty distribution (using violin plots) by binned absolute error.
+
+        Addtionally, the Area-under-Curve (AUC) can be calculated for the line connecting the
+        means of the violins and the line connecting the minimums.
+
+        Args:
+            eval_cfg_name: Name of the configuration to create the plot for.
+            bin_width: Width of the bin used for binning the absolute error.
+            with_aucs: Whether to include the Lines for AUC calculation and the AUSs in the legend
+                of the plot.
+        """
         color = self.eval_runs_data[eval_cfg_name]["color"]
         df = self.eval_runs_data[eval_cfg_name]["prediction_log"]
 
@@ -286,6 +310,12 @@ class EvalPlotGenerator:
         )
 
     def plot_error_by_age(self, eval_cfg_name: str) -> None:
+        """
+        Plot the error distribution (using violin plots) by the binned age (bin width = 1 year).
+
+        Args:
+            eval_cfg_name: Name of the configuration to create the plot for.
+        """
         df = self.eval_runs_data[eval_cfg_name]["prediction_log"]
         target_min = int(np.floor(df["target"].min()))
         target_max = int(np.ceil(df["target"].max()))
@@ -326,6 +356,12 @@ class EvalPlotGenerator:
         self._save_figure(fig, "error_by_age")
 
     def plot_prediction_vs_truth(self, eval_cfg_name: str) -> None:
+        """
+        Plot the truth on the x axis vs. the predictions on the y axis.
+
+        Args:
+            eval_cfg_name: Name of the configuration to create the plot for.
+        """
         df = self.eval_runs_data[eval_cfg_name]["prediction_log"]
         target = df["target"].tolist()
         prediction = df["prediction"].tolist()
@@ -511,8 +547,7 @@ class EvalPlotGenerator:
             - Deep Ensemble Paper: https://arxiv.org/abs/1612.01474
 
         Args:
-            eval_cfg_names: A list of configuration names to include into the plot. Must be given,
-                if plot is NOT a `comparison_plot` (default).
+            eval_cfg_names: A list of configuration names to include into the plot.
         """
 
         if not eval_cfg_names:
@@ -576,6 +611,12 @@ class EvalPlotGenerator:
         eval_cfg_names: Optional[list[str]] = None,
         method: str = "pearson",
     ) -> None:
+        """
+        Plot a comparison of the given correlation method for given methods.
+
+        Args:
+            eval_cfg_names: A list of configuration names to include into the plot.
+        """
         corrs = []
         labels = []
         colors = []
@@ -608,9 +649,16 @@ class EvalPlotGenerator:
     def plot_error_comparison(
         self,
         eval_cfg_names: Optional[list[str]] = None,
-        plot_type: str = "boxplot",
+        plot_type: Literal["boxplot", "violin"] = "boxplot",
     ) -> None:
-        """Plot comparison of errors by different UQ method (Boxplot or Violin Plot)."""
+        """
+        Plot comparison of errors by different UQ method (Boxplot or Violin Plot).
+
+        Args:
+            eval_cfg_names: A list of configuration names to include into the plot.
+            plot_type: What type of plot to create. Either "boxplot" (default) to use box plots, or
+                "violin" to use violin plots.
+        """
         if not eval_cfg_names:
             eval_cfg_names = list(self.eval_runs_data.keys())
 
@@ -699,6 +747,18 @@ class EvalPlotGenerator:
         bin_width: float = 0.5,
         bin_padding: float = 0.05,
     ) -> None:
+        """
+        Plot comparison of uncertainty mean by binned absolute error.
+
+        The absolute error is binned by given bin width. For each bin, the mean uncertainty is
+        plotted using the methods color and marker (as points).
+
+        Args:
+            eval_cfg_names: A list of configuration names to include into the plot.
+            bin_width: The width to use for binning the absolute error.
+            bin_padding: Padding within the bins (the distance of the markers to the left and right
+                side of the bin to create better visual differentiation between bins).
+        """
         if not eval_cfg_names:
             eval_cfg_names = list(self.eval_runs_data.keys())
 
@@ -756,6 +816,12 @@ class EvalPlotGenerator:
     def save_uncertainty_reorder_ranks_csv(
         self, eval_cfg_names: Optional[list[str]] = None
     ) -> None:
+        """
+        Calculate and save Uncertainty Reorder Ranks (URDs, etc.) for given methods as CSV.
+
+        Args:
+            eval_cfg_names: A list of configuration names to include into the comparison CSV.
+        """
         if not eval_cfg_names:
             eval_cfg_names = list(self.eval_runs_data.keys())
 
@@ -802,6 +868,14 @@ class EvalPlotGenerator:
         eval_cfg_names: Optional[list[str]] = None,
         bin_width: float = 0.5,
     ) -> None:
+        """
+        Calculate AUCs for Uncertainty by Error plots and save in CSV.
+
+        Args:
+            eval_cfg_names: A list of configuration names to include into the comparison.
+            bin_width: The width to use for binning the absolute error for the error mean line
+                comparison.
+        """
         if not eval_cfg_names:
             eval_cfg_names = list(self.eval_runs_data.keys())
 
@@ -843,6 +917,15 @@ class EvalPlotGenerator:
         plot_type: Literal["mean", "min", "mean_min"] = "mean_min",
         bin_width: float = 0.5,
     ) -> None:
+        """
+        Plot Uncertainty by Error (Mean and Minimum Lines) in comparison for different UQ methods.
+
+        Args:
+            eval_cfg_names: A list of configuration names to include into the comparison.
+            plot_type: Which lines to inlcude "mean", "min", or "mean_min".
+            bin_width: The width to use for binning the absolute error for the error mean line
+                comparison.
+        """
         if not eval_cfg_names:
             eval_cfg_names = list(self.eval_runs_data.keys())
 
@@ -947,6 +1030,15 @@ class EvalPlotGenerator:
         self,
         eval_cfg_names: Optional[list[str]] = None,
     ) -> None:
+        """
+        Plot the Mean Error by binned age in comparison for different methods.
+
+        The age is binned by year and for every bin the mean of the error is binned for each method
+        using the respective color and markers (from the evaluation config).
+
+        Args:
+            eval_cfg_names: A list of configuration names to include into the plot.
+        """
         if not eval_cfg_names:
             eval_cfg_names = list(self.eval_runs_data.keys())
 
@@ -1005,6 +1097,12 @@ class EvalPlotGenerator:
         self._save_figure(fig, "error_by_age_comparison")
 
     def save_error_uncertainty_stats(self, eval_cfg_names: Optional[list[str]] = None) -> None:
+        """
+        Save mean, median, and standard deviation for error and uncertainty in comparison to CSV.
+
+        Args:
+            eval_cfg_names: A list of configuration names to include into the comparison.
+        """
         if not eval_cfg_names:
             eval_cfg_names = list(self.eval_runs_data.keys())
 

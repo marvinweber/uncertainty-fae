@@ -19,6 +19,24 @@
     helful for usage with the uncertainty framework).
 - `util`: Utility scripts; see `util/README.md` for details.
 
+## Setup
+It's recommended to use the provided Dockerimage to create an environment to
+work with.  
+Alternatively you can also use virtual environments or Conda. Make sure to first
+setup the (desired) PyTorch Version (see Dockerfile for recent tested one with
+this code/ repo) and install requirements afterwards:
+
+```bash
+# create venv or similar
+# setup PyTorch
+
+# install requirements
+python -m pip install -r requirements.txt
+```
+
+You can also refer to the Dockerfile to see how the respective environment is
+setup in it.
+
 ## Docker Setup
 A `Dockerfile` is provided which defines a working environemnt for this project
 and allows to reproduce trainings and evaluations.
@@ -71,7 +89,7 @@ If you want to write and/or use the notebooks, you should install the
 
 ```bash
 # Inside the Container
-# Note, that version >= 8 caused trouble with interactive widgets (Jan 2023).
+# Note: version >= 8 caused trouble with interactive widgets in VSCode (01-2023)
 python -m pip install ipykernel "ipywidgets<8" ipympl
 ```
 
