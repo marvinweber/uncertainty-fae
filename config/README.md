@@ -12,3 +12,5 @@ can be overwritten on a per model basis.
 
 The models in the configurations used for the MA-Thesis can be found in the
 `models.ma.yml` file.
+
+Configs ending with `*.config.yml` are ignored by Git (gitignore).
