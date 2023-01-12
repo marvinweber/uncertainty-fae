@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import Callable, Literal, Optional
+from typing import Literal, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,7 +14,7 @@ from matplotlib.patches import Patch
 import uncertainty_toolbox as uct
 import yaml
 
-from uncertainty_fae.evaluation.util import EvalRunData, apply_df_age_transform, sort_min_swaps
+from uncertainty_fae.evaluation.util import EvalRunData, sort_min_swaps
 
 TARGET_COLOR = "green"
 """Color to use in plots for the target (ground truth)."""
