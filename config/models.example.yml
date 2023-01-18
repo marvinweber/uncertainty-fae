@@ -2,18 +2,21 @@
 # files as well. This file is only for demonstration purposes to show possible
 # configuration setups.
 
+# For more examples, refer to the `models.ma.yml` file, which contains the
+# actual configurations used for the Thesis.
+
 # default settings for datasets per data (rsna_boneage, clavicle_ct, ...)
 defaults:
     rsna_boneage:
         datasets:
             annotations:
-                train: /mnt/datassd/data_fae_uncertainty/train_annotations.csv
-                val: /mnt/datassd/data_fae_uncertainty/val_annotations.csv
-                test: /mnt/datassd/data_fae_uncertainty/test_annotations.csv
+                train: /data_fae_uq/rsna_boneage/train_annotations.csv
+                val: /data_fae_uq/rsna_boneage/val_annotations.csv
+                test: /data_fae_uq/rsna_boneage/test_annotations.csv
             img_base_dirs:
-                train:
-                val:
-                test:
+                train: # e.g.: /data_fae_uq/rsna_boneage/train_val
+                val: # can be the same for two sets: /data_fae_uq/rsna_boneage/train_val
+                test: # if omitted, full path must be defined in the annotation file
     clavicle_ct:
         # ...
 
@@ -27,12 +30,22 @@ models:
         # Provider Configuration is used to create the data type specific
         # model provider
         provider_config:
+            # RSNA Bone Age Model Provider can either create ResNet or Inception
+            # based models (resnet18, resnet34, resnet50, inceptionv3).
             base_net: inceptionv3
+            # Type of uncertainty to use; must be supported by the respective
+            # Model Provider. "mc_dropout", "deep_ensemble", "laplace_approx",
+            # "swag" are supported by RSNA Bone Age and Clavicle CT Model Providers.
             uncertainty_method: mc_dropout
+            # size to resize input images to
             img_input_dimensions: [500, 500]
+            # whether to use the variance network architecture (learned variance)
             variance_net: False
+            # use sex as additional input
             with_gender_input: True
+            # rscale age to values [0; 1]
             rescale_boneage: True
+            # create flat distribution (cf. thesis for details)
             rebalance_classes: True
         # Litmodel Configuration is directly passed to constructor of LitModel
         # (Available) default values can be omitted, or overwritten (see below)
@@ -88,3 +101,11 @@ models:
             # base dir is optional, but if not provided, annotation files must
             # contain full (absolute) image paths
             base_dir: null
+
+    # Clavicle Models have fewer configuration options
+    clavicle_mcd:
+        data: clavicle_ct
+        provider_config:
+            variance_net: False
+            uncertainty_method: mc_dropout
+            rescale_boneage: True
